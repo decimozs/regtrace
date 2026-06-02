@@ -11,8 +11,13 @@ import {
 } from "./cli/baseline.command";
 import { initCommand } from "./cli/init.command";
 import { historyCommand, listCommand } from "./cli/list.command";
+import { configureColor, isCiEnvironment } from "./cli/print";
 import { runCommand } from "./cli/run.command";
 import { watchCommand } from "./cli/watch.command";
+
+configureColor(
+	process.env.NO_COLOR ? "never" : isCiEnvironment() ? "never" : "auto",
+);
 
 const program = new Command();
 
@@ -27,9 +32,10 @@ Examples:
   regtrace init                  Create a new project
   regtrace run                   Run all golden sets
   regtrace run --set qa.yaml     Run a specific set
-  regtrace run --format json     JSON output
-  regtrace run --ci              CI mode (exit 1 on failure)
+  regtrace run --format json     JSON output (stdout)
+  regtrace run --ci              CI mode (no color, exit 1 on failure)
   regtrace run --bail            Stop at first suite failure
+  regtrace run --dry-run         Validate config without evaluating
   regtrace list                  List recent runs
   regtrace history --run-id <id> Show a specific run
   regtrace history --diff <a> <b> Compare two runs
@@ -54,15 +60,23 @@ program
 	.option("-t, --trigger <type>", "Run trigger type: cli|ci|watch", "cli")
 	.option("-f, --format <type>", "Output format: terminal|json|markdown")
 	.option("-o, --output <path>", "Write report to file")
-	.option("--ci", "CI mode — exit 1 if quality gates fail")
+	.option("--ci", "CI mode — suppress color, exit 1 on quality gate failure")
+	.option("--no-ci", "Disable CI mode auto-detection")
+	.option("--verbose", "Show all test cases, including passing ones")
+	.option(
+		"--dry-run",
+		"Validate config, golden sets, and env without evaluating",
+	)
 	.option("--bail", "Stop after first suite that fails quality gates")
 	.addHelpText(
 		"after",
 		`
 Examples:
   regtrace run
-  regtrace run --format json --output report.json
-  regtrace run --set my-set --ci --bail`,
+  regtrace run --format json        # JSON output to stdout
+  regtrace run --format json -o report.json
+  regtrace run --set my-set --ci --bail
+  regtrace run --dry-run            # Validate setup`,
 	)
 	.action(
 		async (options: {
@@ -72,6 +86,9 @@ Examples:
 			format?: string;
 			output?: string;
 			ci?: boolean;
+			noCi?: boolean;
+			verbose?: boolean;
+			dryRun?: boolean;
 			bail?: boolean;
 		}) => {
 			await runCommand({
@@ -81,6 +98,9 @@ Examples:
 				format: options.format,
 				output: options.output,
 				ci: options.ci,
+				noCi: options.noCi,
+				verbose: options.verbose,
+				dryRun: options.dryRun,
 				bail: options.bail,
 			});
 		},

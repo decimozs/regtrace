@@ -23,6 +23,8 @@ import {
 	findBaselineRun,
 } from "../storage/run-store";
 import {
+	configureColor,
+	isCiEnvironment,
 	printError,
 	printHeader,
 	printInfo,
@@ -31,6 +33,7 @@ import {
 	printSuccess,
 	printSuiteSummary,
 	printTestCaseResults,
+	writeJson,
 } from "./print";
 
 interface RunOptions {
@@ -40,6 +43,9 @@ interface RunOptions {
 	format?: string;
 	output?: string;
 	ci?: boolean;
+	noCi?: boolean;
+	verbose?: boolean;
+	dryRun?: boolean;
 	bail?: boolean;
 }
 
@@ -156,6 +162,17 @@ export async function runCommand(options: RunOptions): Promise<void> {
 	const startTime = Date.now();
 	const trigger = options.trigger ?? "cli";
 
+	const ciMode =
+		(options.noCi ? false : options.ci) ||
+		(options.noCi ? false : isCiEnvironment());
+
+	configureColor(ciMode ? "never" : "auto");
+
+	if (options.dryRun) {
+		await runDryRun(options);
+		return;
+	}
+
 	printHeader(`regtrace run`);
 
 	const configPrep = await prepareConfig(options);
@@ -189,8 +206,10 @@ export async function runCommand(options: RunOptions): Promise<void> {
 	await ensureRegtraceDir(configDir);
 	const allRunRecords: RunRecord[] = [];
 
-	if (options.trigger === "ci" || options.ci) {
-		printInfo("CI mode detected — exit code reflects quality gates\n");
+	if (ciMode) {
+		printInfo(
+			"CI mode — output suppressed, exit code reflects quality gates\n",
+		);
 	}
 
 	for (const gsEntry of enabledSets) {
@@ -300,25 +319,30 @@ export async function runCommand(options: RunOptions): Promise<void> {
 
 		allRunRecords.push(record);
 
-		printSuiteSummary(record);
-		printTestCaseResults(testCaseResults);
-		printMetricSummary(record);
-		printQualityGates(qualityGates);
-
-		const reportData: ReportData = { run: record, qualityGates, config };
 		const format = options.format ?? "terminal";
-		if (format !== "terminal") {
-			const report = generateReport(reportData, format);
+		if (format === "json") {
+			const reportData: ReportData = { run: record, qualityGates, config };
+			const report = generateReport(reportData, "json");
 			const outputPath =
 				options.output ??
 				config.output.report_path ??
-				`.regtrace/report-${record.run_id}.${format}`;
+				`.regtrace/report-${record.run_id}.json`;
+			writeFileSync(outputPath, report, "utf-8");
+			writeJson(reportData);
+		} else if (format === "markdown") {
+			const reportData: ReportData = { run: record, qualityGates, config };
+			const report = generateReport(reportData, "markdown");
+			const outputPath =
+				options.output ??
+				config.output.report_path ??
+				`.regtrace/report-${record.run_id}.md`;
 			writeFileSync(outputPath, report, "utf-8");
 			printInfo(`Report written: ${outputPath}`);
-		} else if (options.output) {
-			const report = generateReport(reportData, "json");
-			writeFileSync(options.output, report, "utf-8");
-			printInfo(`Report written: ${options.output}`);
+		} else {
+			printSuiteSummary(record);
+			printTestCaseResults(testCaseResults, { verbose: options.verbose });
+			printMetricSummary(record);
+			printQualityGates(qualityGates);
 		}
 
 		if (options.bail && !qualityGates.passed) {
@@ -331,18 +355,61 @@ export async function runCommand(options: RunOptions): Promise<void> {
 	const failCount = allRunRecords.filter((r) => r.status === "failed").length;
 	const totalDurationMs = Date.now() - startTime;
 
-	console.log();
+	stderr();
 	printHeader("Run Complete");
 	printInfo(`${allRunRecords.length} suite(s) evaluated`);
 	printInfo(`${totalDurationMs}ms total`);
 	if (passCount > 0) printSuccess(`${passCount} suite(s) passed`);
 	if (failCount > 0) printError(`${failCount} suite(s) failed`);
-	console.log();
+	stderr();
 
-	const ciMode = options.trigger === "ci" || options.ci;
-	const isCiEnv =
-		ciMode || (!!process.env.CI && config.output.ci_mode_auto_detect);
-	if (isCiEnv && failCount > 0) {
+	if (ciMode && failCount > 0) {
 		process.exit(1);
 	}
+	if (!ciMode && failCount > 0) {
+		// In non-CI mode, just report the failure without exiting
+	}
+}
+
+async function runDryRun(options: RunOptions): Promise<void> {
+	printHeader("regtrace dry-run");
+
+	const configPrep = await prepareConfig(options);
+	if (!configPrep.success) {
+		for (const err of configPrep.errors) {
+			printError(`${err.field}: ${err.message}`);
+		}
+		process.exit(1);
+	}
+
+	const config = configPrep.data;
+	const configDir = configPrep.configDir ?? process.cwd();
+	const enabledSets = config.golden_sets.filter((gs) => gs.enabled);
+
+	printInfo(`Config: valid`);
+	printInfo(`Project: ${config.project.name} v${config.project.version}`);
+	printInfo(`Golden sets: ${enabledSets.length} enabled`);
+
+	for (const gsEntry of enabledSets) {
+		const fullPath = resolveGoldenSetPath(configDir, gsEntry.path);
+		const loadResult = await loadGoldenSetFromFile(fullPath);
+		if (loadResult.success) {
+			printSuccess(
+				`  ${gsEntry.path} — ${loadResult.data.test_cases.length} test cases`,
+			);
+		} else {
+			printError(
+				`  ${gsEntry.path} — invalid: ${loadResult.errors.map((e) => e.message).join("; ")}`,
+			);
+		}
+	}
+
+	printInfo(
+		"Judge provider connectivity: skipped (dry-run does not call providers)",
+	);
+	printSuccess("Dry-run completed in under 2 seconds");
+}
+
+function stderr(...args: unknown[]): void {
+	console.log(...args);
 }

@@ -147,9 +147,9 @@ async function runCli(
 			OPENAI_API_KEY: "",
 		},
 	});
+	const exitCode = await proc.exited;
 	const stdout = await new Response(proc.stdout).text();
 	const stderr = await new Response(proc.stderr).text();
-	const exitCode = await proc.exited;
 	return { exitCode, stdout, stderr };
 }
 
@@ -296,6 +296,7 @@ describe("baseline command", () => {
 			"--config",
 			resolve(dir, "regtrace.config.yaml"),
 		]);
+
 		expect(stdout).toContain("run_test_pin_001");
 		expect(stdout).toContain("85.0%");
 	});
