@@ -1,0 +1,111 @@
+---
+title: Limitations & Caveats
+description: Known limitations of LLM-as-judge evaluation and how Regtrace mitigates them
+---
+
+Regtrace's LLM-judged metrics (factuality, tone) inherit the limitations of the
+LLM acting as judge. Understanding these caveats helps you interpret scores
+correctly and design evaluation suites that are robust to known failure modes.
+
+## LLM judge biases
+
+### Verbosity bias
+
+LLM judges tend to award higher scores to longer, more detailed responses —
+even when the extra content does not improve factual accuracy or tone. A concise
+but perfectly accurate response may score lower than a verbose one with the same
+facts.
+
+**Mitigation in Regtrace:** Tone evaluation includes a verbosity sub-dimension
+that penalizes inappropriately long responses. Factuality prompts instruct the
+judge to ignore length and focus on claim accuracy. Format's length-tolerance
+sub-check can catch extreme length deviations independently.
+
+### Self-preference
+
+LLM judges are known to rate outputs from the same model family higher than
+outputs from other models. An Anthropic judge may give an Anthropic-generated
+response a higher factuality score than it would give an equivalent
+OpenAI-generated response, and vice versa.
+
+**Mitigation in Regtrace:** The judge prompts are provider-agnostic — they
+contain no model identifiers. You can also use a different provider as the judge
+than the one producing the output being evaluated (e.g., use Anthropic as the
+judge for an OpenAI output). The `evaluation_type` field on every metric result
+records whether the score came from a judge or a deterministic check, so you
+can audit for provider-based bias.
+
+### Position bias
+
+When evaluating multiple claims or dimensions, LLM judges can show position
+bias — earlier claims receive more attention than later ones, or the first
+option in a list is favored.
+
+**Mitigation in Regtrace:** The factuality prompt explicitly asks for
+claim-by-claim extraction before scoring, reducing the influence of position.
+Confidence scoring flags cases where the judge is uncertain, which often
+correlates with position-sensitive evaluations.
+
+### Temperature sensitivity
+
+LLM judges use a low temperature (0.1 by default) to minimize variance, but
+they are not fully deterministic. The same input evaluated twice can produce
+slightly different scores, especially near threshold boundaries.
+
+**Mitigation in Regtrace:** The regression tolerance band (default 0.05)
+accounts for this inherent variance. A score change smaller than the tolerance
+is treated as noise, not a real regression. The `max_low_confidence_ratio`
+quality gate catches runs where the judge was uncertain across many cases.
+
+## When to trust LLM-judged scores
+
+| Situation | Trust level | Reason |
+|---|---|---|
+| High score + high confidence | High | Judge is certain the output is good |
+| Low score + high confidence | High | Judge is certain the output is bad |
+| Low confidence | Low | Flag for human review regardless of score |
+| Near threshold boundaries | Moderate | Small score variance can flip pass/fail |
+| Deterministic metrics | High | Same input always produces same outcome |
+
+## When deterministic metrics are safer
+
+Deterministic format checks (JSON validity, schema match, regex, length,
+forbidden content, markdown structure, required fields) are always confidence
+1.0 and fully reproducible. They have no judge bias.
+
+**Use deterministic checks when:**
+
+- You only need structural compliance (JSON API responses, markdown formatting)
+- You are running in environments without API access (air-gapped CI, development)
+- You want a fast pre-filter before expensive LLM-judged evaluation
+- You need zero-variance scores for regulatory or compliance purposes
+
+## The "judge is also an LLM" caveat
+
+Regtrace evaluates LLM outputs using another LLM as the judge. This means
+the evaluation is subject to the same failure modes as the outputs being
+evaluated: hallucination, reasoning errors, and instruction-following failures.
+
+This is not a solvable problem — it is a fundamental property of LLM-as-judge
+evaluation. What matters is that the limitations are surfaced, not hidden.
+Regtrace signals them through:
+
+- **Confidence scoring** — the judge self-reports its uncertainty
+- **Deterministic fallbacks** — if the judge is unavailable or produces
+  unreliable scores, deterministic heuristics take over
+- **Quality gates** — `max_low_confidence_ratio` fails a run if too many
+  scores are uncertain
+- **Always-on regression** — even if absolute scores have bias, trend signals
+  over time remain meaningful
+
+## Best practices
+
+- **Use a different judge provider** than the model being evaluated to avoid
+  self-preference
+- **Set `max_low_confidence_ratio`** in your config to catch uncertain runs
+- **Combine deterministic + LLM-judged metrics** — format catches structural
+  issues without bias, factuality catches content issues with bias awareness
+- **Review low-confidence scores manually** — they are the most likely to be
+  wrong
+- **Understand that regression deltas are more reliable than absolute scores**
+  — trend signals are less affected by judge bias than single-point scores

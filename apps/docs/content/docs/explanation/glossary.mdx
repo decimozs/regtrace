@@ -1,0 +1,77 @@
+---
+title: Glossary
+description: Common terms used throughout the Regtrace documentation
+---
+
+### Baseline
+
+A stored run record used as a reference for regression comparison. Each suite
+uses either the latest passing run or a pinned run as its baseline. See
+[Regression](/docs/explanation/regression).
+
+### Claim extraction depth
+
+Controls how factuality evaluation extracts claims from text. `shallow` uses
+heuristic N-gram overlap (deterministic, no API call). `deep` uses the LLM
+judge to extract and verify claims. See [Config File](/docs/reference/config-file).
+
+### Deterministic metric
+
+A metric that produces the same score for the same input every time.
+Deterministic metrics (format, shallow factuality) use rule-based evaluation
+and require no LLM API call.
+
+### Golden set
+
+A YAML file containing a curated collection of test cases. Each test case
+defines an input, expected output, metrics to evaluate, and optionally an
+actual output. See [Golden Set](/docs/reference/golden-set).
+
+### Judge provider
+
+An LLM service used to evaluate factuality and tone metrics. Supported
+providers: Anthropic, OpenAI, Gemini, Groq, Ollama. See
+[Judge Providers](/docs/reference/judge-providers).
+
+### LLM-judged metric
+
+A metric that uses an LLM judge to evaluate responses. LLM-judged metrics
+(deep factuality, tone) capture nuance that deterministic rules miss but
+require API calls and incur latency and cost.
+
+### Quality gate
+
+A configurable threshold that translates evaluation scores into a pass/fail
+decision. Four gates exist: suite score, max failed cases, low-confidence
+ratio, and regression status. See [Quality Gates](/docs/explanation/quality-gates).
+
+### Regression status
+
+The classification of a suite's score change relative to its baseline. Three
+states: `clean` (within tolerance), `warning` (exceeded tolerance but below
+critical threshold), `critical` (exceeded critical threshold, gate fails).
+See [Regression](/docs/explanation/regression).
+
+### Run record
+
+A JSON file stored in `.regtrace/runs/` containing the full evaluation
+result, config snapshot, metadata, and timestamps. Each `regtrace run`
+produces one run record. See [Run Record](/docs/reference/run-record).
+
+### Suite
+
+A collection of test cases from one golden set file. Each golden set produces
+one suite. A run can evaluate multiple suites if multiple golden sets are
+configured.
+
+### Test case
+
+A single evaluation unit in a golden set. Defines an input, expected output,
+enabled metrics, and optionally an actual output. See
+[Golden Set](/docs/reference/golden-set).
+
+### Tolerance / Critical threshold
+
+Two-tier regression thresholds in quality gates. Tolerance sets the boundary
+for a `warning` status. Critical threshold sets the boundary for a `critical`
+status that fails the gate. See [Config File](/docs/reference/config-file).

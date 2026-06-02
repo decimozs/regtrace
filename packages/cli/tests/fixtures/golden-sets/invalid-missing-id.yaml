@@ -1,0 +1,19 @@
+name: invalid-missing-id
+version: 1.0.0
+description: This golden set is missing the id field on its first test case
+interaction_type: single_turn
+tags:
+  - invalid
+author: test@example.com
+created_at: "2024-06-01T00:00:00Z"
+updated_at: "2024-06-01T00:00:00Z"
+test_cases:
+  - description: Missing id field
+    input: "test input"
+    system_prompt: null
+    expected_output: "test output"
+    actual_output: null
+    metrics:
+      - format
+    tags: []
+    weight: 1.0

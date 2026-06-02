@@ -1,0 +1,98 @@
+---
+title: The Four Pillars of Regtrace
+description: Why golden sets, metrics, baselines, and quality gates are the core concepts
+---
+
+Regtrace's design rests on four interconnected pillars. Each one solves a
+specific problem, and together they form a complete evaluation system.
+
+<Accordions type="single">
+  <Accordion title="1. Golden sets — what good looks like">
+    A golden set is a curated collection of test cases. Each case defines:
+
+    - **Input** — what you send to the model
+    - **Expected output** — the ideal response
+    - **Actual output** — what the model actually produced (filled in later)
+
+    Why this matters: without a golden set, evaluation is ad-hoc. Different team
+    members evaluate against different standards, producing inconsistent results.
+    Golden sets make the standard explicit and version-controlled.
+
+    Golden sets capture domain knowledge: edge cases, typical customer questions,
+    failure modes discovered in production. Each set tells the story of what your
+    team has learned about quality.
+  </Accordion>
+  <Accordion title="2. Metrics — how to measure">
+    A golden set tells you *what* to test. Metrics tell you *how* to score the
+    result. Regtrace provides four metric families:
+
+    | Metric | Answers the question |
+    |---|---|
+    | Factuality | "Is the response factually correct?" |
+    | Format | "Is the response structured correctly?" |
+    | Tone | "Does the response sound right?" |
+    | Regression | "Is quality getting worse over time?" |
+
+    Each metric uses a different evaluation strategy. Format is completely
+    deterministic — it checks rules. Factuality and tone use an LLM judge to
+    make nuanced assessments. Regression is statistical — it compares against
+    past performance.
+
+    The reason for multiple metrics: real-world quality is multi-dimensional.
+    A response can be factually correct but badly formatted, or well-formatted
+    but miss the wrong tone. Each metric captures a different signal.
+  </Accordion>
+  <Accordion title="3. Baselines — quality over time">
+    A single evaluation tells you the current score. A baseline tells you whether
+    that score is improving or degrading.
+
+    Baselines solve a specific problem: absolute scores are hard to interpret.
+    A factuality score of 0.72 might be good or bad depending on the task. But a
+    regression of -15% from last week's baseline is unambiguously concerning.
+
+    The baseline comparison produces deltas at three levels:
+
+    - **Suite delta** — overall score change
+    - **Per-metric delta** — which specific metric changed
+    - **Per-test-case delta** — which specific test case changed
+
+    This hierarchy makes root-cause analysis efficient. If the suite dropped,
+    check which metric. If factuality dropped, check which test case.
+  </Accordion>
+  <Accordion title="4. Quality gates — enforcing standards">
+    Quality gates translate evaluation results into pass/fail decisions. They
+    answer the question: "Is this good enough to deploy?"
+
+    A quality gate is a threshold, not a person. It doesn't review or discuss.
+    It checks four specific conditions:
+
+    - Suite score is high enough
+    - Not too many test cases failed
+    - Not too many low-confidence results
+    - No critical regression
+
+    Quality gates are the boundary between evaluation and decision. Evaluation
+    produces scores. Quality gates produce yes/no decisions suitable for
+    automation in CI/CD pipelines.
+  </Accordion>
+</Accordions>
+
+## How the pillars connect
+
+```
+Golden sets ──define what to test──▶ Metrics
+                                     │
+                                     ▼
+Metrics ──produce scores──▶ Regression baseline
+                            │
+                            ▼
+Regression ──detects drops──▶ Quality gates
+                              │
+                              ▼
+Quality gates ──decides──▶ pass/fail
+```
+
+Each pillar depends on the previous one. Without golden sets, metrics have
+nothing to evaluate. Without metrics, there's nothing to baseline. Without
+baselines, quality gates can only check absolute scores (which is less useful
+than checking for regressions).

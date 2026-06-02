@@ -1,0 +1,152 @@
+---
+title: CLI Reference
+description: Complete command-line reference for regtrace
+---
+
+## Synopsis
+
+```bash
+regtrace <command> [options]
+```
+
+## Global options
+
+<TypeTable
+  type={{
+    "--config": { description: "Path to config file", type: "string", default: "regtrace.config.yaml" },
+    "--verbose": { description: "Enable verbose logging", type: "boolean", default: "false" },
+    "--version": { description: "Show version number", type: "boolean" },
+    "--help": { description: "Show help", type: "boolean" },
+  }}
+/>
+
+## Commands
+
+### `init`
+
+```bash
+regtrace init
+```
+
+Scaffold a new Regtrace project:
+
+- Creates `regtrace.config.yaml` with defaults
+- Creates `golden-sets/qa.yaml` with sample test cases
+- Creates `.gitignore` with `.regtrace/runs/`
+- Creates `.regtrace/runs/` directory
+
+<Callout type="info">
+  Required config blocks that must always be present: `metrics.tone`
+  (can disable all sub-dimensions to skip tone evaluation) and
+  `judge.cost_controls`. Both are populated by `regtrace init`.
+</Callout>
+
+### `run`
+
+```bash
+regtrace run [options]
+```
+
+Run evaluation on all enabled golden sets.
+
+<TypeTable
+  type={{
+    "--ci": { description: "CI mode: suppress color, exit 1 on failure", type: "boolean", default: "false" },
+    "--bail": { description: "Stop after first suite that fails quality gates", type: "boolean", default: "false" },
+    "--format": { description: "Output format: `terminal`, `json`, `markdown`", type: "string", default: "terminal" },
+    "--output": { description: "Write output to file (requires `--format`)", type: "string" },
+    "--set": { description: "Run a specific golden set (matches config `path`)", type: "string" },
+  }}
+/>
+
+Steps:
+
+1. Load config from `regtrace.config.yaml`
+2. Load and validate all enabled golden sets
+3. For each golden set:
+   a. Validate test cases
+   b. Run each case through enabled metrics
+   c. Aggregate scores
+   d. Check quality gates
+4. Print terminal report
+5. Persist run record
+
+### `list`
+
+```bash
+regtrace list [options]
+```
+
+List recent evaluation runs.
+
+<TypeTable
+  type={{
+    "--limit": { description: "Number of runs to show", type: "number", default: "10" },
+    "--suite": { description: "Filter by suite name", type: "string" },
+    "--status": { description: "Filter by status: `passed`, `failed`", type: "string" },
+  }}
+/>
+
+### `history`
+
+```bash
+regtrace history [options]
+```
+
+Show detailed run information.
+
+<TypeTable
+  type={{
+    "--run-id": { description: "Show detailed results for a specific run", type: "string" },
+    "--diff": { description: "Diff against another run. Use `--run-id <a> --diff <b>` for two specific runs", type: "string" },
+  }}
+/>
+
+### `watch`
+
+```bash
+regtrace watch [options]
+```
+
+Watch golden set files for changes and re-run evaluation.
+
+<TypeTable
+  type={{
+    "--ci": { description: "CI mode for watch runs", type: "boolean", default: "false" },
+    "--bail": { description: "Stop on first suite failure", type: "boolean", default: "false" },
+  }}
+/>
+
+### `baseline`
+
+```bash
+regtrace baseline <subcommand>
+```
+
+Manage regression baselines.
+
+| Subcommand | Args | Description |
+|---|---|---|
+| `pin <run-id>` | Run ID to pin | Pin baseline to a specific run |
+| `unpin` | — | Revert to `last_passing` strategy |
+| `show` | — | Display current baseline info |
+
+## Quality gates
+
+Quality gates are checked after every run. They determine pass/fail.
+
+See [config file reference](/docs/reference/config-file) for quality gate
+options and defaults.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | All quality gates passed |
+| 1 | Quality gates failed, config error, or unhandled error |
+
+<Callout type="warn">
+  Exit code 1 conflates quality failures with config errors. A config error
+  produces the same exit code as a failing evaluation. Check error messages
+  to distinguish the two.
+</Callout>

@@ -1,0 +1,137 @@
+---
+title: Creating a Golden Set
+description: Write your own evaluation test cases
+---
+
+A *golden set* is a YAML file containing a collection of test cases. Each test
+case defines an input, an expected output, and which metrics to evaluate.
+
+## Structure
+
+```yaml
+name: my-qa-set
+version: "1.0"
+description: QA test cases for my chatbot
+interaction_type: single_turn
+tags: [qa, chatbot]
+author: you@example.com
+created_at: "2026-01-01"
+updated_at: "2026-01-01"
+
+test_cases:
+  - id: qa-001
+    description: Capital of France
+    input: "What is the capital of France?"
+    system_prompt: null
+    expected_output: "Paris is the capital of France."
+    actual_output: null
+    metrics: [factuality, format, tone]
+    tags: [geography]
+    weight: 1
+```
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| `name` | Yes | Human-readable identifier |
+| `version` | Yes | Semantic version for diff tracking |
+| `description` | Yes | What this set tests |
+| `interaction_type` | Yes | `single_turn` or `rag` |
+| `tags` | Yes | For filtering during runs |
+| `author` | Yes | Who owns the set |
+| `created_at` | Yes | ISO 8601 date |
+| `updated_at` | Yes | ISO 8601 date |
+
+Each test case:
+
+| Field | Required | Description |
+|---|---|---|
+| `id` | Yes | Unique within the set, stable across versions |
+| `description` | Yes | One-line summary |
+| `input` | Yes | Prompt or user message |
+| `system_prompt` | Yes (nullable) | System instruction in effect |
+| `expected_output` | Yes | Ground truth ideal response |
+| `actual_output` | Yes (nullable) | Model output — `null` at authoring time |
+| `metrics` | Yes | Which metrics to run |
+| `tags` | Yes | For case-level filtering |
+| `weight` | Yes | Score multiplier for suite aggregation |
+
+## Providing actual output
+
+When you run `regtrace run`, the tool evaluates whatever is in `actual_output`.
+You have two options:
+
+<Steps>
+  <Step>
+    ### Set it manually
+
+    Fill in the model's response yourself. Metrics run deterministically where
+    possible. This is the fastest path — no API key needed.
+
+    ```yaml
+    actual_output: "Paris is the capital of France."
+    ```
+  </Step>
+  <Step>
+    ### Leave it null
+
+    Regtrace evaluates using the LLM judge to score the `expected_output`
+    against the `input`. Requires a configured judge provider.
+
+    ```yaml
+    actual_output: null
+    ```
+  </Step>
+</Steps>
+
+<Callout type="warn">
+  All-null `actual_output` across the entire golden set is rejected. You must
+  either provide inline outputs or configure a judge provider.
+</Callout>
+
+## RAG test cases
+
+For RAG evaluation, add a `context` block:
+
+```yaml
+- id: rag-001
+  input: "What is the API rate limit?"
+  system_prompt: null
+  context:
+    documents:
+      - source: "docs/api-reference.md"
+        content: "The API rate limit is 500 requests per minute."
+        retrieval_score: 0.94
+  expected_output: "500 requests per minute"
+  actual_output: null
+  metrics: [factuality, format]
+```
+
+Each document in the context includes a `source`, `content`, and optional
+`retrieval_score`.
+
+## Versioning
+
+The golden set version follows semver:
+
+- **Patch** — typo fixes, clarifying wording without changing meaning
+- **Minor** — new test cases or meaningful modifications
+- **Major** — restructuring, removing cases, changing interaction type
+
+<Callout type="info">
+  Regtrace flags golden set version changes in regression reports so you can
+  distinguish score changes caused by the golden set evolving from changes
+  caused by the model degrading.
+</Callout>
+
+## Register the set
+
+Add the golden set to your config:
+
+```yaml
+golden_sets:
+  - path: golden-sets/my-set.yaml
+    enabled: true
+    weight: 1
+```

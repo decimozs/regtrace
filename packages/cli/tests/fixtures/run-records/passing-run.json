@@ -1,0 +1,61 @@
+{
+	"run_id": "run_20240601_a1b2c3",
+	"timestamp": "2024-06-01T12:00:00.000Z",
+	"status": "passed",
+	"trigger": "cli",
+	"duration_ms": 4523,
+	"regtrace_version": "0.1.0",
+	"judge_provider": "anthropic",
+	"judge_model": "claude-3-5-sonnet-20240620",
+	"config_hash": "abc123def456",
+	"golden_set_name": "customer-support-qa",
+	"golden_set_version": "1.0.0",
+	"golden_set_file_hash": "def789abc012",
+	"suite_score": 0.89,
+	"metric_summary": {
+		"factuality": { "score": 0.92, "pass_rate": 1.0 },
+		"format": { "score": 1.0, "pass_rate": 1.0 },
+		"tone": { "score": 0.78, "pass_rate": 0.5 }
+	},
+	"test_case_results": [
+		{
+			"test_case_id": "cs-001",
+			"input": "What is your refund policy?",
+			"actual_output": "Our refund policy allows returns within 30 days of purchase.",
+			"overall_passed": true,
+			"severity": "pass",
+			"metric_results": {
+				"factuality": {
+					"metric_name": "factuality",
+					"score": 0.95,
+					"confidence": 0.92,
+					"passed": true,
+					"threshold": 0.7,
+					"explanation": "All claims in the output match the expected output.",
+					"evaluation_type": "llm_judged",
+					"token_cost": 450
+				},
+				"tone": {
+					"metric_name": "tone",
+					"score": 0.82,
+					"confidence": 0.78,
+					"passed": true,
+					"threshold": 0.7,
+					"explanation": "Tone is appropriately professional and matches expected register.",
+					"evaluation_type": "llm_judged",
+					"token_cost": 380
+				}
+			}
+		}
+	],
+	"regression": {
+		"baseline_run_id": null,
+		"baseline_golden_set_version": null,
+		"current_golden_set_version": "1.0.0",
+		"version_change_detected": false,
+		"suite_delta": 0,
+		"regression_status": "clean",
+		"test_cases_excluded": [],
+		"metric_deltas": {}
+	}
+}

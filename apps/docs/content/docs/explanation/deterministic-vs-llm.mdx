@@ -1,0 +1,98 @@
+---
+title: Deterministic vs LLM-Judged Metrics
+description: Trade-offs between rule-based and LLM-based evaluation
+---
+
+Regtrace uses two fundamentally different evaluation approaches:
+deterministic rules and LLM judging. Understanding the trade-offs helps you
+configure each metric appropriately.
+
+## Deterministic metrics (format)
+
+Format evaluation runs entirely on rules. It checks JSON validity, length
+tolerance, markdown structure, and other structural properties.
+
+**Strengths:**
+
+- **Fast** — sub-millisecond per check, no network calls
+- **Cheap** — no API costs
+- **Deterministic** — same input always produces same score
+- **Explanatory** — each sub-check can explain exactly why it failed
+
+**Weaknesses:**
+
+- **Shallow** — only checks structure, not meaning
+- **Brittle** — minor format variations can trigger unexpected failures
+- **Limited scope** — can't evaluate factual correctness or tone
+
+**When to use:** Always. Format checks have no downsides — they're free,
+fast, and detect structural problems that affect user experience.
+
+## LLM-judged metrics (factuality, tone)
+
+Factuality and tone evaluation sends prompts to an LLM provider, asking it
+to assess the response against expectations.
+
+**Strengths:**
+
+- **Deep** — can evaluate meaning, not just structure
+- **Flexible** — adapts to different domains, tones, and formats
+- **Nuanced** — can detect subtle factual errors and tone mismatches
+
+**Weaknesses:**
+
+- **Slow** — 1–5 seconds per evaluation (network latency + generation)
+- **Expensive** — API costs scale with volume
+- **Non-deterministic** — same input can produce slightly different scores
+  (temperature > 0)
+- **Hard to explain** — LLM explanations can be verbose or vague
+
+**When to use:** Factuality evaluation for correctness-critical applications
+(customer support, documentation, legal/compliance). Tone evaluation for
+brand-sensitive applications (marketing, health advice, public-facing
+chatbots).
+
+## The heuristic fallback
+
+When no LLM judge is configured or all providers fail, factuality and tone
+fall back to heuristic scoring:
+
+- **Factuality** — Uses N-gram overlap between expected and actual output
+  (strict and lenient modes). This captures approximate factual alignment.
+- **Tone** — Uses keyword heuristics: formality ratio, sentiment keyword
+  matching, verbosity thresholds. Less accurate but always available.
+
+The fallback ensures Regtrace can always produce a score, even without API
+access. Scores from the fallback are flagged with low confidence.
+
+## When to use each approach
+
+| Scenario | Recommended metrics |
+|---|---|
+| Safety-critical correctness | factuality (LLM-deep) |
+| JSON API response consistency | format (all sub-checks) |
+| Customer support tone | tone (LLM-judged) + format |
+| High-volume daily runs | factuality (lenient, shallow) + format |
+| Local dev without API keys | format + heuristic fallback |
+| CI pipeline gate | factuality (strict) + regression |
+
+## Confidence as a signal
+
+Deterministic metrics report confidence = 1.0. LLM-judged metrics report the
+judge's self-assessed confidence (0.0–1.0).
+
+Confidence is informative because:
+
+- High confidence + low score → strong signal the output is bad
+- Low confidence + low score → possible false positive, flag for human review
+- Low confidence + high score → judge is uncertain about a good output
+
+The quality gate `max_low_confidence_ratio` uses this signal to catch runs
+where the judge was uncertain across many test cases.
+
+## Known limitations
+
+LLM judges have known biases — verbosity bias, self-preference, position bias —
+and are subject to the same failure modes as the outputs they evaluate. See
+[Limitations & Caveats](/docs/explanation/limitations) for a detailed
+discussion of these caveats and how Regtrace mitigates them.

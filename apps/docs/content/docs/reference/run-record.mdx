@@ -1,0 +1,171 @@
+---
+title: Run Record Reference
+description: Structure of persisted run records
+---
+
+## Location
+
+Run records are stored as JSON files in `.regtrace/runs/`.
+
+## Filename convention
+
+```
+<run_id>.json
+```
+
+`run_id` is formatted as `run_YYYYMMDD_<timestamp>` with a random suffix to
+avoid collisions.
+
+## Schema
+
+```typescript
+interface RunRecord {
+  /** Unique identifier */
+  run_id: string;
+
+  /** Run timestamp (ISO 8601) */
+  timestamp: string;
+
+  /** Config snapshot at time of run */
+  config: {
+    project?: { name?: string; version?: string };
+    metrics: MetricsConfig;
+    judge: JudgeConfig;
+    quality_gates: QualityGates;
+    scoring: ScoringConfig;
+    output: OutputConfig;
+  };
+
+  /** Results per golden set */
+  suites: SuiteResult[];
+
+  /** Summary over all suites */
+  summary: {
+    total_suites: number;
+    total_test_cases: number;
+    total_passed: number;
+    total_failed: number;
+    overall_score: number;
+    overall_passed: boolean;
+  };
+
+  /** Judge provider and model used */
+  judge_used: {
+    provider: string;
+    model: string;
+  };
+
+  /** Token usage estimate (if available) */
+  token_usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_cost_usd: number;
+  };
+}
+```
+
+## Suite result
+
+```typescript
+interface SuiteResult {
+  /** Golden set name */
+  suite_name: string;
+
+  /** Golden set version */
+  golden_set_version: string;
+
+  /** Suite aggregate score (0.0–1.0) */
+  suite_score: number;
+
+  /** Pass/fail */
+  passed: boolean;
+
+  /** Per-test-case results */
+  test_cases: TestCaseResult[];
+
+  /** Quality gate results for this suite */
+  quality_gates: {
+    passed: boolean;
+    gates: Record<string, GateResult>;
+  };
+
+  /** Regression analysis (if baseline exists) */
+  regression?: {
+    status: "clean" | "warning" | "critical" | "new";
+    suite_delta: number;
+    baseline_run_id: string | null;
+    per_metric_deltas: Record<string, number>;
+    test_case_deltas: Array<{
+      id: string;
+      status: "improved" | "regressed" | "unchanged" | "new" | "removed";
+      delta: number;
+    }>;
+  };
+
+  /** Duration in milliseconds */
+  duration_ms: number;
+}
+```
+
+## Test case result
+
+```typescript
+interface TestCaseResult {
+  /** Test case ID */
+  id: string;
+
+  /** Pass/fail for this case */
+  passed: boolean;
+
+  /** Aggregated score across metrics (0.0–1.0) */
+  score: number;
+
+  /** Per-metric results */
+  metrics: Record<string, MetricResult>;
+
+  /** Duration in milliseconds */
+  duration_ms: number;
+}
+```
+
+## Metric result
+
+```typescript
+interface MetricResult {
+  /** Metric score (0.0–1.0) */
+  score: number;
+
+  /** Pass/fail against threshold */
+  passed: boolean;
+
+  /** Confidence in score (0.0–1.0); 1.0 for deterministic */
+  confidence: number;
+
+  /** Human-readable explanation */
+  explanation: string | null;
+
+  /** Detailed sub-check results (deterministic metrics) */
+  details?: Record<string, SubCheckResult>;
+
+  /** Token usage for LLM-judged metrics */
+  token_usage?: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+}
+```
+
+## Sub-check result (format metric)
+
+```typescript
+interface SubCheckResult {
+  /** Sub-check score (0.0–1.0) */
+  score: number;
+
+  /** Pass/fail */
+  passed: boolean;
+
+  /** Explanation */
+  explanation: string | null;
+}
+```

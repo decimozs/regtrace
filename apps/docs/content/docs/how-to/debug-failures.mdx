@@ -1,0 +1,103 @@
+---
+title: Debugging Failures
+description: Diagnose why a test case failed and what to fix
+---
+
+When a test case fails, Regtrace provides explanations and context to help
+you understand what went wrong.
+
+## Read the output
+
+Run evaluation normally:
+
+```bash
+regtrace run
+```
+
+Failed test cases show:
+
+- Which metrics failed
+- The actual score vs threshold
+- Confidence level
+- Explanation text from the judge
+
+Example:
+
+```
+✗ qa-001: What is the capital of France?
+  ✗ factuality: 45% (threshold: 70%, confidence: 95%)
+    The response claimed the API rate limit is 1000 requests/minute
+    but the golden set specifies 500. Two factual claims were
+    unverifiable against the provided context.
+```
+
+## Audit a specific metric
+
+Drill into one metric across all test cases:
+
+```bash
+regtrace history --run-id run_20260101_a3f9
+```
+
+Shows per-test-case breakdown for every metric.
+
+## Compare with a passing run
+
+Diff against a previous passing run:
+
+```bash
+regtrace history --run-id run_20260101_def --diff run_20260101_abc
+```
+
+Or diff against an immediate predecessor:
+
+```bash
+regtrace history --diff run_20260101_def
+```
+
+Shows which test cases changed status and by how much.
+
+## Check confidence levels
+
+A low-confidence score (below 0.5) means the judge was uncertain.
+Flag these for human review rather than treating them as definitive failures.
+
+In the quality gates config:
+
+```yaml
+quality_gates:
+  max_low_confidence_ratio: 0.1
+```
+
+This fails the suite if more than 10% of results have low confidence.
+
+## Common failure patterns
+
+### Factuality failure
+
+The model made claims not supported by the expected output or context.
+
+**Fix:** Verify your expected output is accurate. Check if the model needs
+better context or a more specific system prompt.
+
+### Format failure
+
+The output structure doesn't match requirements.
+
+**Fix:** Check JSON validity, required fields, length constraints. These
+are usually simple to fix.
+
+### Tone failure
+
+The output voice doesn't match expectations.
+
+**Fix:** Review the tone profile. Adjust the system prompt to guide the
+model's voice more explicitly.
+
+### Regression failure
+
+The score dropped compared to baseline.
+
+**Fix:** Use `regtrace history --run-id <current> --diff <baseline>` to see
+exactly which test cases regressed. The change might be in the model, the
+prompt, or the golden set.

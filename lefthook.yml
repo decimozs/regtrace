@@ -1,0 +1,5 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      run: bunx biome check --staged --no-errors-on-unmatched

@@ -1,0 +1,125 @@
+---
+title: Metrics Reference
+description: Complete reference for all evaluation metrics
+---
+
+## Metric types
+
+| Metric | Type | Deterministic | Requires LLM judge |
+|---|---|---|---|
+| Factuality | LLM-judged | No | Yes (deep mode) |
+| Format | Deterministic | Yes | No |
+| Tone | LLM-judged | Partial | Yes |
+| Regression | Statistical | Yes | No |
+
+## Factuality
+
+Evaluates whether the actual output is factually correct against the expected
+output or context.
+
+**Modes:**
+
+| Mode | Behavior |
+|---|---|
+| `strict` | Fail on contradicted claims AND unverifiable claims |
+| `lenient` | Fail only on contradicted claims |
+
+**Claim extraction:**
+
+| Depth | Behavior |
+|---|---|
+| `shallow` (default) | Heuristic N-gram overlap. Deterministic, no API call. |
+| `deep` | Use LLM to extract claims (requires configured judge provider). |
+
+If no LLM provider is configured or the API call fails, factuality falls back
+to heuristic (`shallow`) scoring regardless of the configured depth.
+
+**Scoring:**
+
+- Score = ratio of supported claims to total claims
+- Contradicted and unverifiable claims each contribute to the failure count
+
+## Format
+
+Deterministic structural checks on the actual output.
+
+**Sub-checks:**
+
+| Sub-check | What it does |
+|---|---|
+| `length` | Compares output length to expected; tolerance controls allowed deviation |
+| `json_validity` | Checks if output is valid JSON |
+| `json_schema` | Validates JSON against a schema derived from the expected output |
+| `markdown_structure` | Checks heading hierarchy, list formatting |
+| `required_fields` | Checks specific terms appear in output |
+| `forbidden_content` | Checks specific terms do NOT appear |
+| `regex_match` | Checks output matches a regex pattern |
+
+**Scoring:**
+
+- Score = (passed sub-checks) / (total sub-checks)
+- 1.0 if all enabled sub-checks pass
+
+## Tone
+
+Evaluates the tone and voice of the actual output against expectations.
+
+**Sub-dimensions:**
+
+| Dimension | What it checks |
+|---|---|
+| `formality` | Formal vs informal register |
+| `sentiment` | Positive, negative, or neutral sentiment |
+| `assertiveness` | Confident vs tentative language |
+| `persona_consistency` | Consistent voice matching the tone profile |
+| `verbosity` | Appropriate level of detail |
+
+**Scoring:**
+
+Weighted average of active sub-dimensions. Default weights are 1.0 for all.
+
+**Judge fallback:**
+
+When the LLM judge is unavailable, tone uses heuristic rules:
+- `formality`: Ratio of formal hedging terms
+- `sentiment`: Keyword-based scoring
+- `verbosity`: Word and sentence length ratios
+
+## Regression
+
+Statistical comparison against a baseline run.
+
+**Strategies:**
+
+| Strategy | Description |
+|---|---|
+| `last_passing` | Compare against most recent passing run |
+| `pinned` | Compare against a specific pinned run |
+
+**Statuses:**
+
+| Status | Condition |
+|---|---|
+| `clean` | No significant delta or improvement |
+| `warning` | Delta below `tolerance` (above threshold) |
+| `critical` | Delta below `critical_threshold` |
+| `new` | No baseline exists for comparison |
+
+**Test case deltas:**
+
+| Delta | Condition |
+|---|---|
+| `improved` | Score increased |
+| `regressed` | Score decreased |
+| `unchanged` | Score unchanged |
+| `new` | Test case didn't exist in baseline |
+| `removed` | Test case existed in baseline but not in current |
+
+## Scoring cascade
+
+1. **Sub-check scores** → aggregated to **metric score** (weighted average)
+2. **Metric scores** → aggregated to **test case score** (weighted by metric weight)
+3. **Test case scores** → aggregated to **suite score** (weighted by test case weight)
+4. **Suite scores** → aggregated to **overall score** (weighted by golden set weight)
+
+Scoring method: `weighted_average` (default). All weights default to `1`.

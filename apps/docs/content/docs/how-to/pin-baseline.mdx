@@ -1,0 +1,58 @@
+---
+title: Pinning a Baseline
+description: Lock regression comparison to a specific run
+---
+
+By default, Regtrace compares each run against the most recent passing run.
+Pin a specific run to keep regression comparisons stable across many runs.
+
+## Pin a run
+
+```bash
+regtrace baseline pin run_20260101_a3f9
+```
+
+This:
+
+- Sets `baseline_strategy` to `pinned` in config
+- Stores the run ID
+
+All future runs compare against this pinned run until you unpin.
+
+## Verify the pin
+
+```bash
+regtrace baseline show
+```
+
+Output:
+
+```
+=== Current Baseline ===
+✓ Pinned run: run_20260101_a3f9
+  Suite: my-qa-set v1.0
+  Score: 85.0%
+```
+
+## Unpin
+
+Revert to automatic `last_passing` strategy:
+
+```bash
+regtrace baseline unpin
+```
+
+## When to pin
+
+Pin a baseline when:
+
+- You are preparing a release and want stable regression targets
+- Your golden set changes frequently and you want a fixed reference point
+- You want to ensure a specific known-good version is the comparison standard
+
+## When not to pin
+
+Use `last_passing` (default) when:
+
+- Your golden set evolves regularly and you want the most recent passing state
+- You are in active development and want to compare against latest

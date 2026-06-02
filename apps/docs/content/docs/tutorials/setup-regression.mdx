@@ -1,0 +1,120 @@
+---
+title: Setting Up Regression Detection
+description: Track quality over time with automatic baseline comparison
+---
+
+Regression detection is Regtrace's core feature. Every run is automatically
+compared against a baseline to detect quality degradation.
+
+## How it works
+
+Each time you run `regtrace run`, the result is stored in `.regtrace/runs/`.
+The next run compares against the previous passing run and reports deltas.
+
+## First run
+
+Run evaluation once to establish a baseline:
+
+```bash
+regtrace run
+```
+
+Output includes a regression block:
+
+```
+Regression: clean
+  Suite delta: +0.0%
+  Baseline: none
+```
+
+The first run has no baseline — it establishes the initial scores.
+
+## Second run
+
+After making changes (prompt tweak, model swap, pipeline update), run again:
+
+```bash
+regtrace run
+```
+
+Now regression compares against the first run:
+
+```
+Regression: warning
+  Suite delta: -7.2%
+  Baseline: run_20260101_a3f9
+```
+
+## Configuring thresholds
+
+In `regtrace.config.yaml`:
+
+```yaml
+metrics:
+  regression:
+    enabled: true
+    baseline_strategy: last_passing
+    tolerance: 0.05      # -5% triggers warning
+    critical_threshold: 0.15  # -15% triggers critical
+    exclude_new_test_cases: true
+```
+
+## Quality gates
+
+The quality gates block enforces pass/fail:
+
+```yaml
+quality_gates:
+  suite_score_minimum: 0.7
+  max_failed_test_cases: 0
+  max_low_confidence_ratio: 0.1
+  regression_gate: true
+```
+
+With `regression_gate: true`, a critical regression fails the suite regardless
+of the absolute score.
+
+## Viewing regression in a report
+
+```bash
+regtrace history --run-id run_20260101_a3f9
+```
+
+Shows regression status, suite delta, and per-metric deltas compared to the
+baseline.
+
+## Diff two runs
+
+```bash
+regtrace history --diff run_20260101_def run_20260101_abc
+```
+
+Shows suite score delta, per-metric deltas, and which test cases changed
+status.
+
+## Pinning a baseline
+
+By default, Regtrace uses the last passing run as baseline. Pin a specific run:
+
+```bash
+regtrace baseline pin run_20260101_a3f9
+```
+
+This sets `baseline_strategy: pinned` and stores the run ID in config.
+
+Revert to automatic:
+
+```bash
+regtrace baseline unpin
+```
+
+Check current baseline:
+
+```bash
+regtrace baseline show
+```
+
+## Next steps
+
+- [Configure metrics](/docs/how-to/configure-metrics) — tune thresholds and weights
+- [CI integration](/docs/how-to/ci-integration) — automate regression checks

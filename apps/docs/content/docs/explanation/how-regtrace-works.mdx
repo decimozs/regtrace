@@ -1,0 +1,94 @@
+---
+title: How Regtrace Works
+description: Architectural overview of the evaluation pipeline
+---
+
+Regtrace is a CLI tool that compares LLM outputs against golden set
+expectations and reports whether quality is maintained or degraded.
+
+## High-level flow
+
+```
+golden-sets/*.yaml  →  validate  →  evaluate  →  aggregate  →  report
+                                    ↑
+regtrace.config.yaml               |
+       └──────────────────── threshold config
+```
+
+Each run is:
+
+1. **Load** — read config and golden set files
+2. **Validate** — check schema, semantic rules, no all-null actual_output
+3. **Evaluate** — for each test case, run each enabled metric
+4. **Aggregate** — combine scores using weighted averaging
+5. **Check gates** — compare quality metrics against configured thresholds
+6. **Report** — print to terminal, JSON, or Markdown
+7. **Persist** — save the run record to `.regtrace/runs/`
+
+## Evaluation pipeline
+
+For each test case:
+
+```
+test_case
+  ├── factuality evaluator (LLM or heuristic)
+  ├── format evaluator (deterministic sub-checks)
+  └── tone evaluator (LLM or heuristic)
+         ↓
+    metric results
+         ↓
+    aggregated test case score
+```
+
+Each evaluator produces a score (0.0–1.0), a pass/fail decision, confidence
+level, and an explanation.
+
+## Regression comparison
+
+After evaluation, Regtrace checks for an existing baseline:
+
+```
+If baseline exists:
+  Compare current suite score to baseline score
+  Compute deltas per-metric and per-test-case
+  Classify regression status (clean/warning/critical)
+
+If no baseline:
+  Mark status as "new"
+```
+
+## Quality gates
+
+Quality gates are final pass/fail checks:
+
+```
+suite_score >= minimum?
+failed cases <= max?
+low-confidence ratio <= max?
+regression status != critical?
+                    ↓
+            All pass → suite passes
+            Any fail → suite fails
+```
+
+## Run storage
+
+Run records are JSON files stored in `.regtrace/runs/`. Each file contains
+the full evaluation result, config snapshot, and metadata. Stored runs allow
+listing, history review, and regression comparison.
+
+## Architecture layers
+
+```
+┌─────────────────────────────────────────────────┐
+│                  CLI (Commander)                 │
+│   init / run / list / history / watch / baseline │
+├─────────────────────────────────────────────────┤
+│                  Orchestrator                    │
+│   config → golden sets → metrics → report       │
+├──────────────┬──────────────────┬────────────────┤
+│   Schema     │    Metrics       │   Reports      │
+│   & Storage  │    Evaluators    │   JSON/MD      │
+│   Zod + YAML │   Judge + Det    │   Terminal     │
+└──────────────┴──────────────────┴────────────────┘
+```

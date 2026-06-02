@@ -1,0 +1,66 @@
+---
+title: Using Watch Mode
+description: Automatically re-run evaluations when golden set files change
+---
+
+Watch mode re-runs evaluation whenever a golden set file changes. Useful for
+iterative development — tweak a test case, save the file, and see results
+immediately.
+
+## Start watching
+
+```bash
+regtrace watch
+```
+
+Output:
+
+```
+=== regtrace watch ===
+i Watching 1 golden set file(s)...
+i Press Ctrl+C to stop
+  Watching: /project/golden-sets/qa.yaml
+```
+
+## How it works
+
+- Watches all enabled golden set files from the config
+- Debounces changes (500ms) to avoid re-running on partial writes
+- Each detected change triggers a full `regtrace run`
+
+## Workflow
+
+1. Start watch mode in one terminal
+2. Edit a golden set file in another
+3. Save the file
+4. Watch mode detects the change and re-runs evaluation
+5. Results appear in the watch terminal
+
+```
+i Change detected: golden-sets/qa.yaml
+  ✓ Evaluating "my-qa-set" (3 test cases)
+  ...
+  Run Complete
+  1 suite(s) evaluated
+```
+
+## Stopping
+
+Press `Ctrl+C` to stop:
+
+```
+i Watch stopped
+```
+
+## Use case: prompt iteration
+
+A typical workflow:
+
+1. Run `regtrace watch`
+2. Edit a test case's `actual_output` to test a new prompt
+3. Save — watch mode runs evaluation
+4. Check results
+5. Iterate
+
+This tight feedback loop is faster than manually running `regtrace run` after
+every change.

@@ -1,0 +1,58 @@
+name: customer-support-qa
+version: "1.0.0"
+description: Realistic customer support scenarios for an e-commerce platform
+interaction_type: single_turn
+tags: [customer-support, ecommerce, production]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: cs-001
+    description: Refund policy question — good response
+    input: "What is your refund policy?"
+    system_prompt: "You are a helpful customer support agent for Acme Corp."
+    expected_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method. Items must be unused and in original packaging."
+    actual_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method. Items must be unused and in original packaging."
+    metrics: [format]
+    tags: [refund, policy]
+    weight: 1.5
+
+  - id: cs-002
+    description: Refund policy question — bad response (missing conditions, wrong timeframe)
+    input: "What is your refund policy?"
+    system_prompt: "You are a helpful customer support agent for Acme Corp."
+    expected_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method. Items must be unused and in original packaging."
+    actual_output: "You can return items within 14 days for a store credit."
+    metrics: [format]
+    tags: [refund, policy]
+    weight: 1.5
+
+  - id: cs-003
+    description: Shipping question — good structured response
+    input: "How long does shipping take?"
+    system_prompt: "You are a helpful customer support agent for Acme Corp."
+    expected_output: "Standard shipping takes 5-7 business days. Express shipping is available for 2-3 business days at an additional cost of $12.99."
+    actual_output: "Standard shipping takes 5-7 business days. Express shipping is available for 2-3 business days at an additional cost of $12.99."
+    metrics: [format]
+    tags: [shipping]
+    weight: 1
+
+  - id: cs-004
+    description: Shipping question — missing key info
+    input: "How long does shipping take?"
+    system_prompt: "You are a helpful customer support agent for Acme Corp."
+    expected_output: "Standard shipping takes 5-7 business days. Express shipping is available for 2-3 business days at an additional cost of $12.99."
+    actual_output: "Shipping takes a few days."
+    metrics: [format]
+    tags: [shipping]
+    weight: 1
+
+  - id: cs-005
+    description: Cancellation question — response with forbidden content patterns
+    input: "I want to cancel my order #12345"
+    system_prompt: "You are a helpful customer support agent for Acme Corp."
+    expected_output: "I can help you cancel order #12345. Orders can be cancelled within 1 hour of placing them. Your order was placed 3 hours ago, so it has already entered processing. I can initiate a return once it arrives instead."
+    actual_output: "I'm sorry, but I cannot cancel order #12345 as it has already been processed. I think we can help you with a return once it arrives instead."
+    metrics: [format]
+    tags: [cancellation, orders]
+    weight: 1

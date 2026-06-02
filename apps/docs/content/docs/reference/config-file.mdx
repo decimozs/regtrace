@@ -1,0 +1,168 @@
+---
+title: Config File Reference
+description: Complete schema for regtrace.config.yaml
+---
+
+## Location
+
+`regtrace.config.yaml` in the project root. Specify a custom path with
+`--config`.
+
+## Schema
+
+```yaml
+# Project metadata (optional)
+project:
+  name: my-eval-project
+  version: "1.0.0"
+
+# Golden set entries
+golden_sets:
+  - path: golden-sets/qa.yaml
+    enabled: true
+    weight: 1
+
+# Metric configuration
+metrics:
+  enabled: [factuality, format, tone, regression]
+  default_threshold: 0.7
+  default_weight: 1
+
+  factuality:
+    mode: strict
+    claim_extraction_depth: shallow
+    rag_faithfulness_only: false
+
+  format:
+    sub_checks:
+      length: true
+      json_validity: true
+      json_schema: true
+      markdown_structure: true
+      required_fields: true
+      forbidden_content: true
+      regex_match: true
+    length_tolerance: 0.2
+    strict_json: false
+
+  tone:
+    tone_profile: null
+    sub_dimensions:
+      formality: true
+      sentiment: true
+      assertiveness: true
+      persona_consistency: true
+      verbosity: true
+    sub_dimension_weights:
+      formality: 1.0
+      sentiment: 1.0
+      assertiveness: 1.0
+      persona_consistency: 1.0
+      verbosity: 1.0
+
+  regression:
+    enabled: true
+    baseline_strategy: last_passing
+    tolerance: 0.05
+    critical_threshold: 0.15
+    exclude_new_test_cases: true
+
+# Judge provider configuration
+judge:
+  primary:
+    provider: anthropic
+    model: claude-3-haiku-20240307
+    temperature: 0.1
+    max_tokens: 4096
+    timeout_ms: 30000
+    retry_attempts: 3
+
+  fallback:
+    provider: openai
+    model: gpt-4o-mini
+    temperature: 0.1
+    max_tokens: 4096
+    timeout_ms: 30000
+    retry_attempts: 2
+
+  cost_controls:
+    max_tokens_per_run: 100000
+    warn_at_tokens: 80000
+
+# Runtime configuration
+run:
+  concurrency: 1
+
+# Quality gates
+quality_gates:
+  suite_score_minimum: 0.7
+  max_failed_test_cases: 0
+  max_low_confidence_ratio: 0.1
+  regression_gate: true
+
+# Output configuration
+output:
+  format: terminal
+  ci_mode_auto_detect: true
+
+# Storage configuration
+storage:
+  base_path: .regtrace
+  runs_dir: runs
+  max_runs: 100
+
+# Scoring configuration
+scoring:
+  method: weighted_average
+  passing_threshold: 0.7
+  weight_by: test_case_weight
+```
+
+## Run configuration
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `concurrency` | integer | `1` | Number of test cases evaluated in parallel per batch. Higher values speed up suites with many LLM-judged metrics. A 20s rate-limit delay is applied between batches. Max: `20`. |
+
+## Quality gates reference
+
+| Gate | Type | Default | Description |
+|---|---|---|---|
+| `suite_score_minimum` | number | `0.7` | Minimum suite aggregate score (0.0–1.0) |
+| `max_failed_test_cases` | integer | `0` | Maximum allowed failed test cases |
+| `max_low_confidence_ratio` | number | `0.1` | Max fraction of results with confidence < 0.5 |
+| `regression_gate` | boolean | `true` | Fail on critical regression |
+
+## Weighting
+
+Weights form a three-level cascade:
+
+- **Config `default_weight`** — applied to all metrics unless overridden
+- **Golden set `weight`** — how much this golden set counts in a multi-set run
+- **Test case `weight`** — how much this case counts within its set
+
+All weights default to `1`.
+
+## Required blocks
+
+These blocks must always be present in the config. `regtrace init` populates
+them with defaults:
+
+| Block | Why required |
+|---|---|
+| `metrics.tone` | Zod schema requires it. Disable all sub-dimensions to skip tone evaluation. |
+| `judge.cost_controls` | Zod schema requires it. Defaults: 100K max tokens, 80K warn threshold. |
+| `metrics.factuality` | Required. Defaults: `strict` mode, `shallow` extraction depth. |
+| `metrics.format` | Required. Defaults: all 7 sub-checks enabled. |
+| `metrics.regression` | Required. Defaults: `last_passing` strategy. |
+
+## Validation
+
+Regtrace validates the config file at startup:
+
+- `golden_sets` must be an array
+- Each golden set entry must have `path` (string) and `enabled` (boolean)
+- `provider` must be one of: `anthropic`, `openai`, `gemini`, `groq`, `ollama`
+- `format` must be one of: `terminal`, `json`, `markdown`
+- Numbers outside expected ranges produce helpful error messages
+- Missing required blocks produce clear error messages naming the missing field

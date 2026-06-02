@@ -1,0 +1,132 @@
+---
+title: Getting Started
+description: Install Regtrace and run your first evaluation in 5 minutes
+---
+
+This tutorial walks you through installing Regtrace, creating a project, and
+running your first evaluation.
+
+## Prerequisites
+
+- Linux, macOS, or Windows
+- No runtime dependencies — the binary is self-contained
+
+## Install
+
+<Tabs items={['Linux', 'macOS', 'Windows']}>
+  <Tab value="Linux">
+    ```bash
+    curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
+    chmod +x ./regtrace
+    sudo mv ./regtrace /usr/local/bin/regtrace
+    ```
+  </Tab>
+  <Tab value="macOS">
+    ```bash
+    curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-darwin-arm64
+    chmod +x ./regtrace
+    sudo mv ./regtrace /usr/local/bin/regtrace
+    ```
+  </Tab>
+  <Tab value="Windows">
+    ```powershell
+    curl -L -o regtrace.exe https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe
+    # Move regtrace.exe to a directory in your %PATH%
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+  You can also build from source with [Bun](https://bun.sh): clone the repo and
+  run `bun run build`. The binary is output to the repo root.
+</Callout>
+
+## Create a project
+
+```bash
+mkdir my-eval-project
+cd my-eval-project
+regtrace init
+```
+
+This creates:
+
+- `regtrace.config.yaml` — project configuration
+- `golden-sets/qa.yaml` — a sample golden set with two test cases
+- `.gitignore` — with `.regtrace/runs/` entry
+- `.regtrace/runs/` — local run storage
+
+## Inspect the golden set
+
+Open `golden-sets/qa.yaml`. It contains two test cases:
+
+```yaml
+test_cases:
+  - id: qa-001
+    description: Basic question about the capital of France
+    input: "What is the capital of France?"
+    expected_output: "The capital of France is Paris."
+    actual_output: null
+    metrics: [factuality, format, tone]
+    weight: 1
+```
+
+The `actual_output` field is `null` because it will be populated when you run
+evaluation with an LLM provider.
+
+## Set up a judge provider
+
+Regtrace needs an LLM to judge factuality and tone metrics. Set your API key
+in a `.env` file in the project directory:
+
+```bash
+echo "GROQ_API_KEY=gsk_..." > .env
+```
+
+Or export it:
+
+```bash
+export GROQ_API_KEY=gsk_...
+```
+
+For other providers see [switching providers](/docs/how-to/switch-provider).
+
+## Populate the golden set with outputs
+
+Edit `golden-sets/qa.yaml` and fill in `actual_output` for both cases. Without
+an LLM provider, Regtrace falls back to heuristic scoring — for meaningful
+results, provide model responses:
+
+```yaml
+actual_output: "The capital of France is Paris."
+```
+
+## Run evaluation
+
+```bash
+regtrace run
+```
+
+Terminal output shows:
+
+- Each test case and its per-metric scores
+- Suite-level summary with pass/fail status
+- Quality gates results
+
+## View run history
+
+```bash
+regtrace list
+```
+
+Show details of a specific run:
+
+```bash
+regtrace history --run-id run_20260101_abc123
+```
+
+## Next steps
+
+- [Create a golden set](/docs/tutorials/create-golden-set) — write your own test cases
+- [Set up regression](/docs/tutorials/setup-regression) — track quality over time
+- [CI integration](/docs/how-to/ci-integration) — add Regtrace to your pipeline

@@ -1,0 +1,39 @@
+name: customer-support-qa
+version: 1.0.0
+description: Tests response quality for common customer support scenarios
+interaction_type: single_turn
+tags:
+  - customer-support
+  - production
+author: jane@example.com
+created_at: "2024-06-01T00:00:00Z"
+updated_at: "2024-06-01T00:00:00Z"
+test_cases:
+  - id: cs-001
+    description: Verifies correct refund policy explanation
+    input: "What is your refund policy?"
+    system_prompt: "You are a helpful customer support agent for Acme Corp."
+    expected_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method."
+    actual_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method."
+    metrics:
+      - factuality
+      - tone
+    thresholds:
+      factuality: 0.9
+    tags:
+      - refund
+      - policy
+    weight: 1.5
+
+  - id: cs-002
+    description: Verifies correct shipping time explanation
+    input: "How long does shipping take?"
+    system_prompt: "You are a helpful customer support agent for Acme Corp."
+    expected_output: "Standard shipping takes 5-7 business days. Express shipping takes 2-3 business days."
+    actual_output: "Standard shipping takes 5-7 business days. Express shipping takes 2-3 business days."
+    metrics:
+      - factuality
+      - format
+    tags:
+      - shipping
+    weight: 1.0

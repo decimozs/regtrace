@@ -1,0 +1,136 @@
+---
+title: Quality Gates Deep-Dive
+description: How quality gates translate evaluation scores into pass/fail decisions
+---
+
+Quality gates are the boundary between measurement and decision. They take
+the raw output of evaluation — scores, confidence levels, regression deltas —
+and determine whether a suite passes or fails.
+
+<Callout type="info">
+  Quality gates are the bridge between evaluation scores and CI/CD decisions.
+  They answer one question: "Is this good enough to deploy?"
+</Callout>
+
+## The four gates
+
+Each suite run is checked against four independent gates. A suite passes only
+when all four gates pass.
+
+### 1. Suite score gate
+
+```
+suite_score >= quality_gates.suite_score.minimum
+```
+
+The suite score is a weighted average of all test case scores. This gate
+prevents overall degradation: if the average quality drops below a threshold,
+the suite fails regardless of individual test case performance.
+
+### 2. Max failed test cases gate
+
+```
+failed_count <= quality_gates.max_failed_test_cases.max_per_suite
+```
+
+A few failing test cases might be acceptable even when the average is high.
+This gate limits how many individual test cases can fail before the entire
+suite is rejected.
+
+### 3. Low-confidence gate
+
+```
+low_confidence_ratio <= quality_gates.low_confidence.max_ratio
+```
+
+LLM-judged metrics report confidence levels alongside scores. A result with
+low confidence might indicate an ambiguous test case or a judge that's
+struggling. This gate rejects suites where too many results are uncertain.
+
+<Callout type="warn">
+  Results with confidence below 0.6 should be flagged for human review —
+  they are the most likely to be incorrect.
+</Callout>
+
+### 4. Regression gate
+
+```
+regression_status needs to be "clean"
+```
+
+When a baseline exists, the regression gate compares the current run against
+it. The gate uses two thresholds:
+
+| Threshold | Effect |
+|---|---|
+| `tolerance` | Suite score drop >= tolerance → regression status = `warning` |
+| `criticalThreshold` | Suite score drop >= criticalThreshold → regression status = `critical` (gate fails) |
+
+A `warning` status is informational — the suite still passes. A `critical`
+status fails the suite. This two-tier system allows monitoring degradation
+without breaking the pipeline, while hard-failing on significant drops.
+
+## Gate configuration reference
+
+```yaml
+quality_gates:
+  suite_score_minimum: 0.7
+  max_failed_test_cases: 0
+  max_low_confidence_ratio: 0.1
+  regression_gate: true
+```
+
+<TypeTable
+  type={{
+    suite_score_minimum: { description: "Minimum suite aggregate score (0.0–1.0)", type: "number", default: "0.7" },
+    max_failed_test_cases: { description: "Maximum allowed failed test cases", type: "integer", default: "0" },
+    max_low_confidence_ratio: { description: "Max fraction of results with confidence < 0.5", type: "number", default: "0.1" },
+    regression_gate: { description: "Fail the suite on critical regression status", type: "boolean", default: "true" },
+  }}
+/>
+
+## Gate composition
+
+All four gates must pass for the suite to succeed:
+
+```
+suite_score >= minimum
+    AND failed <= max_per_suite
+    AND low_confidence_ratio <= max_ratio
+    AND regression status != critical
+```
+
+This AND logic means any single deficiency can block the pipeline. It also
+means gates are independently configurable: tighten the suite score gate
+without affecting the regression gate.
+
+## CI behavior
+
+In CI mode (`--ci` flag), quality gate failures produce:
+
+- Non-zero exit code (`1`)
+- Machine-readable gate results in JSON output
+- Clear error message indicating which gate failed and why
+
+<Callout type="info">
+  Without `--ci`, gate failures are displayed but don't affect the exit code.
+  This lets developers run evaluations locally without breaking their terminal
+  session.
+</Callout>
+
+## Design rationale
+
+Quality gates exist because absolute scores are hard to interpret. A
+factuality score of 0.72 means little by itself — but a regression of -15%
+from baseline is an unambiguous signal. Gates focus on actionable signals,
+not absolute quality.
+
+The four-gate design provides defense in depth:
+
+- **Suite score gate** catches uniform degradation
+- **Max failed gate** catches spiky degradation (a few test cases collapse
+  while average stays high)
+- **Low-confidence gate** catches judge uncertainty (the model might be wrong
+  or the test case might be ambiguous)
+- **Regression gate** catches trend degradation (quality is declining slowly
+  over multiple runs)

@@ -1,0 +1,64 @@
+{
+	"run_id": "run_20240602_d4e5f6",
+	"timestamp": "2024-06-02T14:30:00.000Z",
+	"status": "failed",
+	"trigger": "cli",
+	"duration_ms": 3891,
+	"regtrace_version": "0.1.0",
+	"judge_provider": "anthropic",
+	"judge_model": "claude-3-5-sonnet-20240620",
+	"config_hash": "abc123def456",
+	"golden_set_name": "customer-support-qa",
+	"golden_set_version": "1.0.0",
+	"golden_set_file_hash": "def789abc012",
+	"suite_score": 0.45,
+	"metric_summary": {
+		"factuality": { "score": 0.35, "pass_rate": 0.0 },
+		"format": { "score": 1.0, "pass_rate": 1.0 },
+		"tone": { "score": 0.55, "pass_rate": 0.0 }
+	},
+	"test_case_results": [
+		{
+			"test_case_id": "cs-001",
+			"input": "What is your refund policy?",
+			"actual_output": "You can return items within 14 days.",
+			"overall_passed": false,
+			"severity": "fail",
+			"metric_results": {
+				"factuality": {
+					"metric_name": "factuality",
+					"score": 0.2,
+					"confidence": 0.85,
+					"passed": false,
+					"threshold": 0.7,
+					"explanation": "The output claims a 14-day return window but the expected output specifies 30 days. This is a direct contradiction.",
+					"evaluation_type": "llm_judged",
+					"token_cost": 420
+				},
+				"tone": {
+					"metric_name": "tone",
+					"score": 0.55,
+					"confidence": 0.65,
+					"passed": false,
+					"threshold": 0.7,
+					"explanation": "The tone is abrupt and lacks the empathetic framing expected in customer support responses.",
+					"evaluation_type": "llm_judged",
+					"token_cost": 360
+				}
+			}
+		}
+	],
+	"regression": {
+		"baseline_run_id": "run_20240601_a1b2c3",
+		"baseline_golden_set_version": "1.0.0",
+		"current_golden_set_version": "1.0.0",
+		"version_change_detected": false,
+		"suite_delta": -0.44,
+		"regression_status": "critical",
+		"test_cases_excluded": [],
+		"metric_deltas": {
+			"factuality": -0.75,
+			"tone": -0.27
+		}
+	}
+}

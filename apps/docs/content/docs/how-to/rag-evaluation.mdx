@@ -1,0 +1,79 @@
+---
+title: RAG Evaluation
+description: Set up and evaluate RAG-based test cases
+---
+
+Regtrace supports RAG (Retrieval-Augmented Generation) evaluation with
+special handling for context faithfulness.
+
+## RAG interaction type
+
+A RAG golden set uses `interaction_type: rag`:
+
+```yaml
+name: rag-qa-set
+version: "1.0"
+description: RAG faithfulness tests
+interaction_type: rag
+test_cases:
+  - id: rag-001
+    input: "What is the API rate limit?"
+    system_prompt: null
+    context:
+      documents:
+        - source: "docs/api-reference.md"
+          content: "The API rate limit is 500 requests per minute."
+          retrieval_score: 0.94
+    expected_output: "500 requests per minute"
+    actual_output: null
+    metrics: [factuality, format]
+    weight: 1
+```
+
+## Context structure
+
+Each RAG test case requires a `context` block:
+
+```yaml
+context:
+  documents:
+    - source: "docs/api.md"
+      content: "The actual retrieved text..."
+      retrieval_score: 0.94
+```
+
+`source` identifies where the document came from. `retrieval_score` is the
+similarity score from your retriever (optional, for debugging).
+
+## What RAG factuality checks
+
+RAG factuality evaluates faithfulness: are the claims in the actual output
+supported by the provided context? The model should not make claims that
+contradict or go beyond what the context supports.
+
+Config:
+
+```yaml
+metrics:
+  factuality:
+    mode: strict
+    rag_faithfulness_only: true
+```
+
+With `rag_faithfulness_only: true`, factuality only checks against the
+context documents, ignoring world knowledge.
+
+## Diagnostics
+
+When a RAG test case fails, the explanation distinguishes:
+
+- **Contradicted claims** — the model claimed something the context contradicts
+- **Unverifiable claims** — the model went beyond the context
+
+This tells you whether the failure is a generation issue or a retrieval issue.
+
+## RAG validation
+
+Regtrace validates that RAG test cases have a context block. If a test case
+is in a RAG set but missing context, validation fails with a specific error
+message.

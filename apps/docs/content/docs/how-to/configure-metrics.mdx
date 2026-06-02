@@ -1,0 +1,183 @@
+---
+title: Configuring Metrics
+description: Tune thresholds, weights, and sub-checks per metric
+---
+
+Each metric has its own configuration block in `regtrace.config.yaml`.
+
+## Global settings
+
+```yaml
+metrics:
+  enabled: [factuality, format, tone, regression]
+  default_threshold: 0.7
+  default_weight: 1
+```
+
+`default_threshold` sets the passing bar for all metrics. A score below 0.7
+marks the metric as failed.
+
+`default_weight` controls how much each metric contributes to a test case's
+aggregate score.
+
+## Per-metric configuration
+
+### Factuality
+
+```yaml
+metrics:
+  factuality:
+    mode: strict           # strict | lenient
+    claim_extraction_depth: shallow  # shallow | deep
+    rag_faithfulness_only: false
+```
+
+`strict` mode fails on both contradicted claims and unverifiable claims.
+`lenient` mode only fails on direct contradictions.
+
+<Tabs items={['shallow (default)', 'deep']}>
+  <Tab value="shallow (default)">
+    Heuristic N-gram overlap. Deterministic, no API call. Runs entirely locally
+    — no API key needed.
+
+    <Callout type="info">
+      Shallow mode is fast, free, and always available. Use it for daily runs
+      and CI pipelines where speed matters.
+    </Callout>
+  </Tab>
+  <Tab value="deep">
+    Uses LLM judge to extract and verify claims. Requires a configured LLM
+    provider (Groq, Anthropic, etc.). More accurate but incurs API costs and
+    latency.
+
+    <Callout type="warn">
+      Deep mode calls the LLM judge for every test case. Costs scale with
+      the number of test cases and the length of responses.
+    </Callout>
+  </Tab>
+</Tabs>
+
+### Format
+
+```yaml
+metrics:
+  format:
+    sub_checks:
+      length: true
+      json_validity: true
+      json_schema: true
+      markdown_structure: true
+      required_fields: true
+      forbidden_content: true
+      regex_match: true
+    length_tolerance: 0.2
+    strict_json: false
+```
+
+<TypeTable
+  type={{
+    length: { description: "Compares output length to expected; tolerance controls allowed deviation", type: "boolean", default: "true" },
+    json_validity: { description: "Checks if output is valid JSON", type: "boolean", default: "true" },
+    json_schema: { description: "Validates JSON structure against expected output shape", type: "boolean", default: "true" },
+    markdown_structure: { description: "Checks heading hierarchy, list formatting, code blocks", type: "boolean", default: "true" },
+    required_fields: { description: "Checks specific terms appear in output", type: "boolean", default: "true" },
+    forbidden_content: { description: "Checks specific terms do NOT appear", type: "boolean", default: "true" },
+    regex_match: { description: "Checks output matches a regex pattern", type: "boolean", default: "true" },
+  }}
+/>
+
+`length_tolerance` is a ratio. If expected output is 100 words and tolerance
+is 0.2, outputs between 80 and 120 words pass.
+
+### Tone
+
+```yaml
+metrics:
+  tone:
+    tone_profile: null
+    sub_dimensions:
+      formality: true
+      sentiment: true
+      assertiveness: true
+      persona_consistency: true
+      verbosity: true
+    sub_dimension_weights:
+      formality: 1.0
+      sentiment: 1.0
+```
+
+<TypeTable
+  type={{
+    formality: { description: "Formal vs informal register", type: "boolean", default: "true" },
+    sentiment: { description: "Positive, negative, or neutral sentiment", type: "boolean", default: "true" },
+    assertiveness: { description: "Confident vs tentative language", type: "boolean", default: "true" },
+    persona_consistency: { description: "Consistent voice matching the tone profile", type: "boolean", default: "true" },
+    verbosity: { description: "Appropriate level of detail", type: "boolean", default: "true" },
+  }}
+/>
+
+`tone_profile` is a plain-text description of the expected tone, passed to
+the LLM judge. Example: "Professional but approachable, avoid jargon."
+
+<Callout type="warn">
+  The `tone` config block is required by the schema. To skip tone evaluation,
+  disable all sub-dimensions:
+  ```yaml
+  metrics:
+    tone:
+      sub_dimensions:
+        formality: false
+        sentiment: false
+        assertiveness: false
+        persona_consistency: false
+        verbosity: false
+  ```
+</Callout>
+
+### Regression
+
+```yaml
+metrics:
+  regression:
+    enabled: true
+    baseline_strategy: last_passing  # last_passing | pinned
+    tolerance: 0.05
+    critical_threshold: 0.15
+    exclude_new_test_cases: true
+```
+
+<TypeTable
+  type={{
+    enabled: { description: "Enable or disable regression detection", type: "boolean", default: "true" },
+    baseline_strategy: { description: "How to select the baseline run", type: '"last_passing" | "pinned"', default: "last_passing" },
+    tolerance: { description: "Score drop that triggers a warning (0.0–1.0)", type: "number", default: "0.05" },
+    critical_threshold: { description: "Score drop that fails the quality gate (0.0–1.0)", type: "number", default: "0.15" },
+    exclude_new_test_cases: { description: "Exclude test cases not in baseline from regression scoring", type: "boolean", default: "true" },
+  }}
+/>
+
+See [regression detection](/docs/tutorials/setup-regression) for details.
+
+## Per-test-case overrides
+
+Override thresholds for a specific test case in the golden set:
+
+```yaml
+- id: qa-001
+  input: "What is 2+2?"
+  expected_output: "4"
+  actual_output: "4"
+  metrics: [factuality, format, tone]
+  thresholds:
+    factuality: 0.9
+```
+
+This overrides the global `default_threshold` for `factuality` on this case only.
+
+## Configuration priority
+
+```
+Global config (defaults)
+    ↓
+Test case thresholds (overrides for one case)
+```

@@ -1,0 +1,91 @@
+---
+title: Why Regtrace
+description: Problem statement, comparison to alternatives, and design philosophy
+---
+
+Regtrace is built on a single premise: **the CLI is the product.** Evaluation
+should be a version-controlled, reproducible pipeline step — not a dashboard
+you log into or a library you import. When a dashboard comes, it will be a
+viewer for data the CLI already produces, not a dependency you need to ship.
+
+## The problem
+
+LLM evaluation is fragmented and ad-hoc. Teams evaluate the same model against
+different criteria, using different tools, producing results that can't be
+compared or reproduced. Without a shared standard, quality is subjective.
+
+Common failure modes:
+
+- **Checklist evaluation** — someone reads 10 responses and assigns a
+  pass/fail. Not reproducible, not quantitative.
+- **Single-metric focus** — only measuring one dimension (e.g., format
+  compliance) while ignoring factuality or tone.
+- **No regression tracking** — scores from last week are lost, so there's no
+  way to know if a prompt tweak helped or hurt.
+- **Vendor lock-in** — evaluation logic is tied to one LLM provider, making
+  it expensive to switch.
+
+Regtrace solves these problems with a simple premise: define what "good"
+looks like in YAML, run a single CLI command, and get a pass/fail decision.
+
+## How it compares
+
+| Tool | Primary interface | Deployment model | Regression | Config format |
+|---|---|---|---|---|
+| **Promptfoo** | CLI + Web UI | Node.js library + cloud | Manual diff | JS/TS or YAML |
+| **Braintrust** | Web UI + SDK | Cloud/SaaS required | Experiment tracking | Python SDK |
+| **LangSmith** | Monitoring, traces, eval | Cloud/SaaS | Platform-level | Python/JS SDK |
+| **DeepEval** | Evaluation library | Python lib | Pytest plugin | Python decorators |
+| **RAGAS** | RAG-specific eval | Python lib | No built-in | Python API |
+| **Regtrace** | CLI-first (dashboard is a viewer) | Standalone binary (optional cloud) | Automatic, always-on, gates CI | Declarative YAML |
+
+LangSmith and Braintrust excel at production monitoring and experiment
+tracking. Promptfoo is the closest direct competitor — a CLI-first evaluator
+with a web UI. DeepEval and RAGAS are Python-native and integrate with
+existing test suites.
+
+Regtrace sits in a distinct niche: **regression-first, CI-native, zero
+runtime dependencies, language-agnostic.** The CLI is the product. A future
+dashboard will be a viewer for data the CLI already produces.
+
+## Design philosophy
+
+**YAML-first configuration.** A single `regtrace.config.yaml` defines
+everything: golden sets, metrics, judge provider, quality gates. Configuration
+is version-controllable and reviewable in pull requests.
+
+**No vendor lock-in.** Judge providers are pluggable. Swap Anthropic for Groq
+or Ollama by changing one config field. The same golden set works with any
+provider — or with no provider at all (deterministic-only metrics).
+
+**Standalone binary.** No Python venv, no Node.js runtime, no Docker daemon.
+The binary runs on any Linux x86-64 machine, including CI runners that have no
+language runtime installed.
+
+**CI-native.** Exit codes reflect pass/fail quality gates. Machine-readable
+JSON output feeds into dashboards and alerts. The binary is small enough to
+download fresh on every CI run.
+
+**Deterministic fallbacks.** Every LLM-judged metric degrades gracefully when
+the API is unavailable. Factuality falls back to N-gram overlap. Tone falls
+back to heuristics. You always get scores, even when the judge is down.
+
+**Regression is always-on.** Unlike tools where regression is a separate
+workflow, Regtrace compares every run against the last passing baseline
+automatically. No opt-in, no config required.
+
+## When to use Regtrace
+
+- You want reproducible, version-controlled evaluation standards
+- You run evaluations in CI/CD pipelines
+- Your stack is polyglot (not Python-only)
+- You need to compare different models or providers on the same criteria
+- You want to detect regressions before deploying
+
+## When to use something else
+
+- You need production traffic monitoring and tracing (try LangSmith or Braintrust)
+- You want a collaborative experiment dashboard with team features (try Braintrust or Promptfoo)
+- You're already deep in Python testing and want pytest integration (try DeepEval)
+- You only need RAG-specific metrics with no golden set concept (try RAGAS)
+- You need human annotation workflows for model comparison

@@ -1,0 +1,30 @@
+name: invalid-duplicate-id
+version: 1.0.0
+description: This golden set has duplicate test case ids
+interaction_type: single_turn
+tags:
+  - invalid
+author: test@example.com
+created_at: "2024-06-01T00:00:00Z"
+updated_at: "2024-06-01T00:00:00Z"
+test_cases:
+  - id: duplicate-id
+    description: First test case with this id
+    input: "first input"
+    system_prompt: null
+    expected_output: "first output"
+    actual_output: null
+    metrics:
+      - format
+    tags: []
+    weight: 1.0
+  - id: duplicate-id
+    description: Second test case with the same id
+    input: "second input"
+    system_prompt: null
+    expected_output: "second output"
+    actual_output: null
+    metrics:
+      - format
+    tags: []
+    weight: 1.0

@@ -1,0 +1,91 @@
+---
+title: Architecture & Design Decisions
+description: Why certain design choices were made and what they mean for users
+---
+
+This page explains the rationale behind Regtrace's major design decisions.
+
+## Standalone binary over npm package
+
+Regtrace distributes as a standalone ELF binary via `bun build --compile`
+rather than an npm package or language-specific installer.
+
+**Why:** Eval tools that require a specific runtime (Python, Node, Java) force
+every CI pipeline to install that runtime first. A standalone binary has zero
+prerequisites — download, `chmod +x`, run. This matters most in:
+
+- CI runners in heterogeneous environments (GitHub Actions, GitLab CI, Jenkins)
+- Teams that don't use the runtime language (e.g., a Go shop adding LLM eval)
+- Security-constrained environments that restrict runtime installation
+
+**Trade-off:** The binary is ~90 MB (it bundles the Bun runtime). This is
+acceptable because CI runners download it once per pipeline run and cache it.
+
+## Zod v5 for schema validation
+
+Config files, golden sets, and run records are validated against Zod schemas
+at runtime.
+
+**Why:** Zod provides type-safe parsing that catches configuration errors
+before evaluation starts. A malformed config file produces a clear error
+message naming the exact field and the expected type, rather than a cryptic
+runtime crash.
+
+**Explicit types over `z.infer`:** Regtrace defines TypeScript types
+explicitly alongside Zod schemas instead of using `z.infer`. This makes types
+visible in IDE tooling and avoids coupling type consumers to schema internals.
+
+## CWD-based configuration loading
+
+Regtrace loads `regtrace.config.yaml` and `.env` from the current working
+directory, not from a fixed project root or global location.
+
+**Why:** This makes a Regtrace project entirely self-contained. You can clone
+a repo, `cd` into it, and run `regtrace run` — no global state, no hidden
+configuration files outside the project tree. It also enables running multiple
+projects with different configurations from the same machine.
+
+The `.env` file lives next to the config file in CWD, keeping secrets scoped
+to the project.
+
+## Deterministic fallbacks for LLM-judged metrics
+
+Factuality and tone metrics can use an LLM judge for sophisticated evaluation.
+When the judge is unavailable (no API key configured, network error, rate
+limit), they fall back to deterministic heuristics.
+
+**Why:** An evaluation pipeline should never be blocked by an external API.
+Deterministic fallbacks guarantee that every `regtrace run` produces scores,
+even if every LLM provider is down. The scores are less nuanced than
+LLM-judged ones, but they're always available.
+
+The fallback is silent — it doesn't require user configuration. The run record
+notes which evaluation mode was used for each metric.
+
+## Rate-limit architecture
+
+Groq's free tier requires 20 seconds between requests. Regtrace handles this
+by adding a 20-second delay between test cases in the evaluation runner
+(`runner.ts:evaluateSuite`).
+
+**Why:** The delay sits in the runner rather than individual providers. This
+keeps providers stateless and testable while still protecting against free-tier
+rate limits. Providers without rate limits are unaffected.
+
+## Four-pillar architecture
+
+Regtrace's design decomposes evaluation into four independent concepts:
+
+| Pillar | Responsibility |
+|---|---|
+| **Golden sets** | Define what to test (inputs + expected outputs) |
+| **Metrics** | Define how to score (LLM-judged or deterministic) |
+| **Baselines** | Define what "good enough" means historically |
+| **Quality gates** | Define pass/fail thresholds for automation |
+
+Each pillar has its own schema, storage, and CLI subcommand. They compose
+through well-defined interfaces: golden sets feed into metrics, metrics
+produce scores for baselines, baselines drive quality gates.
+
+This decomposition makes each part testable in isolation and replaceable
+without affecting the others.

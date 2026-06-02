@@ -1,0 +1,125 @@
+---
+title: Regression Detection
+description: Why regression is the core feature and how it works
+---
+
+Regression detection is the most important reason to use Regtrace. It
+answers a question that single-run evaluations cannot: *is quality getting
+worse?*
+
+## The problem with absolute scores
+
+A single evaluation produces an absolute score: "suite score: 0.82". Is 0.82
+good? It depends entirely on context:
+
+- For a well-tuned production model on easy test cases, 0.82 might be bad
+- For a new model on hard test cases, 0.82 might be excellent
+- For a model in a controlled benchmark, 0.82 might be expected
+
+Absolute scores are hard to interpret without deep domain knowledge and
+historical context. Regression detection solves this by comparing against a
+known-good reference point.
+
+## The baseline strategy
+
+Every run produces an evaluation record. The next run compares against a
+baseline:
+
+```
+Run 1: suite score 0.85  →  baseline = none  →  status: new
+Run 2: suite score 0.82  →  baseline = run 1 →  delta: -3.5%
+                           →  status: clean (within 5% tolerance)
+Run 3: suite score 0.71  →  baseline = run 1 →  delta: -16.5%
+                           →  status: critical (past 15% threshold)
+```
+
+The delta transforms an opaque absolute score into a meaningful comparison:
+"this run is 16.5% worse than the baseline."
+
+## Tolerance vs critical thresholds
+
+Two thresholds control regression behavior:
+
+| Threshold | Effect |
+|---|---|
+| `tolerance` (default 5%) | Drops below this trigger a `warning` |
+| `critical_threshold` (default 15%) | Drops below this trigger a `critical` failure |
+
+These are separate because they serve different purposes:
+
+- A warning tells you to investigate — quality might be slipping
+- A critical failure tells you to stop — quality has degraded unacceptably
+
+The gap between 5% and 15% gives you room to detect trends before they
+become emergencies.
+
+## What methodically changes
+
+If you track scores over time and a regression appears, the question is:
+*what changed?* Common candidates:
+
+### The model changed
+
+Model updates, prompt tweaks, system prompt changes, or a new version
+deployed. The model's behavior shifted.
+
+### The golden set changed
+
+New test cases, modified expectations, or version bumps. If the golden set
+evolved, score changes might reflect different standards rather than model
+degradation.
+
+The `exclude_new_test_cases` option helps here — it compares only test cases
+that existed in both the baseline and current run.
+
+### The judge changed
+
+Switching judge providers or models can change scoring. The judge is a
+separate system from the model being evaluated, and changes to either
+system affect the scores.
+
+Regtrace records the judge provider and model in each run record, so you
+can cross-reference score changes with judge changes.
+
+### The data changed
+
+RAG context documents, customer input distribution, or environment variables.
+External factors that affect model output.
+
+## Multi-level delta reporting
+
+When a regression is detected, Regtrace reports deltas at three levels:
+
+```
+Suite delta: -16.5% (critical)
+  factuality:  -18.2%
+  format:       -2.1%
+  tone:        -11.4%
+  Test cases:
+    qa-001: -22% (regressed)
+    qa-002:  +3% (improved)
+    qa-003: new test case
+    qa-004: unchanged
+```
+
+This hierarchy lets you drill in:
+- Suite delta tells you *if* there's a problem
+- Per-metric delta tells you *which dimension* is affected
+- Per-test-case delta tells you *which input* triggers the problem
+
+## The baseline as a decision tool
+
+The real power of regression detection is in automation. A CI pipeline
+doesn't need to know what a "good" absolute score is. It just needs to know
+whether quality regressed compared to what was already deployed.
+
+This makes the baseline a decision tool:
+
+- Baseline = "known good" reference
+- Current run = "what we're proposing to deploy"
+- Regression check = "is the proposal worse than what's running?"
+
+Questions it answers:
+- Did the prompt change make things better or worse?
+- Did the model update introduce regressions?
+- Can we deploy, or should we investigate first?

@@ -1,0 +1,88 @@
+---
+title: Golden Set Reference
+description: Complete schema for golden set YAML files
+---
+
+## Synopsis
+
+Golden sets define evaluation test cases in YAML format. Each file is loaded
+by a `golden_sets` entry in `regtrace.config.yaml`.
+
+## File-level fields
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `name` | string | Yes | — | Human-readable identifier |
+| `version` | string | Yes | — | Semantic version (e.g. `"1.0.0"`) |
+| `description` | string | Yes | — | What this golden set evaluates |
+| `interaction_type` | string | Yes | — | `single_turn` or `rag` |
+| `tags` | string[] | Yes | `[]` | For filtering during runs |
+| `author` | string | Yes | — | Who created this set |
+| `created_at` | string (date) | Yes | — | ISO 8601 date |
+| `updated_at` | string (date) | Yes | — | ISO 8601 date |
+| `test_cases` | array | Yes | — | Array of test case objects |
+
+## Test case fields
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `id` | string | Yes | — | Unique within golden set, stable across versions |
+| `description` | string | Yes | — | One-line summary of what this tests |
+| `input` | string | Yes | — | Prompt or user message sent to the model |
+| `system_prompt` | string or null | Yes | — | System instruction in effect during generation |
+| `expected_output` | string | Yes | — | Ground truth ideal response |
+| `actual_output` | string or null | Yes | — | Model's actual output; `null` at authoring time |
+| `metrics` | string[] | Yes | — | Metrics to evaluate (e.g. `[factuality, format]`) |
+| `tags` | string[] | Yes | `[]` | Case-level tags for filtering |
+| `weight` | number | Yes | `1` | Relative importance in suite scoring |
+| `thresholds` | object | No | `{}` | Per-metric threshold overrides |
+
+### Threshold overrides
+
+```yaml
+- id: qa-001
+  input: "..."
+  expected_output: "..."
+  metrics: [factuality, format, tone]
+  thresholds:
+    factuality: 0.9
+```
+
+This overrides the global `default_threshold` for `factuality` on this case.
+
+## RAG test case fields
+
+RAG test cases (when `interaction_type: rag`) require a `context` block:
+
+```yaml
+- id: rag-001
+  input: "What is the API rate limit?"
+  context:
+    documents:
+      - source: "docs/api-reference.md"
+        content: "The API rate limit is 500 requests per minute."
+        retrieval_score: 0.94
+  expected_output: "500 requests per minute"
+  actual_output: null
+```
+
+### Context document fields
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `source` | string | Yes | — | Document identifier (URL, file path) |
+| `content` | string | Yes | — | The retrieved text |
+| `retrieval_score` | number | No | — | Retriever similarity score |
+
+## Validation rules
+
+- `id` must be unique within the file
+- `metrics` values must be recognized metric names (`factuality`, `format`, `tone`, `regression`)
+- `interaction_type` must be `single_turn` or `rag`
+- RAG test cases must have a non-null `context` with at least one document
+- All-null `actual_output` across the entire set is rejected (add inline outputs or a judge provider)
+- `weight` must be a positive number
+- `thresholds` keys must match metric names
+
+If any validation rule is violated, Regtrace exits with a specific error
+message identifying the file and the exact problem.
