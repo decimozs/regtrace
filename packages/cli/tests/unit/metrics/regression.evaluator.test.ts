@@ -313,10 +313,73 @@ describe("regressionEvaluator.evaluate", () => {
 			expectedOutput: "expected output",
 			config: {
 				project: { name: "test", version: "1.0" },
+				golden_sets: [{ path: "test.yaml", enabled: true, weight: 1 }],
 				metrics: {
 					enabled: ["regression"],
 					default_threshold: 0.7,
 					default_weight: 1,
+					factuality: {
+						mode: "lenient",
+						claim_extraction_depth: "shallow",
+						rag_faithfulness_only: false,
+					},
+					format: {
+						sub_checks: {
+							length: true,
+							json_validity: false,
+							json_schema: false,
+							markdown_structure: false,
+							required_fields: false,
+							forbidden_content: false,
+							regex_match: false,
+						},
+						length_tolerance: 0.3,
+						strict_json: false,
+					},
+					tone: {
+						sub_dimensions: {
+							formality: false,
+							sentiment: false,
+							assertiveness: false,
+							persona_consistency: false,
+							verbosity: false,
+						},
+					},
+					regression: {
+						enabled: true,
+						baseline_strategy: "last_passing",
+						tolerance: 0.05,
+						critical_threshold: 0.15,
+						exclude_new_test_cases: true,
+					},
+				},
+				judge: {
+					primary: {
+						provider: "anthropic",
+						model: "claude-3-5-sonnet-20240620",
+						temperature: 0.1,
+						max_tokens: 4096,
+						timeout_ms: 30000,
+						retry_attempts: 3,
+					},
+					cost_controls: {
+						max_tokens_per_run: 100000,
+						warn_at_tokens: 80000,
+					},
+				},
+				run: { concurrency: 1 },
+				quality_gates: {
+					suite_score_minimum: 0.7,
+					max_failed_test_cases: 1,
+					max_low_confidence_ratio: 0.1,
+					regression_gate: true,
+				},
+				output: {
+					run_history_limit: 50,
+					default_format: "terminal",
+					explain_by_default: false,
+					color: "auto",
+					ci_mode_auto_detect: true,
 				},
 			},
 			metricConfig: {
