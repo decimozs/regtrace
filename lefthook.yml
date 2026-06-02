@@ -3,3 +3,7 @@ pre-commit:
   commands:
     biome:
       run: bunx biome check --staged --no-errors-on-unmatched
+    typecheck:
+      run: bunx tsc --noEmit -p packages/cli/tsconfig.json
+    test:
+      run: bun test
