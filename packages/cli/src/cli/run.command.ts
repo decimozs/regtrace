@@ -162,11 +162,10 @@ export async function runCommand(options: RunOptions): Promise<void> {
 	const startTime = Date.now();
 	const trigger = options.trigger ?? "cli";
 
-	const ciMode =
-		(options.noCi ? false : options.ci) ||
-		(options.noCi ? false : isCiEnvironment());
+	const ciMode = options.ci === true;
+	const noColor = options.noCi ? false : ciMode || isCiEnvironment();
 
-	configureColor(ciMode ? "never" : "auto");
+	configureColor(noColor ? "never" : "auto");
 
 	if (options.dryRun) {
 		await runDryRun(options);
