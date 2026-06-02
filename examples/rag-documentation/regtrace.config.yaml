@@ -1,12 +1,12 @@
-# Regtrace config — Customer Support QA example
-# Runs with format metrics only (deterministic, no API key needed)
+# Regtrace config — RAG Documentation example
+# Runs with format metrics by default. Add judge key and enable factuality.
 project:
-  name: customer-support-qa
+  name: rag-documentation-qa
   version: "1.0"
-  description: Evaluating customer support response quality
+  description: Evaluating RAG response faithfulness against API documentation
 
 golden_sets:
-  - path: golden-sets/qa.yaml
+  - path: golden-sets/rag-documentation.yaml
     enabled: true
 
 metrics:
@@ -23,15 +23,15 @@ metrics:
       regex_match: false
     length_tolerance: 0.3
   factuality:
-    mode: lenient
-    claim_extraction_depth: shallow
+    mode: strict
+    claim_extraction_depth: deep
   tone:
     sub_dimensions:
       formality: true
-      sentiment: true
-      assertiveness: true
-      persona_consistency: true
-      verbosity: true
+      sentiment: false
+      assertiveness: false
+      persona_consistency: false
+      verbosity: false
   regression:
     enabled: true
     baseline_strategy: last_passing

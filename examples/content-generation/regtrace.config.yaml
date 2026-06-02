@@ -1,12 +1,12 @@
-# Regtrace config — Customer Support QA example
-# Runs with format metrics only (deterministic, no API key needed)
+# Regtrace config — Content Generation example
+# Runs with format metrics by default. Add judge key and enable tone for full eval.
 project:
-  name: customer-support-qa
+  name: brand-content-qa
   version: "1.0"
-  description: Evaluating customer support response quality
+  description: Evaluating brand content tone consistency
 
 golden_sets:
-  - path: golden-sets/qa.yaml
+  - path: golden-sets/content-generation.yaml
     enabled: true
 
 metrics:
@@ -21,7 +21,6 @@ metrics:
       required_fields: true
       forbidden_content: true
       regex_match: false
-    length_tolerance: 0.3
   factuality:
     mode: lenient
     claim_extraction_depth: shallow

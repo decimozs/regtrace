@@ -1,0 +1,69 @@
+---
+title: Examples Overview
+description: Real-world production examples demonstrating Regtrace across different use cases
+---
+
+The [examples/](https://github.com/decimozs/regtrace/tree/main/examples) directory
+contains ready-to-run Regtrace projects covering real-world production scenarios.
+Each example is self-contained — its own golden sets, config, and README.
+
+## How to run
+
+Pick an example and run it:
+
+```bash
+cd examples/<name>
+regtrace run
+```
+
+No API key needed for format-only examples — they use deterministic metrics.
+For full factuality and tone evaluation, add an LLM judge key (`.env`) and
+enable the relevant metrics in `regtrace.config.yaml`.
+
+## Examples
+
+### Format-only (deterministic, no API key)
+
+These run entirely on deterministic format checks. Zero cost, zero latency.
+
+| Example | Scenario | What it tests |
+|---------|----------|--------------|
+| [customer-support](https://github.com/decimozs/regtrace/tree/main/examples/customer-support) | E-commerce customer support agent | Format sub-checks: length, required fields, forbidden content |
+| [content-moderation](https://github.com/decimozs/regtrace/tree/main/examples/content-moderation) | Toxicity and abuse filtering pipeline | Forbidden patterns, required fields, content classification |
+| [intent-classification](https://github.com/decimozs/regtrace/tree/main/examples/intent-classification) | Chatbot intent routing | JSON validity, JSON schema, required JSON fields |
+| [data-extraction](https://github.com/decimozs/regtrace/tree/main/examples/data-extraction) | Structured invoice extraction from text | JSON schema compliance, field types, completeness |
+| [code-generation](https://github.com/decimozs/regtrace/tree/main/examples/code-generation) | AI coding assistant output | Markdown structure, code block fencing, security patterns |
+
+### LLM-judged (API key recommended)
+
+These default to format-only but unlock deeper evaluation with an LLM judge.
+
+| Example | Scenario | Full metric set |
+|---------|----------|-----------------|
+| [summarization](https://github.com/decimozs/regtrace/tree/main/examples/summarization) | News article summarization | factuality + format + tone |
+| [translation](https://github.com/decimozs/regtrace/tree/main/examples/translation) | Spanish product description translation | factuality + format + tone |
+| [content-generation](https://github.com/decimozs/regtrace/tree/main/examples/content-generation) | Brand marketing copy | tone + format |
+| [email-drafting](https://github.com/decimozs/regtrace/tree/main/examples/email-drafting) | Customer outreach emails | tone + format |
+| [rag-documentation](https://github.com/decimozs/regtrace/tree/main/examples/rag-documentation) | API documentation RAG chatbot | factuality + format |
+| [rag-legal](https://github.com/decimozs/regtrace/tree/main/examples/rag-legal) | GDPR compliance Q&A | factuality + format |
+| [rag-product](https://github.com/decimozs/regtrace/tree/main/examples/rag-product) | E-commerce product search | factuality + format |
+
+## Feature coverage
+
+Each example exercises different Regtrace features:
+
+- **Quality gates** — all examples configure `suite_score_minimum`,
+  `max_failed_test_cases`, and `regression_gate`
+- **Regression tracking** — every run stores a baseline for delta comparison
+- **Format sub-checks** — length, JSON validity, JSON schema, markdown structure,
+  required fields, forbidden content
+- **Deterministic by default** — all examples default to format-only so you can
+  run them immediately
+- **RAG interaction type** — three RAG examples demonstrate
+  `context.documents` with retrieval scores and faithfulness evaluation
+
+## Next steps
+
+- Run `regtrace run --format json` for machine-readable output
+- Run `regtrace run` twice on the same example to see regression detection
+- Clone an example as a starting point for your own evaluation project

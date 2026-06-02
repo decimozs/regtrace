@@ -1,0 +1,68 @@
+name: brand-content-qa
+version: "1.0.0"
+description: Brand marketing content tone evaluation for Acme Corp
+interaction_type: single_turn
+tags: [content-generation, marketing, brand-tone]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: bn-001
+    description: On-brand product launch copy for new feature
+    input: "Write a short product launch announcement for Acme Corp's new AI-powered analytics dashboard. Brand voice: confident, approachable, professional. Avoid jargon."
+    system_prompt: "You are a brand copywriter for Acme Corp. Your voice is confident but approachable, professional but not stiff. Write marketing copy that is clear, benefit-focused, and avoids technical jargon. Never mention competitors."
+    expected_output: "Meet Acme Analytics — your team's new command center for data. We've stripped away the complexity so you can focus on what matters: finding insights that move your business forward. Real-time dashboards, smart alerts, and AI-powered recommendations — all without the learning curve."
+    actual_output: "Meet Acme Analytics — your team's new command center for data. We've stripped away the complexity so you can focus on what matters: finding insights that move your business forward. Real-time dashboards, smart alerts, and AI-powered recommendations — all without the learning curve."
+    metrics: [format]
+    tags: [on-brand, launch]
+    weight: 1
+
+  - id: bn-002
+    description: Overly formal corporate tone for a friendly brand
+    input: "Write a welcome email for new users signing up for Acme Corp's project management tool."
+    system_prompt: "You are a brand copywriter for Acme Corp. Your voice is confident but approachable, professional but not stiff. Use warm, conversational language. Never use overly formal corporate phrasing."
+    expected_output: "Welcome to Acme! We're thrilled to have you on board. Your workspace is ready and waiting — here's a quick tour to get you started. If you get stuck, our support team is just a message away. Let's build something great together."
+    actual_output: "Dear Valued Customer, We are pleased to inform you that your registration with Acme Corporation's Project Management Suite has been successfully processed. Per our standard onboarding procedure, we recommend reviewing the attached documentation. Should you require assistance, please direct inquiries to our customer support department during normal business hours."
+    metrics: [format]
+    tags: [too-formal, corporate]
+    weight: 1.5
+
+  - id: bn-003
+    description: Too casual and unprofessional for the brand
+    input: "Write a customer support autoresponder acknowledging a bug report."
+    system_prompt: "You are a brand copywriter for Acme Corp. Your voice is confident but approachable, professional but not stiff. Write in a helpful, clear tone. Be warm but maintain professionalism."
+    expected_output: "Thanks for reporting this. Our team has been notified and is looking into it. We'll follow up with an update within 24 hours. Appreciate your patience — and your help making Acme better."
+    actual_output: "Yo! Thanks for flagging this bug. Our dev squad is on it — they'll check it out ASAP. We'll hit you up when it's fixed. No worries fam!"
+    metrics: [format]
+    tags: [too-casual, unprofessional]
+    weight: 1.5
+
+  - id: bn-004
+    description: Mentions competitor name — forbidden content violation
+    input: "Write a comparison page for Acme Corp's analytics tool."
+    system_prompt: "You are a brand copywriter for Acme Corp. Write a comparison of your product features. Focus on Acme's strengths without naming or directly disparaging competitors. Never mention competitor products by name."
+    expected_output: "While many analytics tools offer basic reporting, Acme goes further with real-time collaboration, AI-powered insights, and seamless integrations. Our pricing is transparent with no hidden fees — and you can try everything free for 14 days."
+    actual_output: "Unlike Google Analytics and Mixpanel which only give you basic reports, Acme provides real-time collaboration and AI insights. Google Analytics is complicated and Mixpanel is overpriced. Acme is the clear winner."
+    metrics: [format]
+    tags: [competitor, forbidden]
+    weight: 2
+
+  - id: bn-005
+    description: Inconsistent persona — starts professional, ends casual
+    input: "Write a LinkedIn post announcing Acme Corp's Series B funding round."
+    system_prompt: "You are a brand copywriter for Acme Corp. Write a LinkedIn announcement for a funding round. Maintain a consistent professional-but-approachable tone throughout. Confidence without arrogance."
+    expected_output: "Big news: Acme Corp has closed our Series B funding round, led by Venture Partners. This investment accelerates our mission to make data analytics accessible to every team. We're hiring across engineering, design, and go-to-market. If you want to build the future of data, we'd love to hear from you."
+    actual_output: "Acme Corp is thrilled to announce our $30M Series B funding round led by Venture Partners. This funding validates our vision and will accelerate our growth trajectory. We will be expanding our engineering and go-to-market teams significantly in the coming quarters. Anyway, super excited to keep building with this amazing team! Let's gooo! 🚀"
+    metrics: [format]
+    tags: [inconsistent, persona]
+    weight: 1.5
+
+  - id: bn-006
+    description: Perfect social media post following brand voice
+    input: "Write a Twitter/X post announcing Acme Corp's new mobile app."
+    system_prompt: "You are a brand copywriter for Acme Corp. Write a social media post announcing the mobile app launch. Keep it short, benefit-driven, and consistent with brand voice: confident, approachable, professional."
+    expected_output: "Your data, now in your pocket. Acme Analytics mobile is here. Same powerful insights, designed for life on the go. Download now on iOS and Android."
+    actual_output: "Your data, now in your pocket. Acme Analytics mobile is here. Same powerful insights, designed for life on the go. Download now on iOS and Android."
+    metrics: [format]
+    tags: [social, on-brand, passing]
+    weight: 1

@@ -1,12 +1,12 @@
-# Regtrace config — Customer Support QA example
+# Regtrace config — Intent Classification example
 # Runs with format metrics only (deterministic, no API key needed)
 project:
-  name: customer-support-qa
+  name: intent-classification
   version: "1.0"
-  description: Evaluating customer support response quality
+  description: Evaluating chatbot intent classification quality
 
 golden_sets:
-  - path: golden-sets/qa.yaml
+  - path: golden-sets/classification.yaml
     enabled: true
 
 metrics:
@@ -15,11 +15,11 @@ metrics:
   format:
     sub_checks:
       length: true
-      json_validity: false
-      json_schema: false
+      json_validity: true
+      json_schema: true
       markdown_structure: false
       required_fields: true
-      forbidden_content: true
+      forbidden_content: false
       regex_match: false
     length_tolerance: 0.3
   factuality:

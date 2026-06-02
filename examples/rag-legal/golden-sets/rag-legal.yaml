@@ -1,0 +1,104 @@
+name: rag-legal-compliance
+version: "1.0.0"
+description: RAG response precision for GDPR compliance chatbot
+interaction_type: rag
+tags: [rag, legal, compliance, gdpr, precision]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: rag-legal-001
+    description: Faithful paraphrase of GDPR right to erasure article
+    input: "What is the right to erasure under GDPR?"
+    system_prompt: "You are a compliance assistant. Answer based only on the provided legal text. Use precise legal language. Do not simplify in ways that change legal meaning. If the context is insufficient, say so."
+    context:
+      documents:
+        - source: "regulations/gdpr/article-17.md"
+          content: "Article 17: Right to erasure ('right to be forgotten'). 1. The data subject shall have the right to obtain from the controller the erasure of personal data concerning him or her without undue delay and the controller shall have the obligation to erase personal data without undue delay where one of the following grounds applies: (a) the personal data are no longer necessary in relation to the purposes for which they were collected or otherwise processed; (b) the data subject withdraws consent on which the processing is based according to point (a) of Article 6(1), or point (a) of Article 9(2), and where there is no other legal ground for the processing."
+          retrieval_score: 0.96
+    expected_output: "Under Article 17 of the GDPR, data subjects have the right to obtain erasure of their personal data from the controller without undue delay. The controller must erase the data when: (a) the data is no longer necessary for the purpose it was collected; (b) the data subject withdraws consent and there is no other legal ground for processing."
+    actual_output: "Under Article 17 of the GDPR, data subjects have the right to obtain erasure of their personal data from the controller without undue delay. The controller must erase the data when: (a) the data is no longer necessary for the purpose it was collected; (b) the data subject withdraws consent and there is no other legal ground for processing."
+    metrics: [format]
+    tags: [gdpr, faithful, erasure]
+    weight: 1.5
+
+  - id: rag-legal-002
+    description: Oversimplified answer that changes legal meaning
+    input: "How long can I keep customer data under GDPR?"
+    system_prompt: "You are a compliance assistant. Answer based only on the provided legal text. Use precise legal language. Do not simplify in ways that change legal meaning. If the context is insufficient, say so."
+    context:
+      documents:
+        - source: "regulations/gdpr/article-5.md"
+          content: "Article 5: Principles relating to processing of personal data. 1. Personal data shall be: (a) processed lawfully, fairly and in a transparent manner in relation to the data subject ('lawfulness, fairness and transparency'); (b) collected for specified, explicit and legitimate purposes and not further processed in a manner that is incompatible with those purposes ('purpose limitation'); (c) adequate, relevant and limited to what is necessary in relation to the purposes for which they are processed ('data minimisation'); (d) accurate and, where necessary, kept up to date ('accuracy'); (e) kept in a form which permits identification of data subjects for no longer than is necessary for the purposes for which the personal data are processed ('storage limitation'); (f) processed in a manner that ensures appropriate security ('integrity and confidentiality')."
+          retrieval_score: 0.93
+    expected_output: "Under Article 5(1)(e) of the GDPR, personal data must be kept in a form that permits identification of data subjects for no longer than is necessary for the purposes for which it is processed (the 'storage limitation' principle). There is no fixed time period — it depends on the processing purpose. You must establish and document retention periods based on the specific purpose."
+    actual_output: "You can keep customer data for up to 5 years under GDPR. After that, you must delete it."
+    metrics: [format]
+    tags: [oversimplified, inaccurate, gdpr]
+    weight: 2
+
+  - id: rag-legal-003
+    description: Adds unsourced legal advice not in the provided text
+    input: "What are the requirements for obtaining valid consent under GDPR?"
+    system_prompt: "You are a compliance assistant. Answer based only on the provided legal text. Use precise legal language. Do not add legal interpretations or advice not present in the context. If the context is insufficient, say so."
+    context:
+      documents:
+        - source: "regulations/gdpr/article-7.md"
+          content: "Article 7: Conditions for consent. 1. Where processing is based on consent, the controller shall be able to demonstrate that the data subject has consented to processing of his or her personal data. 2. If the data subject's consent is given in the context of a written declaration which also concerns other matters, the request for consent shall be presented in a manner which is clearly distinguishable from the other matters, in an intelligible and easily accessible form, using clear and plain language."
+          retrieval_score: 0.94
+    expected_output: "Under Article 7, the controller must be able to demonstrate that consent was given. If consent is part of a written declaration covering other matters, the consent request must be clearly distinguishable, intelligible, easily accessible, and in clear plain language."
+    actual_output: "Under Article 7, the controller must be able to demonstrate consent was given. Consent must be in a written declaration clearly distinguishable from other matters. Additionally, you should implement a double opt-in mechanism, maintain a consent register with timestamps, and refresh consent every 12 months to remain compliant with regulatory guidance."
+    metrics: [format]
+    tags: [unsourced-advice, hallucination]
+    weight: 2
+
+  - id: rag-legal-004
+    description: Correct legal content but confusing disorganized structure
+    input: "What are the data subject rights under GDPR?"
+    system_prompt: "You are a compliance assistant. Answer based only on the provided legal text. Use precise legal language. Organize information clearly. If the context is insufficient, say so."
+    context:
+      documents:
+        - source: "regulations/gdpr/article-15.md"
+          content: "Article 15: Right of access by the data subject. The data subject shall have the right to obtain from the controller confirmation as to whether or not personal data concerning him or her are being processed, and, where that is the case, access to the personal data and certain information including: (a) the purposes of the processing; (b) the categories of personal data concerned; (c) the recipients or categories of recipient to whom the personal data have been or will be disclosed."
+          retrieval_score: 0.89
+        - source: "regulations/gdpr/article-16.md"
+          content: "Article 16: Right to rectification. The data subject shall have the right to obtain from the controller without undue delay the rectification of inaccurate personal data concerning him or her."
+          retrieval_score: 0.87
+        - source: "regulations/gdpr/article-17.md"
+          content: "Article 17: Right to erasure ('right to be forgotten'). The data subject shall have the right to obtain from the controller the erasure of personal data concerning him or her without undue delay."
+          retrieval_score: 0.85
+    expected_output: "Based on the provided context, key data subject rights under GDPR include: (1) Right of access (Article 15) — confirm whether personal data is being processed and access that data along with processing purpose, categories, and recipients. (2) Right to rectification (Article 16) — correct inaccurate personal data without undue delay. (3) Right to erasure (Article 17) — obtain deletion of personal data without undue delay."
+    actual_output: "So there's this right to access where you can ask if they have your data. Article 15. Also Article 17 which is the right to be forgotten — you can ask them to delete stuff. And Article 16 about fixing wrong data. There's probably more rights too but these are the main ones."
+    metrics: [format]
+    tags: [disorganized, informal]
+    weight: 1
+
+  - id: rag-legal-005
+    description: Correctly refuses when context does not cover the question
+    input: "What are the GDPR requirements for international data transfers?"
+    system_prompt: "You are a compliance assistant. Answer based only on the provided legal text. Use precise legal language. If the context does not contain sufficient information to answer accurately, say so clearly."
+    context:
+      documents:
+        - source: "regulations/gdpr/article-17.md"
+          content: "Article 17: Right to erasure ('right to be forgotten'). The data subject shall have the right to obtain from the controller the erasure of personal data concerning him or her without undue delay."
+          retrieval_score: 0.32
+    expected_output: "The provided context does not contain information about international data transfers. The available text covers the right to erasure under Article 17 only. I cannot provide requirements for international data transfers based on these documents."
+    actual_output: "The provided context does not contain information about international data transfers. The available text covers the right to erasure under Article 17 only. I cannot provide requirements for international data transfers based on these documents."
+    metrics: [format]
+    tags: [refusal, insufficient-context]
+    weight: 1.5
+
+  - id: rag-legal-006
+    description: Partially incorrect legal detail in an otherwise good answer
+    input: "When do I need to report a data breach under GDPR?"
+    system_prompt: "You are a compliance assistant. Answer based only on the provided legal text. Use precise legal language. Do not guess or extrapolate. If the context is insufficient, say so."
+    context:
+      documents:
+        - source: "regulations/gdpr/article-33.md"
+          content: "Article 33: Notification of a personal data breach to the supervisory authority. 1. In the case of a personal data breach, the controller shall without undue delay and, where feasible, not later than 72 hours after having become aware of it, notify the personal data breach to the supervisory authority competent in accordance with Article 55, unless the personal data breach is unlikely to result in a risk to the rights and freedoms of natural persons."
+          retrieval_score: 0.95
+    expected_output: "Under Article 33 of the GDPR, a controller must notify the supervisory authority of a personal data breach without undue delay and, where feasible, not later than 72 hours after becoming aware of it. Notification is not required if the breach is unlikely to result in a risk to the rights and freedoms of natural persons."
+    actual_output: "Under Article 33 of the GDPR, you must notify the supervisory authority of a data breach within 72 hours. You must also notify affected data subjects within 24 hours. There is no exception — all breaches must be reported."
+    metrics: [format]
+    tags: [partially-incorrect, breach, notification]
+    weight: 2

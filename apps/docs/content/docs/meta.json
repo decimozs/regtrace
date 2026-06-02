@@ -13,6 +13,8 @@
     "how-to/generate-reports",
     "how-to/switch-provider",
     "how-to/rag-evaluation",
+    "---Examples---",
+    "examples/overview",
     "---Reference---",
     "reference/cli",
     "reference/config-file",

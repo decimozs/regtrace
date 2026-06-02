@@ -1,0 +1,68 @@
+name: intent-classification
+version: "1.0.0"
+description: Intent classification for a customer service chatbot routing system
+interaction_type: single_turn
+tags: [intent, classification, routing, chatbot]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: ic-001
+    description: Billing question — correctly classified with confidence
+    input: "I was charged twice for my last subscription payment."
+    system_prompt: "You are an intent classifier for a customer service chatbot. Output a JSON object with fields: intent (string), confidence (0.0-1.0), department (string). Valid intents: billing, technical_support, account, sales, general."
+    expected_output: "{\"intent\": \"billing\", \"confidence\": 0.95, \"department\": \"billing\"}"
+    actual_output: "{\"intent\": \"billing\", \"confidence\": 0.95, \"department\": \"billing\"}"
+    metrics: [format]
+    tags: [billing, correct]
+    weight: 1
+
+  - id: ic-002
+    description: Billing question — assigned wrong intent (technical_support instead of billing)
+    input: "My credit card was declined but the payment still went through."
+    system_prompt: "You are an intent classifier for a customer service chatbot. Output a JSON object with fields: intent (string), confidence (0.0-1.0), department (string). Valid intents: billing, technical_support, account, sales, general."
+    expected_output: "{\"intent\": \"billing\", \"confidence\": 0.88, \"department\": \"billing\"}"
+    actual_output: "{\"intent\": \"technical_support\", \"confidence\": 0.72, \"department\": \"support\"}"
+    metrics: [format]
+    tags: [billing, wrong-intent]
+    weight: 1.5
+
+  - id: ic-003
+    description: Account question — missing required confidence field
+    input: "I forgot my password and can't reset it."
+    system_prompt: "You are an intent classifier for a customer service chatbot. Output a JSON object with fields: intent (string), confidence (0.0-1.0), department (string). Valid intents: billing, technical_support, account, sales, general."
+    expected_output: "{\"intent\": \"account\", \"confidence\": 0.91, \"department\": \"account\"}"
+    actual_output: "{\"intent\": \"account\", \"department\": \"account\"}"
+    metrics: [format]
+    tags: [account, missing-field]
+    weight: 1.5
+
+  - id: ic-004
+    description: General question — malformed JSON output
+    input: "What are your business hours?"
+    system_prompt: "You are an intent classifier for a customer service chatbot. Output a JSON object with fields: intent (string), confidence (0.0-1.0), department (string). Valid intents: billing, technical_support, account, sales, general."
+    expected_output: "{\"intent\": \"general\", \"confidence\": 0.97, \"department\": \"general\"}"
+    actual_output: "{ intent: general, confidence: 0.97 }"
+    metrics: [format]
+    tags: [general, malformed-json]
+    weight: 1
+
+  - id: ic-005
+    description: Sales question — non-standard but semantically valid format
+    input: "Do you offer enterprise pricing plans?"
+    system_prompt: "You are an intent classifier for a customer service chatbot. Output a JSON object with fields: intent (string), confidence (0.0-1.0), department (string). Valid intents: billing, technical_support, account, sales, general."
+    expected_output: "{\"intent\": \"sales\", \"confidence\": 0.89, \"department\": \"sales\"}"
+    actual_output: "Intent: sales\nConfidence: 0.89\nDepartment: sales"
+    metrics: [format]
+    tags: [sales, non-standard]
+    weight: 1
+
+  - id: ic-006
+    description: Multi-intent query — correctly identified primary and secondary
+    input: "My account is locked and I was overcharged last month."
+    system_prompt: "You are an intent classifier for a customer service chatbot. Output a JSON object with fields: intent (string), confidence (0.0-1.0), department (string). For multi-intent queries, choose the primary intent. Valid intents: billing, technical_support, account, sales, general."
+    expected_output: "{\"intent\": \"account\", \"confidence\": 0.82, \"department\": \"account\"}"
+    actual_output: "{\"intent\": \"account\", \"confidence\": 0.82, \"department\": \"account\"}"
+    metrics: [format]
+    tags: [multi-intent, account]
+    weight: 1.5

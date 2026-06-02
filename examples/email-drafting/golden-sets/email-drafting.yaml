@@ -1,0 +1,68 @@
+name: email-drafting-qa
+version: "1.0.0"
+description: Email response quality for customer success automation
+interaction_type: single_turn
+tags: [email, customer-success, outreach, sales]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: em-001
+    description: Professional follow-up email after a product demo
+    input: "Draft a follow-up email to a prospect named Sarah Chen who attended a demo of Acme Analytics yesterday. She is the VP of Engineering at a mid-size tech company."
+    system_prompt: "You are a customer success representative for Acme Corp. Write professional, personalized follow-up emails. Be warm but not pushy. Reference specific details from the interaction. Include a clear call to action."
+    expected_output: "Hi Sarah,\n\nThanks again for your time yesterday. I hope the Acme Analytics demo gave you a good sense of how our platform can help your engineering team track key metrics without the overhead.\n\nA few resources I thought you might find useful:\n- Case study on how similar teams reduced reporting time by 60%\n- API documentation for custom integrations\n\nWould you like to schedule a deeper dive with your engineering leads? Happy to set that up.\n\nBest,\nAlex"
+    actual_output: "Hi Sarah,\n\nThanks again for your time yesterday. I hope the Acme Analytics demo gave you a good sense of how our platform can help your engineering team track key metrics without the overhead.\n\nA few resources I thought you might find useful:\n- Case study on how similar teams reduced reporting time by 60%\n- API documentation for custom integrations\n\nWould you like to schedule a deeper dive with your engineering leads? Happy to set that up.\n\nBest,\nAlex"
+    metrics: [format]
+    tags: [follow-up, professional]
+    weight: 1
+
+  - id: em-002
+    description: Aggressive pushy sales tone — high pressure tactics
+    input: "Draft a sales outreach email to a prospect who trialed Acme Analytics but hasn't converted yet."
+    system_prompt: "You are a customer success representative for Acme Corp. Write professional, personalized follow-up emails. Be warm but not pushy. Never use pressure tactics, fake urgency, or aggressive language."
+    expected_output: "Hi {{name}},\n\nI noticed your trial of Acme Analytics is ending soon. I'd love to hear how it's been working for your team.\n\nDo you have any questions about the platform or the plans available? Happy to hop on a quick call if that would help.\n\nBest,\nAlex"
+    actual_output: "Hi {{name}},\n\nThis is your FINAL NOTICE. Your trial expires in 24 hours and you haven't purchased yet. Don't miss out on this opportunity — our prices are going up next month! Act now or lose access to all your data. Schedule a call immediately.\n\nThis is your last chance!\n\nAlex"
+    metrics: [format]
+    tags: [pushy, aggressive, sales]
+    weight: 2
+
+  - id: em-003
+    description: Missing personalization tokens in a customer support template
+    input: "Write a support response acknowledging a ticket about a billing issue for customer John Martinez (Ticket #TKT-4567)."
+    system_prompt: "You are a customer success representative for Acme Corp. Write personalized responses that reference the customer's name, their specific issue, and ticket number. Never send generic responses."
+    expected_output: "Hi John,\n\nThanks for reaching out about the billing issue on your account (Ticket #TKT-4567). I've taken a look and can see the duplicate charge you mentioned. I'm investigating and will have an update for you within 24 hours.\n\nSorry for the inconvenience.\n\nBest,\nAlex"
+    actual_output: "Hi there,\n\nThanks for contacting support. We've received your ticket and will get back to you as soon as possible. Please allow 24-48 hours for a response.\n\nBest,\nThe Support Team"
+    metrics: [format]
+    tags: [impersonal, template]
+    weight: 1.5
+
+  - id: em-004
+    description: Too informal for a business email context
+    input: "Draft a formal proposal follow-up email to a potential enterprise client CEO who requested pricing information."
+    system_prompt: "You are a customer success representative for Acme Corp. Write professional, polished business emails for executive-level communication. Maintain appropriate formality. Be respectful of the recipient's seniority."
+    expected_output: "Dear Mr. Thompson,\n\nFollowing up on your request for pricing information, I've attached our enterprise proposal for your review.\n\nI'd welcome the opportunity to walk through the details with you and your team at your convenience. Please let me know if next week works for a brief call.\n\nThank you for considering Acme Corp.\n\nBest regards,\nAlex"
+    actual_output: "Hey Mr. T!\n\nGot the pricing info you wanted — check out the attached proposal. Super excited about the possibility of working with you guys! Let me know when you wanna chat. No rush, but also kinda soon maybe?\n\nCheers,\nAlex 😎"
+    metrics: [format]
+    tags: [informal, unprofessional]
+    weight: 1.5
+
+  - id: em-005
+    description: Perfect churn prevention email handling cancellation request
+    input: "Draft an email responding to a long-time customer who requested to cancel their subscription. Customer name: Maria Garcia, 2 years with Acme, Team plan."
+    system_prompt: "You are a customer success representative for Acme Corp. Write empathetic, solution-oriented responses to cancellation requests. Acknowledge their value as a customer. Offer solutions without being pushy. Keep the door open."
+    expected_output: "Hi Maria,\n\nI'm sorry to hear you're considering leaving Acme after two years together — we truly value having you as part of our community.\n\nWould you be open to a quick call? I'd love to understand what's driving this decision and see if there's anything we can do to address your concerns. We've made some updates recently that might change your mind.\n\nEither way, I appreciate your honesty and want to make sure this transition is smooth.\n\nWarmly,\nAlex"
+    actual_output: "Hi Maria,\n\nI'm sorry to hear you're considering leaving Acme after two years together — we truly value having you as part of our community.\n\nWould you be open to a quick call? I'd love to understand what's driving this decision and see if there's anything we can do to address your concerns. We've made some updates recently that might change your mind.\n\nEither way, I appreciate your honesty and want to make sure this transition is smooth.\n\nWarmly,\nAlex"
+    metrics: [format]
+    tags: [churn-prevention, empathetic, passing]
+    weight: 1.5
+
+  - id: em-006
+    description: Generic template sent instead of a personalized response
+    input: "Respond to customer James Wilson who reported that his API keys stopped working after the latest update."
+    system_prompt: "You are a customer success representative for Acme Corp. Write personalized responses that acknowledge the specific issue described. Never send generic templates. Reference the customer's specific problem."
+    expected_output: "Hi James,\n\nI'm sorry about the trouble with your API keys after the update. Let me look into this right away.\n\nCould you let me know which environment this is affecting (production or staging) and approximately when you first noticed the issue?\n\nI'll prioritize getting this resolved for you.\n\nBest,\nAlex"
+    actual_output: "Thank you for contacting Acme Corp support. Your inquiry has been received and will be processed in the order it was received. Please allow 24-48 hours for a response. For urgent issues, please contact our emergency support line."
+    metrics: [format]
+    tags: [generic, template, unhelpful]
+    weight: 1.5

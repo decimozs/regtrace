@@ -1,0 +1,68 @@
+name: data-extraction
+version: "1.0.0"
+description: Invoice data extraction from customer email text
+interaction_type: single_turn
+tags: [data-extraction, structured-output, invoices]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: de-001
+    description: Complete invoice extraction with all fields present
+    input: "Invoice #INV-2024-0892 from Acme Supplies dated 2024-11-15. Items: Widget Pro (x3) at $49.99 each, Shipping $12.99. Total: $162.96."
+    system_prompt: "You are a data extraction system. Extract invoice information as JSON with fields: invoice_id, vendor, date, total (number), items (array of objects with name, quantity, unit_price)."
+    expected_output: "{\"invoice_id\": \"INV-2024-0892\", \"vendor\": \"Acme Supplies\", \"date\": \"2024-11-15\", \"total\": 162.96, \"items\": [{\"name\": \"Widget Pro\", \"quantity\": 3, \"unit_price\": 49.99}, {\"name\": \"Shipping\", \"quantity\": 1, \"unit_price\": 12.99}]}"
+    actual_output: "{\"invoice_id\": \"INV-2024-0892\", \"vendor\": \"Acme Supplies\", \"date\": \"2024-11-15\", \"total\": 162.96, \"items\": [{\"name\": \"Widget Pro\", \"quantity\": 3, \"unit_price\": 49.99}, {\"name\": \"Shipping\", \"quantity\": 1, \"unit_price\": 12.99}]}"
+    metrics: [format]
+    tags: [complete, valid]
+    weight: 1
+
+  - id: de-002
+    description: Missing line items in extraction output
+    input: "Invoice #INV-2024-0911 from TechParts Inc dated 2024-11-10. Items: USB-C Cable (x10) at $8.50 each, HDMI Adapter (x5) at $14.99 each. Total: $159.95."
+    system_prompt: "You are a data extraction system. Extract invoice information as JSON with fields: invoice_id, vendor, date, total (number), items (array of objects with name, quantity, unit_price)."
+    expected_output: "{\"invoice_id\": \"INV-2024-0911\", \"vendor\": \"TechParts Inc\", \"date\": \"2024-11-10\", \"total\": 159.95, \"items\": [{\"name\": \"USB-C Cable\", \"quantity\": 10, \"unit_price\": 8.50}, {\"name\": \"HDMI Adapter\", \"quantity\": 5, \"unit_price\": 14.99}]}"
+    actual_output: "{\"invoice_id\": \"INV-2024-0911\", \"vendor\": \"TechParts Inc\", \"date\": \"2024-11-10\", \"total\": 159.95, \"items\": []}"
+    metrics: [format]
+    tags: [incomplete, missing-items]
+    weight: 1.5
+
+  - id: de-003
+    description: Wrong data type for total field (string instead of number)
+    input: "Invoice #INV-2024-0903 from OfficeGoods Co dated 2024-11-08. Items: Desk Chair (x2) at $199.99 each. Total: $399.98."
+    system_prompt: "You are a data extraction system. Extract invoice information as JSON with fields: invoice_id, vendor, date, total (number), items (array of objects with name, quantity, unit_price)."
+    expected_output: "{\"invoice_id\": \"INV-2024-0903\", \"vendor\": \"OfficeGoods Co\", \"date\": \"2024-11-08\", \"total\": 399.98, \"items\": [{\"name\": \"Desk Chair\", \"quantity\": 2, \"unit_price\": 199.99}]}"
+    actual_output: "{\"invoice_id\": \"INV-2024-0903\", \"vendor\": \"OfficeGoods Co\", \"date\": \"2024-11-08\", \"total\": \"399.98\", \"items\": [{\"name\": \"Desk Chair\", \"quantity\": 2, \"unit_price\": 199.99}]}"
+    metrics: [format]
+    tags: [wrong-type, total]
+    weight: 1.5
+
+  - id: de-004
+    description: Hallucinated vendor not present in source text
+    input: "Invoice #INV-2024-0887 dated 2024-11-05. Items: Ergonomic Keyboard (x1) at $149.99. Total: $149.99."
+    system_prompt: "You are a data extraction system. Extract invoice information as JSON with fields: invoice_id, vendor, date, total (number), items (array of objects with name, quantity, unit_price). If vendor is not present, set to null."
+    expected_output: "{\"invoice_id\": \"INV-2024-0887\", \"vendor\": null, \"date\": \"2024-11-05\", \"total\": 149.99, \"items\": [{\"name\": \"Ergonomic Keyboard\", \"quantity\": 1, \"unit_price\": 149.99}]}"
+    actual_output: "{\"invoice_id\": \"INV-2024-0887\", \"vendor\": \"Amazon\", \"date\": \"2024-11-05\", \"total\": 149.99, \"items\": [{\"name\": \"Ergonomic Keyboard\", \"quantity\": 1, \"unit_price\": 149.99}]}"
+    metrics: [format]
+    tags: [hallucination, vendor]
+    weight: 2
+
+  - id: de-005
+    description: Partially correct extraction — some fields present but incomplete
+    input: "Invoice from Global Logistics. Charges: Freight $500, Insurance $75, Handling $25. No invoice number provided."
+    system_prompt: "You are a data extraction system. Extract invoice information as JSON with fields: invoice_id, vendor, date, total (number), items (array of objects with name, quantity, unit_price). Set missing fields to null."
+    expected_output: "{\"invoice_id\": null, \"vendor\": \"Global Logistics\", \"date\": null, \"total\": 600.00, \"items\": [{\"name\": \"Freight\", \"quantity\": 1, \"unit_price\": 500.00}, {\"name\": \"Insurance\", \"quantity\": 1, \"unit_price\": 75.00}, {\"name\": \"Handling\", \"quantity\": 1, \"unit_price\": 25.00}]}"
+    actual_output: "{\"invoice_id\": null, \"vendor\": \"Global Logistics\", \"date\": null, \"total\": 600.00, \"items\": [{\"name\": \"Freight\", \"quantity\": 1, \"unit_price\": 500.00}, {\"name\": \"Insurance\", \"quantity\": 1, \"unit_price\": 75.00}]}"
+    metrics: [format]
+    tags: [partial, incomplete]
+    weight: 1
+
+  - id: de-006
+    description: Minimal input without extractable invoice data
+    input: "No invoice here."
+    system_prompt: "You are a data extraction system. Extract invoice information as JSON with fields: invoice_id, vendor, date, total (number), items (array of objects with name, quantity, unit_price). If the input contains no invoice data, return all fields as null."
+    expected_output: "{\"invoice_id\": null, \"vendor\": null, \"date\": null, \"total\": null, \"items\": []}"
+    actual_output: "{\"invoice_id\": null, \"vendor\": null, \"date\": null, \"total\": null, \"items\": []}"
+    metrics: [format]
+    tags: [empty, edge-case]
+    weight: 1

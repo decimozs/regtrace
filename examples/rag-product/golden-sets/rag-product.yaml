@@ -1,0 +1,83 @@
+name: rag-product-search
+version: "1.0.0"
+description: RAG product search response accuracy for an e-commerce catalog
+interaction_type: rag
+tags: [rag, ecommerce, product-search, spec-accuracy]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: rag-prd-001
+    description: Accurate product description based on catalog specs
+    input: "Tell me about the MacBook Pro 14-inch with M3 Pro."
+    system_prompt: "You are a product search assistant. Answer based only on the provided product catalog data. Do not make up specifications, prices, or features. If the catalog does not contain the requested information, say so."
+    context:
+      documents:
+        - source: "catalog/laptops/macbook-pro-14-m3-pro.yaml"
+          content: "Product: MacBook Pro 14-inch. Processor: Apple M3 Pro (12-core CPU, 18-core GPU). Memory: 18GB unified memory. Storage: 512GB SSD. Display: 14.2-inch Liquid Retina XDR. Ports: 3x Thunderbolt 4, HDMI, SDXC slot, MagSafe 3. Battery: Up to 17 hours. Price: $1,999. Weight: 3.5 lbs. Color options: Space Black, Silver."
+          retrieval_score: 0.96
+    expected_output: "The MacBook Pro 14-inch features the Apple M3 Pro chip with a 12-core CPU and 18-core GPU. It comes with 18GB unified memory, 512GB SSD, and a 14.2-inch Liquid Retina XDR display. Ports include 3 Thunderbolt 4, HDMI, SDXC slot, and MagSafe 3. Battery lasts up to 17 hours. Price is $1,999. Available in Space Black and Silver."
+    actual_output: "The MacBook Pro 14-inch features the Apple M3 Pro chip with a 12-core CPU and 18-core GPU. It comes with 18GB unified memory, 512GB SSD, and a 14.2-inch Liquid Retina XDR display. Ports include 3 Thunderbolt 4, HDMI, SDXC slot, and MagSafe 3. Battery lasts up to 17 hours. Price is $1,999. Available in Space Black and Silver."
+    metrics: [format]
+    tags: [accurate, specs]
+    weight: 1
+
+  - id: rag-prd-002
+    description: Wrong price quoted — does not match catalog
+    input: "How much does the Sony WH-1000XM5 cost?"
+    system_prompt: "You are a product search assistant. Answer based only on the provided product catalog data. Do not make up specifications, prices, or features. If the catalog does not contain the requested information, say so."
+    context:
+      documents:
+        - source: "catalog/headphones/sony-wh1000xm5.yaml"
+          content: "Product: Sony WH-1000XM5 Wireless Noise Cancelling Headphones. Type: Over-ear. Noise Cancellation: Industry-leading Dual Processor. Battery: 30 hours (ANC on), 40 hours (ANC off). Charging: USB-C, quick charge (3 min = 30 min playback). Driver: 30mm. Frequency response: 4Hz-40,000Hz. Weight: 250g. Price: $349.99. Colors: Black, Midnight Blue, Silver."
+          retrieval_score: 0.94
+    expected_output: "The Sony WH-1000XM5 wireless noise cancelling headphones are priced at $349.99. They feature dual-processor noise cancellation, 30 hours battery with ANC on, and USB-C quick charging. Available in Black, Midnight Blue, and Silver."
+    actual_output: "The Sony WH-1000XM5 wireless noise cancelling headphones are priced at $399.99. They are considered the best noise cancelling headphones on the market with excellent sound quality and comfort."
+    metrics: [format]
+    tags: [wrong-price, inaccurate]
+    weight: 2
+
+  - id: rag-prd-003
+    description: Hallucinated feature not present in product catalog
+    input: "Does the Samsung Galaxy Tab S9 Ultra have water resistance?"
+    system_prompt: "You are a product search assistant. Answer based only on the provided product catalog data. Do not make up specifications, prices, or features. If the catalog does not contain the requested information, say so."
+    context:
+      documents:
+        - source: "catalog/tablets/galaxy-tab-s9-ultra.yaml"
+          content: "Product: Samsung Galaxy Tab S9 Ultra. Display: 14.6-inch Dynamic AMOLED 2X, 120Hz. Processor: Qualcomm Snapdragon 8 Gen 2 for Galaxy. Memory: 12GB/16GB RAM. Storage: 256GB/512GB/1TB. Battery: 11,200mAh. Cameras: 13MP + 8MP ultra-wide (rear), 12MP + 12MP ultra-wide (front). S Pen included. Weight: 737g. Price: From $1,199.99. Colors: Graphite, Beige."
+          retrieval_score: 0.91
+    expected_output: "The provided product catalog does not mention water resistance for the Galaxy Tab S9 Ultra. The catalog covers the display, processor, memory, storage, battery, cameras, S Pen, weight, and pricing. I cannot confirm water resistance based on the available data."
+    actual_output: "Yes, the Samsung Galaxy Tab S9 Ultra has an IP68 water resistance rating. It can survive in up to 1.5 meters of water for 30 minutes. This makes it great for reading by the pool or using it in the bathroom."
+    metrics: [format]
+    tags: [hallucinated-feature, water-resistance]
+    weight: 2
+
+  - id: rag-prd-004
+    description: Correct but missing a key specification from the catalog
+    input: "What are the specs of the Dell XPS 16?"
+    system_prompt: "You are a product search assistant. Answer based only on the provided product catalog data. Do not make up specifications, prices, or features. If the catalog does not contain the requested information, say so."
+    context:
+      documents:
+        - source: "catalog/laptops/dell-xps-16.yaml"
+          content: "Product: Dell XPS 16. Processor: Intel Core Ultra 9 185H. Graphics: NVIDIA GeForce RTX 4070 (8GB). Memory: 32GB DDR5. Storage: 1TB SSD. Display: 16.3-inch 4K OLED, 400-nit. Ports: 3x Thunderbolt 4, HDMI 2.1, USB-A, headphone jack. Battery: 99.5Wh, up to 13 hours. Weight: 4.2 lbs. Price: $2,499.99. Colors: Platinum, Graphite."
+          retrieval_score: 0.93
+    expected_output: "The Dell XPS 16 has an Intel Core Ultra 9 185H processor, NVIDIA GeForce RTX 4070 graphics, 32GB DDR5 RAM, 1TB SSD, and a 16.3-inch 4K OLED display. Ports include 3 Thunderbolt 4, HDMI 2.1, USB-A, and a headphone jack. Battery is 99.5Wh with up to 13 hours. Weighs 4.2 lbs. Price is $2,499.99 in Platinum or Graphite."
+    actual_output: "The Dell XPS 16 has an Intel Core Ultra 9 processor, 32GB of RAM, and a 4K OLED display. It costs $2,499.99."
+    metrics: [format]
+    tags: [incomplete, missing-specs]
+    weight: 1
+
+  - id: rag-prd-005
+    description: Direct product match — accurate response from catalog
+    input: "What colors does the Kindle Scribe come in?"
+    system_prompt: "You are a product search assistant. Answer based only on the provided product catalog data. Do not make up specifications, prices, or features. If the catalog does not contain the requested information, say so."
+    context:
+      documents:
+        - source: "catalog/tablets/kindle-scribe.yaml"
+          content: "Product: Kindle Scribe. Display: 10.2-inch 300ppi E Ink. Storage: 16GB, 32GB, 64GB. Pen: Premium Pen (included). Battery: Up to 12 weeks. Weight: 433g. Price: From $339.99. Colors: Tungsten. Special features: Notebook functionality, sticky notes, convert handwriting to text."
+          retrieval_score: 0.97
+    expected_output: "The Kindle Scribe comes in Tungsten."
+    actual_output: "The Kindle Scribe comes in Tungsten."
+    metrics: [format]
+    tags: [accurate, colors, passing]
+    weight: 1

@@ -1,0 +1,68 @@
+name: code-generation-qa
+version: "1.0.0"
+description: Code generation quality evaluation for an AI coding assistant
+interaction_type: single_turn
+tags: [code-generation, programming, ai-assistant]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: cg-001
+    description: Correct TypeScript function with clear explanation
+    input: "Write a TypeScript function that paginates an array. It should take an array and page size, return the items for a given page number."
+    system_prompt: "You are an AI coding assistant. Provide code solutions with clear explanations. Use proper markdown code blocks with language tags."
+    expected_output: "Here's a TypeScript function to paginate an array:\n\n```typescript\nfunction paginate<T>(items: T[], pageSize: number, pageNumber: number): T[] {\n  const startIndex = (pageNumber - 1) * pageSize;\n  return items.slice(startIndex, startIndex + pageSize);\n}\n```\n\nThe function calculates the start index based on the page number and page size, then uses `Array.slice()` to return only the items for that page."
+    actual_output: "Here's a TypeScript function to paginate an array:\n\n```typescript\nfunction paginate<T>(items: T[], pageSize: number, pageNumber: number): T[] {\n  const startIndex = (pageNumber - 1) * pageSize;\n  return items.slice(startIndex, startIndex + pageSize);\n}\n```\n\nThe function calculates the start index based on the page number and page size, then uses `Array.slice()` to return only the items for that page."
+    metrics: [format]
+    tags: [typescript, correct]
+    weight: 1
+
+  - id: cg-002
+    description: Missing code block fences — raw code without markdown
+    input: "Write a Python function to check if a string is a palindrome."
+    system_prompt: "You are an AI coding assistant. Provide code solutions with clear explanations. Use proper markdown code blocks with language tags."
+    expected_output: "Here's a Python function to check palindromes:\n\n```python\ndef is_palindrome(s: str) -> bool:\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]\n```\n\nThis function removes non-alphanumeric characters and compares the cleaned string to its reverse."
+    actual_output: "Here's a Python function to check palindromes:\n\ndef is_palindrome(s: str) -> bool:\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]\n\nThis function removes non-alphanumeric characters and compares the cleaned string to its reverse."
+    metrics: [format]
+    tags: [missing-fence, markdown]
+    weight: 1
+
+  - id: cg-003
+    description: Hallucinated API that does not exist in the standard library
+    input: "Write JavaScript to read a CSV file and parse it into an array of objects using the standard library."
+    system_prompt: "You are an AI coding assistant. Provide code solutions using standard APIs only. Do not use fictional libraries or non-existent APIs. Use proper markdown code blocks with language tags."
+    expected_output: "Here's JavaScript to parse a CSV file using only built-in Node.js modules:\n\n```javascript\nimport fs from 'fs';\n\nexport function parseCsv(filePath) {\n  const content = fs.readFileSync(filePath, 'utf-8');\n  const lines = content.trim().split('\\n');\n  const headers = lines[0].split(',');\n  return lines.slice(1).map(line => {\n    const values = line.split(',');\n    return headers.reduce((obj, header, i) => {\n      obj[header.trim()] = values[i]?.trim();\n      return obj;\n    }, {});\n  });\n}\n```"
+    actual_output: "Here's JavaScript to parse a CSV file using Node.js built-in `csvParser`:\n\n```javascript\nimport { parseCSV } from 'node:csv';\nimport fs from 'fs';\n\nconst data = parseCSV(fs.readFileSync('data.csv', 'utf-8'));\nconsole.log(data);\n```\n\nNote: Node.js has a built-in `csvParser` in the `node:csv` module."
+    metrics: [format]
+    tags: [hallucinated-api, incorrect]
+    weight: 2
+
+  - id: cg-004
+    description: Insecure code — SQL injection vulnerability
+    input: "Write a Node.js/Express endpoint that looks up a user by their username in a SQL database."
+    system_prompt: "You are an AI coding assistant. Provide secure code following security best practices. Use parameterized queries, not string interpolation for SQL. Use proper markdown code blocks with language tags."
+    expected_output: "```javascript\nimport express from 'express';\nimport { query } from './db.js';\n\nconst app = express();\n\napp.get('/user/:username', async (req, res) => {\n  const { username } = req.params;\n  const result = await query(\n    'SELECT * FROM users WHERE username = $1',\n    [username]\n  );\n  res.json(result.rows);\n});\n```"
+    actual_output: "```javascript\nimport express from 'express';\nimport { query } from './db.js';\n\nconst app = express();\n\napp.get('/user/:username', async (req, res) => {\n  const { username } = req.params;\n  const result = await query(\n    `SELECT * FROM users WHERE username = '${username}'`\n  );\n  res.json(result.rows);\n});\n```"
+    metrics: [format]
+    tags: [insecure, sql-injection]
+    weight: 2
+
+  - id: cg-005
+    description: Wrong language tag on code block
+    input: "Write a bash script that finds all files modified in the last 24 hours and compresses them into a tar archive."
+    system_prompt: "You are an AI coding assistant. Provide code solutions with proper markdown code blocks with correct language tags. Use proper markdown code blocks with language tags."
+    expected_output: "```bash\n#!/bin/bash\nfind /path/to/search -type f -mtime -1 -print0 | tar -czvf backup.tar.gz --null -T -\n```"
+    actual_output: "```python\n#!/bin/bash\nfind /path/to/search -type f -mtime -1 -print0 | tar -czvf backup.tar.gz --null -T -\n```"
+    metrics: [format]
+    tags: [wrong-language, markdown]
+    weight: 1
+
+  - id: cg-006
+    description: Correct code without explanation — still acceptable
+    input: "Write a Rust function that computes the Fibonacci sequence up to n terms."
+    system_prompt: "You are an AI coding assistant. Provide code solutions with clear explanations. Use proper markdown code blocks with language tags."
+    expected_output: "```rust\nfn fibonacci(n: u32) -> Vec<u64> {\n    match n {\n        0 => vec![],\n        1 => vec![0],\n        _ => {\n            let mut sequence = vec![0, 1];\n            for i in 2..n {\n                let next = sequence[(i - 1) as usize] + sequence[(i - 2) as usize];\n                sequence.push(next);\n            }\n            sequence\n        }\n    }\n}\n```"
+    actual_output: "```rust\nfn fibonacci(n: u32) -> Vec<u64> {\n    match n {\n        0 => vec![],\n        1 => vec![0],\n        _ => {\n            let mut sequence = vec![0, 1];\n            for i in 2..n {\n                let next = sequence[(i - 1) as usize] + sequence[(i - 2) as usize];\n                sequence.push(next);\n            }\n            sequence\n        }\n    }\n}\n```"
+    metrics: [format]
+    tags: [rust, correct, no-explanation]
+    weight: 1

@@ -1,12 +1,12 @@
-# Regtrace config — Customer Support QA example
-# Runs with format metrics only (deterministic, no API key needed)
+# Regtrace config — Summarization example
+# Runs with format metrics by default. Add judge key and enable factuality+tone.
 project:
-  name: customer-support-qa
+  name: news-summarization
   version: "1.0"
-  description: Evaluating customer support response quality
+  description: Evaluating AI-generated news article summaries
 
 golden_sets:
-  - path: golden-sets/qa.yaml
+  - path: golden-sets/summarization.yaml
     enabled: true
 
 metrics:
@@ -19,9 +19,8 @@ metrics:
       json_schema: false
       markdown_structure: false
       required_fields: true
-      forbidden_content: true
+      forbidden_content: false
       regex_match: false
-    length_tolerance: 0.3
   factuality:
     mode: lenient
     claim_extraction_depth: shallow
@@ -30,7 +29,7 @@ metrics:
       formality: true
       sentiment: true
       assertiveness: true
-      persona_consistency: true
+      persona_consistency: false
       verbosity: true
   regression:
     enabled: true

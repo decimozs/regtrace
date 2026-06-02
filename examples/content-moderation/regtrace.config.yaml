@@ -1,12 +1,12 @@
-# Regtrace config — Customer Support QA example
+# Regtrace config — Content Moderation example
 # Runs with format metrics only (deterministic, no API key needed)
 project:
-  name: customer-support-qa
+  name: content-moderation
   version: "1.0"
-  description: Evaluating customer support response quality
+  description: Evaluating content moderation decision quality
 
 golden_sets:
-  - path: golden-sets/qa.yaml
+  - path: golden-sets/moderation.yaml
     enabled: true
 
 metrics:

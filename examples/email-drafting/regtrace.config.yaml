@@ -1,12 +1,12 @@
-# Regtrace config — Customer Support QA example
-# Runs with format metrics only (deterministic, no API key needed)
+# Regtrace config — Email Drafting example
+# Runs with format metrics by default. Add judge key and enable tone for full eval.
 project:
-  name: customer-support-qa
+  name: email-drafting-qa
   version: "1.0"
-  description: Evaluating customer support response quality
+  description: Evaluating AI-generated email quality
 
 golden_sets:
-  - path: golden-sets/qa.yaml
+  - path: golden-sets/email-drafting.yaml
     enabled: true
 
 metrics:

@@ -1,0 +1,98 @@
+name: rag-documentation-qa
+version: "1.0.0"
+description: RAG response faithfulness for a developer API documentation chatbot
+interaction_type: rag
+tags: [rag, documentation, api, faithfulness]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: rag-doc-001
+    description: Faithful answer grounded in API authentication docs
+    input: "How do I authenticate with the Acme API?"
+    system_prompt: "You are a helpful documentation assistant. Answer based only on the provided context documents. Do not use external knowledge. If the context does not contain enough information, say so."
+    context:
+      documents:
+        - source: "docs/api/authentication.md"
+          content: "Authentication is performed via API keys. Include your API key in the Authorization header: 'Authorization: Bearer YOUR_API_KEY'. Keys can be generated from the Dashboard under Settings > API Keys. There are two types of keys: Test keys (prefix 'sk_test_') for development and Live keys (prefix 'sk_live_') for production."
+          retrieval_score: 0.95
+    expected_output: "To authenticate with the Acme API, include your API key in the Authorization header as 'Authorization: Bearer YOUR_API_KEY'. You can generate API keys from the Dashboard under Settings > API Keys. Test keys use the prefix 'sk_test_' and live keys use 'sk_live_'."
+    actual_output: "To authenticate with the Acme API, include your API key in the Authorization header as 'Authorization: Bearer YOUR_API_KEY'. You can generate API keys from the Dashboard under Settings > API Keys. Test keys use the prefix 'sk_test_' and live keys use 'sk_live_'."
+    metrics: [format]
+    tags: [authentication, faithful]
+    weight: 1
+
+  - id: rag-doc-002
+    description: Hallucinated API endpoints not present in context docs
+    input: "Can I use the Acme API to send webhooks?"
+    system_prompt: "You are a helpful documentation assistant. Answer based only on the provided context documents. Do not use external knowledge. If the context does not contain enough information, say so."
+    context:
+      documents:
+        - source: "docs/api/overview.md"
+          content: "The Acme API provides RESTful endpoints for managing resources. Available operations: GET /resources (list), POST /resources (create), GET /resources/{id} (retrieve), PUT /resources/{id} (update), DELETE /resources/{id} (delete). Rate limiting is 1000 requests per minute for paid plans and 100 requests per minute for free plans."
+          retrieval_score: 0.88
+    expected_output: "The context does not mention webhook functionality. Based on the provided documentation, the Acme API supports standard REST operations (list, create, retrieve, update, delete) on resources. I cannot confirm whether webhook support is available."
+    actual_output: "Yes, the Acme API supports webhooks. You can configure webhook endpoints in the Dashboard to receive real-time notifications for events like resource.created, resource.updated, and resource.deleted. Webhook payloads are sent as POST requests to your configured endpoint URL."
+    metrics: [format]
+    tags: [hallucination, webhooks]
+    weight: 2
+
+  - id: rag-doc-003
+    description: Partially grounded answer with unsupported claim
+    input: "What are the rate limits for the Acme API?"
+    system_prompt: "You are a helpful documentation assistant. Answer based only on the provided context documents. Do not use external knowledge. If the context does not contain enough information, say so."
+    context:
+      documents:
+        - source: "docs/api/overview.md"
+          content: "The Acme API provides RESTful endpoints for managing resources. Rate limiting is 1000 requests per minute for paid plans and 100 requests per minute for free plans."
+          retrieval_score: 0.92
+    expected_output: "Rate limits for the Acme API are 1000 requests per minute for paid plans and 100 requests per minute for free plans."
+    actual_output: "Rate limits for the Acme API are 1000 requests per minute for paid plans and 100 requests per minute for free plans. The rate limit resets every hour at the top of the hour. If you exceed the limit, you will receive a 429 Too Many Requests response."
+    metrics: [format]
+    tags: [partial-hallucination, rate-limits]
+    weight: 1.5
+
+  - id: rag-doc-004
+    description: Correct answer but fails to attribute or reference the docs
+    input: "How do I paginate through large result sets?"
+    system_prompt: "You are a helpful documentation assistant. Answer based only on the provided context documents. Do not use external knowledge. If the context does not contain enough information, say so."
+    context:
+      documents:
+        - source: "docs/api/pagination.md"
+          content: "List endpoints support cursor-based pagination. Use the 'cursor' parameter to paginate through results. The initial request omits the cursor. The response includes a 'next_cursor' field. When 'next_cursor' is null, all results have been retrieved. The 'limit' parameter controls page size (default 20, max 100)."
+          retrieval_score: 0.97
+    expected_output: "The Acme API uses cursor-based pagination. Include a 'cursor' parameter in requests, starting without it. The response includes a 'next_cursor' field — when null, all results are returned. Use 'limit' to control page size (default 20, max 100)."
+    actual_output: "You can paginate using cursor-based pagination. Make your first request without a cursor, and each response will include a next_cursor field. Use the limit parameter to control page size."
+    metrics: [format]
+    tags: [missing-detail, pagination]
+    weight: 1
+
+  - id: rag-doc-005
+    description: Correctly refuses to answer when context is insufficient
+    input: "How do I set up billing webhooks?"
+    system_prompt: "You are a helpful documentation assistant. Answer based only on the provided context documents. Do not use external knowledge. If the context does not contain enough information, say so."
+    context:
+      documents:
+        - source: "docs/api/authentication.md"
+          content: "Authentication is performed via API keys. Include your API key in the Authorization header: 'Authorization: Bearer YOUR_API_KEY'. Keys can be generated from the Dashboard under Settings > API Keys."
+          retrieval_score: 0.45
+    expected_output: "I don't have enough information in the provided context to answer that question. The available documentation covers API authentication only. I cannot provide instructions on setting up billing webhooks based on these documents."
+    actual_output: "I don't have enough information in the provided context to answer that question. The available documentation covers API authentication only. I cannot provide instructions on setting up billing webhooks based on these documents."
+    metrics: [format]
+    tags: [refusal, insufficient-context]
+    weight: 1.5
+
+  - id: rag-doc-006
+    description: Incomplete answer missing key details from context
+    input: "What fields are required when creating a new resource?"
+    system_prompt: "You are a helpful documentation assistant. Answer based only on the provided context documents. Do not use external knowledge. If the context does not contain enough information, say so."
+    context:
+      documents:
+        - source: "docs/api/resources.md"
+          content: "To create a resource via POST /resources, the request body must include: 'name' (string, required), 'type' (string, required — one of: 'standard', 'premium', 'enterprise'), 'config' (object, optional — includes 'region' and 'tier' fields). On success, returns 201 with the created resource object. On validation error, returns 422 with field-level error messages."
+          retrieval_score: 0.91
+    expected_output: "When creating a resource via POST /resources, the required fields are 'name' (string) and 'type' (string — one of 'standard', 'premium', or 'enterprise'). The 'config' object is optional. On success you get a 201 response, on validation error you get a 422 with field-level errors."
+    actual_output: "You need to provide a name and type when creating a resource. The request will return the created resource on success."
+    metrics: [format]
+    tags: [incomplete, missing-details]
+    weight: 1
