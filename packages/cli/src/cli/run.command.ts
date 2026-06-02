@@ -10,6 +10,7 @@ import { checkQualityGates } from "../reports/quality-gates";
 import { generateReport } from "../reports/reporter";
 import type { ReportData } from "../reports/types";
 import type { Config } from "../schema/config.schema";
+import type { TestCase } from "../schema/golden-set.schema";
 import type { RunRecord, TestCaseResult } from "../schema/run-record.schema";
 import {
 	type LoadConfigResult,
@@ -52,15 +53,16 @@ interface PreparedGoldenSet {
 		version: string;
 		description: string;
 		interaction_type: string;
-		test_cases: {
-			id: string;
-			description: string;
-			input: string;
-			expected_output: string;
-			actual_output: string | null;
-			metrics: string[];
-			weight: number;
-		}[];
+		test_cases: Pick<
+			TestCase,
+			| "id"
+			| "description"
+			| "input"
+			| "expected_output"
+			| "actual_output"
+			| "metrics"
+			| "weight"
+		>[];
 	};
 }
 
@@ -260,13 +262,13 @@ export async function runCommand(options: RunOptions): Promise<void> {
 
 		const durationMs = Date.now() - startTime;
 
-		const provisionalStatus =
+		const status =
 			suiteScore >= config.quality_gates.suite_score_minimum
 				? "passed"
 				: "failed";
 
 		const record = await createRunRecord(configDir, {
-			status: provisionalStatus,
+			status,
 			trigger,
 			durationMs,
 			regtraceVersion: "0.1.0",
@@ -295,13 +297,6 @@ export async function runCommand(options: RunOptions): Promise<void> {
 
 		const qualityGates = checkQualityGates(record, config);
 		record.status = qualityGates.passed ? "passed" : "failed";
-
-		const runFilePath = resolve(
-			configDir,
-			".regtrace/runs",
-			`${record.run_id}.json`,
-		);
-		writeFileSync(runFilePath, JSON.stringify(record, null, 2), "utf-8");
 
 		allRunRecords.push(record);
 

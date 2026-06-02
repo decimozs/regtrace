@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { dump, load } from "js-yaml";
+import { loadConfigFromFile } from "../storage/config-loader";
 import { loadRunRecord } from "../storage/run-store";
 import { printError, printHeader, printInfo, printSuccess } from "./print";
 
@@ -31,19 +32,17 @@ export async function baselinePinCommand(options: {
 		process.exit(1);
 	}
 
-	const parsed = load(configRaw) as Record<string, unknown>;
-
-	if (typeof parsed !== "object" || parsed === null) {
+	const loaded = await loadConfigFromFile(configPath);
+	if (!loaded.success) {
 		printError("Invalid config file");
 		process.exit(1);
 	}
 
-	const regression = (parsed.regression as Record<string, unknown>) ?? {};
+	const parsed = load(configRaw) as Record<string, unknown>;
+	const metrics = (parsed.metrics as Record<string, unknown>) ?? {};
+	const regression = (metrics.regression as Record<string, unknown>) ?? {};
 	regression.baseline_strategy = "pinned";
 	regression.pinned_run_id = options.runId;
-	parsed.regression = regression;
-
-	const metrics = (parsed.metrics as Record<string, unknown>) ?? {};
 	metrics.regression = regression;
 	parsed.metrics = metrics;
 
@@ -68,12 +67,6 @@ export async function baselineUnpinCommand(options: {
 	}
 
 	const parsed = load(configRaw) as Record<string, unknown>;
-
-	if (typeof parsed !== "object" || parsed === null) {
-		printError("Invalid config file");
-		process.exit(1);
-	}
-
 	const metrics = parsed.metrics as Record<string, unknown> | undefined;
 	if (metrics) {
 		const regression = metrics.regression as

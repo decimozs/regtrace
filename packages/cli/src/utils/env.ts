@@ -1,5 +1,3 @@
-import { logger } from "./logger";
-
 export interface EnvVars {
 	ANTHROPIC_API_KEY?: string;
 	OPENAI_API_KEY?: string;
@@ -31,13 +29,10 @@ export function loadEnv(): void {
 	}
 
 	if (missing.length > 0) {
-		logger.error(
-			`Missing required environment variables: ${missing.join(", ")}`,
+		throw new Error(
+			`Missing required environment variables: ${missing.join(", ")}.\n` +
+				"Create a .env file or set these variables in your environment.",
 		);
-		logger.error(
-			`Create a .env file or set these variables in your environment.`,
-		);
-		process.exit(2);
 	}
 
 	loaded = true;

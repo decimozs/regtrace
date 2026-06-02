@@ -3,7 +3,12 @@ import { getEnv } from "../utils/env";
 import { logger } from "../utils/logger";
 import { buildFactualityPrompt, buildTonePrompt } from "./prompts";
 import { PROVIDER_MAP } from "./providers";
-import type { JudgeConfig, JudgeProviderResponse, JudgeResult } from "./types";
+import type {
+	JudgeConfig,
+	JudgeMessage,
+	JudgeProviderResponse,
+	JudgeResult,
+} from "./types";
 
 const PROVIDER_ENV_MAP: Record<string, string> = {
 	openai: "OPENAI_API_KEY",
@@ -119,21 +124,13 @@ function parseJsonScore(response: string): {
 	}
 }
 
-export async function judgeFactuality(
-	input: string,
-	expectedOutput: string,
-	actualOutput: string,
+async function judgeMetric(
+	promptBuilder: () => JudgeMessage[],
 	judgeConfig: JudgeConfig,
-	claimDepth: "shallow" | "deep",
 ): Promise<JudgeResult> {
 	requireProviderApiKey(judgeConfig.provider, judgeConfig.apiKey);
 	const provider = createProvider(judgeConfig.provider);
-	const messages = buildFactualityPrompt(
-		input,
-		expectedOutput,
-		actualOutput,
-		claimDepth,
-	);
+	const messages = promptBuilder();
 
 	const response = await callWithRetry(
 		provider,
@@ -159,6 +156,20 @@ export async function judgeFactuality(
 	};
 }
 
+export async function judgeFactuality(
+	input: string,
+	expectedOutput: string,
+	actualOutput: string,
+	judgeConfig: JudgeConfig,
+	claimDepth: "shallow" | "deep",
+): Promise<JudgeResult> {
+	return judgeMetric(
+		() =>
+			buildFactualityPrompt(input, expectedOutput, actualOutput, claimDepth),
+		judgeConfig,
+	);
+}
+
 export async function judgeTone(
 	input: string,
 	expectedOutput: string,
@@ -166,37 +177,10 @@ export async function judgeTone(
 	judgeConfig: JudgeConfig,
 	toneProfile: string | null | undefined,
 ): Promise<JudgeResult> {
-	requireProviderApiKey(judgeConfig.provider, judgeConfig.apiKey);
-	const provider = createProvider(judgeConfig.provider);
-	const messages = buildTonePrompt(
-		input,
-		expectedOutput,
-		actualOutput,
-		toneProfile,
-	);
-
-	const response = await callWithRetry(
-		provider,
-		messages,
+	return judgeMetric(
+		() => buildTonePrompt(input, expectedOutput, actualOutput, toneProfile),
 		judgeConfig,
-		judgeConfig.retryAttempts,
 	);
-	const { score, confidence, explanation } = parseJsonScore(response.content);
-	const tokenCost = estimateTokenCost(
-		judgeConfig.provider,
-		judgeConfig.model,
-		response.inputTokens,
-		response.outputTokens,
-	);
-
-	return {
-		score,
-		confidence,
-		explanation,
-		tokenCost,
-		inputTokens: response.inputTokens,
-		outputTokens: response.outputTokens,
-	};
 }
 
 export function buildJudgeConfig(config: {

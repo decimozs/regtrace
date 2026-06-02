@@ -6,6 +6,7 @@ import {
 	object,
 	string,
 	union,
+	type z,
 	enum as zEnum,
 } from "zod";
 
@@ -58,41 +59,8 @@ export const goldenSetSchema = object({
 	test_cases: array(testCaseSchema).min(1),
 });
 
-export type GoldenSet = {
-	name: string;
-	version: string;
-	description: string;
-	interaction_type: "single_turn" | "rag";
-	tags: string[];
-	author: string;
-	created_at: string;
-	updated_at: string;
-	test_cases: TestCase[];
-};
-
-export type TestCase = {
-	id: string;
-	description: string;
-	input: string;
-	system_prompt: string | null;
-	expected_output: string;
-	actual_output: string | null;
-	metrics: string[];
-	thresholds?: {
-		factuality?: number | null;
-		format?: number | null;
-		tone?: number | null;
-	} | null;
-	tags: string[];
-	weight: number;
-	context?: {
-		documents: {
-			source: string;
-			content: string;
-			retrieval_score?: number | null;
-		}[];
-	} | null;
-};
+export type GoldenSet = z.infer<typeof goldenSetSchema>;
+export type TestCase = z.infer<typeof testCaseSchema>;
 
 export type InteractionType = "single_turn" | "rag";
 export type MetricName = (typeof METRIC_NAMES)[number];

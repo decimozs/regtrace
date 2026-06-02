@@ -8,6 +8,7 @@ import {
 	record,
 	string,
 	union,
+	type z,
 } from "zod";
 
 const providerSchema = union([
@@ -150,78 +151,7 @@ export const configSchema = object({
 	output: outputConfigSchema,
 });
 
-export type Config = {
-	project: {
-		name: string;
-		version: string;
-		description?: string | null;
-	};
-	golden_sets: {
-		path: string;
-		alias?: string | null;
-		enabled: boolean;
-		weight: number;
-	}[];
-	metrics: {
-		enabled: string[];
-		default_threshold: number;
-		default_weight: number;
-		factuality: {
-			mode: "strict" | "lenient";
-			claim_extraction_depth: "shallow" | "deep";
-			rag_faithfulness_only: boolean;
-		};
-		format: {
-			sub_checks: Record<string, boolean>;
-			length_tolerance: number;
-			strict_json: boolean;
-		};
-		tone: {
-			tone_profile?: string | null;
-			sub_dimensions: Record<string, boolean>;
-			sub_dimension_weights?: Record<string, number>;
-		};
-		regression: {
-			enabled: boolean;
-			baseline_strategy: "last_passing" | "pinned";
-			pinned_run_id?: string | null;
-			tolerance: number;
-			critical_threshold: number;
-			exclude_new_test_cases: boolean;
-		};
-	};
-	judge: {
-		primary: {
-			provider: string;
-			model: string;
-			temperature: number;
-			max_tokens: number;
-			timeout_ms: number;
-			retry_attempts: number;
-			local_endpoint?: string | null;
-		};
-		fallback?: unknown;
-		cost_controls: { max_tokens_per_run: number; warn_at_tokens: number };
-	};
-	run: {
-		concurrency: number;
-	};
-	quality_gates: {
-		suite_score_minimum: number;
-		metric_score_minimums?: Record<string, number>;
-		max_failed_test_cases: number;
-		max_low_confidence_ratio: number;
-		regression_gate: boolean;
-	};
-	output: {
-		run_history_limit: number;
-		default_format: "terminal" | "json" | "markdown";
-		explain_by_default: boolean;
-		color: "auto" | "always" | "never";
-		report_path?: string | null;
-		ci_mode_auto_detect: boolean;
-	};
-};
+export type Config = z.infer<typeof configSchema>;
 
 export type JudgeProvider =
 	| "openai"

@@ -8,6 +8,7 @@ import {
 	record,
 	string,
 	union,
+	type z,
 } from "zod";
 
 export const runStatusSchema = union([
@@ -85,54 +86,10 @@ export const runRecordSchema = object({
 	regression: regressionBlockSchema,
 });
 
-export type RunRecord = {
-	run_id: string;
-	timestamp: string;
-	status: "passed" | "failed" | "errored";
-	trigger: "cli" | "ci" | "watch";
-	duration_ms: number;
-	regtrace_version: string;
-	judge_provider: string;
-	judge_model: string;
-	config_hash: string;
-	golden_set_name: string;
-	golden_set_version: string;
-	golden_set_file_hash: string;
-	suite_score: number;
-	metric_summary: Record<string, { score: number; pass_rate: number }>;
-	test_case_results: TestCaseResult[];
-	regression: RegressionBlock;
-};
-
-export type RunStatus = "passed" | "failed" | "errored";
-export type RunTrigger = "cli" | "ci" | "watch";
-export type RegressionStatus = "clean" | "warning" | "critical";
-export type TestCaseResult = {
-	test_case_id: string;
-	input: string;
-	actual_output: string;
-	overall_passed: boolean;
-	severity: "pass" | "warn" | "fail";
-	metric_results: Record<string, MetricResult>;
-	regression_delta?: Record<string, number>;
-};
-export type MetricResult = {
-	metric_name: string;
-	score: number;
-	confidence: number;
-	passed: boolean;
-	threshold: number;
-	explanation: string;
-	evaluation_type: "deterministic" | "llm_judged";
-	token_cost: number;
-};
-export type RegressionBlock = {
-	baseline_run_id: string | null;
-	baseline_golden_set_version: string | null;
-	current_golden_set_version: string;
-	version_change_detected: boolean;
-	suite_delta: number;
-	regression_status: "clean" | "warning" | "critical";
-	test_cases_excluded: string[];
-	metric_deltas: Record<string, number>;
-};
+export type RunRecord = z.infer<typeof runRecordSchema>;
+export type RunStatus = z.infer<typeof runStatusSchema>;
+export type RunTrigger = z.infer<typeof runTriggerSchema>;
+export type RegressionStatus = z.infer<typeof regressionStatusSchema>;
+export type TestCaseResult = z.infer<typeof testCaseResultSchema>;
+export type MetricResult = z.infer<typeof metricResultSchema>;
+export type RegressionBlock = z.infer<typeof regressionBlockSchema>;
