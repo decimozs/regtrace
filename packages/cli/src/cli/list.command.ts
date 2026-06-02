@@ -60,8 +60,10 @@ export async function historyCommand(options: {
 	if (options.runId) {
 		const record = await loadRunRecord(basePath, options.runId);
 		if (!record) {
-			printError(`Run record "${options.runId}" not found`);
-			process.exit(1);
+			printError(
+				`Run "${options.runId}" not found. Use \`regtrace list\` to see all runs.`,
+			);
+			process.exit(2);
 		}
 		printSuiteSummary(record);
 		printTestCaseResults(record.test_case_results);
@@ -98,13 +100,13 @@ async function printDiff(
 
 	if (!runIdA) {
 		printError("Need at least one run ID. Usage: --diff <run-a> [run-b]");
-		process.exit(1);
+		process.exit(2);
 	}
 
 	const recordA = await loadRunRecord(basePath, runIdA);
 	if (!recordA) {
 		printError(`Run "${runIdA}" not found`);
-		process.exit(1);
+		process.exit(2);
 	}
 
 	let recordB: RunRecord | null;
@@ -112,19 +114,19 @@ async function printDiff(
 		recordB = await loadRunRecord(basePath, runIdB);
 		if (!recordB) {
 			printError(`Run "${runIdB}" not found`);
-			process.exit(1);
+			process.exit(2);
 		}
 	} else {
 		// diff against immediate predecessor (next in sorted list)
 		const idx = records.findIndex((r) => r.run_id === runIdA);
 		if (idx < 0 || idx >= records.length - 1) {
 			printError("No previous run to diff against. Specify two run IDs.");
-			process.exit(1);
+			process.exit(2);
 		}
 		recordB = records[idx + 1] ?? null;
 		if (!recordB) {
 			printError("Previous run not found");
-			process.exit(1);
+			process.exit(2);
 		}
 	}
 

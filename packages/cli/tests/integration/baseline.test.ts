@@ -228,7 +228,7 @@ describe("baseline command", () => {
 			"--config",
 			resolve(dir, "regtrace.config.yaml"),
 		]);
-		expect(exitCode).toBe(1);
+		expect(exitCode).toBe(2);
 	});
 
 	it("unpin reverts config to last_passing strategy", async () => {

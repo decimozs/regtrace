@@ -21,21 +21,24 @@ export async function baselinePinCommand(options: {
 		configRaw = readFileSync(configPath, "utf-8");
 	} catch {
 		printError(`Config not found: ${configPath}`);
-		process.exit(1);
+		printInfo("Run `regtrace init` to create a new project.");
+		process.exit(2);
 	}
 
 	const configDir = resolve(configPath, "..");
 	const record = await loadRunRecord(configDir, options.runId);
 
 	if (!record) {
-		printError(`Run record "${options.runId}" not found`);
-		process.exit(1);
+		printError(
+			`Run "${options.runId}" not found. Use \`regtrace list\` to see available runs.`,
+		);
+		process.exit(2);
 	}
 
 	const loaded = await loadConfigFromFile(configPath);
 	if (!loaded.success) {
-		printError("Invalid config file");
-		process.exit(1);
+		printError("Invalid config file. Run `regtrace init` to recreate it.");
+		process.exit(2);
 	}
 
 	const parsed = load(configRaw) as Record<string, unknown>;
@@ -63,7 +66,8 @@ export async function baselineUnpinCommand(options: {
 		configRaw = readFileSync(configPath, "utf-8");
 	} catch {
 		printError(`Config not found: ${configPath}`);
-		process.exit(1);
+		printInfo("Run `regtrace init` to create a new project.");
+		process.exit(2);
 	}
 
 	const parsed = load(configRaw) as Record<string, unknown>;
@@ -95,7 +99,7 @@ export async function baselineShowCommand(options: {
 		configRaw = readFileSync(configPath, "utf-8");
 	} catch {
 		printError(`Config not found: ${configPath}`);
-		process.exit(1);
+		process.exit(2);
 	}
 
 	const configDir = resolve(configPath, "..");

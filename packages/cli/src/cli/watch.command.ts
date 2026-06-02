@@ -14,22 +14,25 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
 		for (const err of configResult.errors) {
 			printError(`${err.field}: ${err.message}`);
 		}
-		process.exit(1);
+		printError("Fix config or run `regtrace init` to create a new project.");
+		process.exit(2);
 	}
 
 	const config = configResult.data;
 	const configPath = configResult.configPath;
 	if (!configPath) {
-		printError("Config path not found");
-		process.exit(1);
+		printError("Config path not found. Run `regtrace init` first.");
+		process.exit(2);
 	}
 
 	const configDir = resolve(configPath, "..");
 	const enabledSets = config.golden_sets.filter((gs) => gs.enabled);
 
 	if (enabledSets.length === 0) {
-		printError("No enabled golden sets to watch");
-		process.exit(1);
+		printError(
+			"No enabled golden sets to watch. Enable at least one golden set in regtrace.config.yaml.",
+		);
+		process.exit(2);
 	}
 
 	const watchPaths = enabledSets.map((gs) => {

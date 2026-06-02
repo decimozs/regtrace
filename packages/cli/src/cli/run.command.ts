@@ -180,7 +180,10 @@ export async function runCommand(options: RunOptions): Promise<void> {
 		for (const err of configPrep.errors) {
 			printError(`${err.field}: ${err.message}`);
 		}
-		process.exit(1);
+		printError(
+			"Fix the config or run `regtrace init` to create a new project.",
+		);
+		process.exit(2);
 	}
 
 	const config = configPrep.data;
@@ -194,8 +197,14 @@ export async function runCommand(options: RunOptions): Promise<void> {
 			(gs) => gs.path === options.setName || gs.alias === options.setName,
 		);
 		if (filtered.length === 0) {
-			printError(`No enabled golden set matches "${options.setName}"`);
-			process.exit(1);
+			printError(`No golden set matches "${options.setName}".`);
+			printInfo(
+				`Available sets: ${config.golden_sets
+					.filter((gs) => gs.enabled)
+					.map((gs) => gs.path)
+					.join(", ")}`,
+			);
+			process.exit(2);
 		}
 		enabledSets.length = 0;
 		enabledSets.push(...filtered);
@@ -379,7 +388,7 @@ async function runDryRun(options: RunOptions): Promise<void> {
 		for (const err of configPrep.errors) {
 			printError(`${err.field}: ${err.message}`);
 		}
-		process.exit(1);
+		process.exit(2);
 	}
 
 	const config = configPrep.data;

@@ -284,7 +284,7 @@ describe("run", () => {
 			dir,
 		);
 
-		expect(exitCode).toBe(1);
+		expect(exitCode).toBe(2);
 	});
 });
 
@@ -376,7 +376,7 @@ describe("error handling", () => {
 			["run", "--config", resolve(dir, "no-such.yaml")],
 			dir,
 		);
-		expect(exitCode).toBe(1);
+		expect(exitCode).toBe(2);
 	});
 
 	it("handles missing golden set without crashing", async () => {
