@@ -184,7 +184,7 @@ describe("evaluateSuite", () => {
 		const result = await evaluateSuite(params);
 		const fact = result.metricSummary.factuality;
 		expect(fact).toBeDefined();
-		expect(fact!.score).toBeGreaterThanOrEqual(0);
+		expect(fact?.score).toBeGreaterThanOrEqual(0);
 	});
 
 	it("runs multiple test cases concurrently in a single batch", async () => {

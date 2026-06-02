@@ -66,7 +66,8 @@ async function concurrentMap<T, R>(
 	async function worker(): Promise<void> {
 		while (next < items.length) {
 			const i = next++;
-			results[i] = await fn(items[i]!, i);
+			const item = items[i] as T;
+			results[i] = await fn(item, i);
 		}
 	}
 

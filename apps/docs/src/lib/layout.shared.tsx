@@ -1,4 +1,5 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import Image from "next/image";
 import { appName, gitConfig } from "./shared";
 
 export function baseOptions(): BaseLayoutProps {
@@ -7,7 +8,12 @@ export function baseOptions(): BaseLayoutProps {
       // JSX supported
       title: (
         <div className="flex items-center gap-2">
-          <img src="/apple-touch-icon.png" className="size-5" alt="Regtrace" />
+          <Image
+            src="/apple-touch-icon.png"
+            width={20}
+            height={20}
+            alt="Regtrace"
+          />
           {appName}
         </div>
       ),
