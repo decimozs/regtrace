@@ -1,0 +1,28 @@
+name: my-qa-set
+version: "1.0.0"
+description: My QA test cases
+interaction_type: single_turn
+tags: [qa, general]
+author: anonymous
+created_at: "2026-01-01"
+updated_at: "2026-01-01"
+test_cases:
+  - id: qa-001
+    description: Basic question about the capital of France
+    input: "What is the capital of France?"
+    system_prompt: null
+    expected_output: "The capital of France is Paris."
+    actual_output: null
+    metrics: [factuality, format, tone]
+    tags: [geography]
+    weight: 1
+
+  - id: qa-002
+    description: Question about the population of Paris
+    input: "What is the population of Paris?"
+    system_prompt: null
+    expected_output: "Paris has a population of approximately 2.1 million people within the city limits."
+    actual_output: null
+    metrics: [factuality, format]
+    tags: [geography, demographics]
+    weight: 1

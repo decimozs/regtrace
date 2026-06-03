@@ -134,7 +134,12 @@ const SAMPLE_RUN_RECORD = {
 async function runCli(
 	dir: string,
 	args: string[],
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+): Promise<{
+	stdout: string;
+	stderr: string;
+	exitCode: number;
+	combined: string;
+}> {
 	const proc = Bun.spawn(["bun", "run", CLI_ENTRY, ...args], {
 		cwd: dir,
 		env: {
@@ -143,11 +148,12 @@ async function runCli(
 			ANTHROPIC_API_KEY: "",
 			OPENAI_API_KEY: "",
 		},
+		stdio: ["inherit", "pipe", "pipe"],
 	});
 	const exitCode = await proc.exited;
 	const stdout = await new Response(proc.stdout).text();
 	const stderr = await new Response(proc.stderr).text();
-	return { exitCode, stdout, stderr };
+	return { exitCode, stdout, stderr, combined: stdout + stderr };
 }
 
 describe("baseline command", () => {
@@ -200,14 +206,14 @@ describe("baseline command", () => {
 			"utf-8",
 		);
 
-		const { stdout } = await runCli(dir, [
+		const { combined } = await runCli(dir, [
 			"baseline",
 			"pin",
 			"run_test_pin_002",
 			"--config",
 			resolve(dir, "regtrace.config.yaml"),
 		]);
-		expect(stdout).toContain("Pinned");
+		expect(combined).toContain("Pinned");
 	});
 
 	it("pin exits with error for missing run record", async () => {
@@ -263,13 +269,13 @@ describe("baseline command", () => {
 			"utf-8",
 		);
 
-		const { stdout } = await runCli(dir, [
+		const { combined } = await runCli(dir, [
 			"baseline",
 			"show",
 			"--config",
 			resolve(dir, "regtrace.config.yaml"),
 		]);
-		expect(stdout).toContain("last_passing");
+		expect(combined).toContain("last_passing");
 	});
 
 	it("show displays pinned run details when pinned", async () => {
@@ -287,14 +293,14 @@ describe("baseline command", () => {
 			"utf-8",
 		);
 
-		const { stdout } = await runCli(dir, [
+		const { combined } = await runCli(dir, [
 			"baseline",
 			"show",
 			"--config",
 			resolve(dir, "regtrace.config.yaml"),
 		]);
 
-		expect(stdout).toContain("run_test_pin_001");
-		expect(stdout).toContain("85.0%");
+		expect(combined).toContain("run_test_pin_001");
+		expect(combined).toContain("85.0%");
 	});
 });

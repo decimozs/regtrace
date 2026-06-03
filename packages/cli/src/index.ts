@@ -72,6 +72,7 @@ program
 	)
 	.option("--bail", "Stop after first suite that fails quality gates")
 	.option("--generate", "Generate actual_output from LLM for null test cases")
+	.option("--quiet", "Suppress progress output, show only errors and results")
 	.addHelpText(
 		"after",
 		`
@@ -96,6 +97,7 @@ Examples:
 			dryRun?: boolean;
 			bail?: boolean;
 			generate?: boolean;
+			quiet?: boolean;
 		}) => {
 			await runCommand({
 				config: options.config,
@@ -109,6 +111,7 @@ Examples:
 				dryRun: options.dryRun,
 				bail: options.bail,
 				generate: options.generate,
+				quiet: options.quiet,
 			});
 		},
 	);

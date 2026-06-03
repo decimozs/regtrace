@@ -61,7 +61,7 @@ function icon(symbol: string): string {
 }
 
 function stderr(...args: unknown[]): void {
-	console.log(...args);
+	console.error(...args);
 }
 
 export function writeJson(data: unknown): void {

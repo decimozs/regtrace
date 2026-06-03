@@ -1,29 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { load } from "js-yaml";
-import { buildJudgeConfig } from "../judge/judge";
-import {
-	type EvaluateTestCaseParams,
-	evaluateTestCase,
-} from "../metrics/runner";
-import { checkQualityGates } from "../reports/quality-gates";
 import { generateReport } from "../reports/reporter";
 import type { ReportData } from "../reports/types";
-import type { Config } from "../schema/config.schema";
-import type { TestCase } from "../schema/golden-set.schema";
-import type { RunRecord, TestCaseResult } from "../schema/run-record.schema";
-import {
-	type LoadConfigResult,
-	loadConfigFromFile,
-} from "../storage/config-loader";
-import { initDb, saveRunRecord } from "../storage/db-store";
+import { loadConfigFromFile } from "../storage/config-loader";
 import { loadGoldenSetFromFile } from "../storage/golden-set-loader";
-import {
-	createRunRecord,
-	ensureRegtraceDir,
-	findBaselineRun,
-} from "../storage/run-store";
-import { generateOutput } from "./generate";
 import {
 	configureColor,
 	isCiEnvironment,
@@ -35,13 +15,16 @@ import {
 	printSuccess,
 	printSuiteSummary,
 	printTestCaseResults,
-	writeJson,
 } from "./print";
+import { runPipeline } from "./run-pipeline";
+
+const VALID_FORMATS = ["terminal", "json", "markdown"] as const;
+const VALID_TRIGGERS = ["cli", "ci", "watch"] as const;
 
 interface RunOptions {
 	config?: string;
 	setName?: string;
-	trigger?: "cli" | "ci" | "watch";
+	trigger?: string;
 	format?: string;
 	output?: string;
 	ci?: boolean;
@@ -50,124 +33,33 @@ interface RunOptions {
 	dryRun?: boolean;
 	bail?: boolean;
 	generate?: boolean;
+	quiet?: boolean;
 }
 
-interface PreparedGoldenSet {
-	config: Config;
-	configContent: string;
-	configDir: string;
-	goldenSetContent: string;
-	parsed: {
-		name: string;
-		version: string;
-		description: string;
-		interaction_type: string;
-		test_cases: Pick<
-			TestCase,
-			| "id"
-			| "description"
-			| "input"
-			| "expected_output"
-			| "actual_output"
-			| "metrics"
-			| "weight"
-		>[];
-	};
-}
-
-async function prepareConfig(
-	options: RunOptions,
-): Promise<LoadConfigResult & { configContent?: string; configDir?: string }> {
-	const result = await loadConfigFromFile(options.config);
-
-	if (!result.success) {
-		return result;
-	}
-
-	const configPath = result.configPath;
-	if (!configPath) {
-		return {
-			success: false,
-			errors: [{ field: "file", message: "Config path not found" }],
-		};
-	}
-
-	const configContent = readFileSync(configPath, "utf-8");
-	const configDir = resolve(configPath, "..");
-
-	return { ...result, configContent, configDir };
-}
-
-function resolveGoldenSetPath(configDir: string, relativePath: string): string {
-	if (relativePath.startsWith("/")) return relativePath;
-	return resolve(configDir, relativePath);
-}
-
-async function prepareGoldenSet(
-	configDir: string,
-	path: string,
-): Promise<
-	| PreparedGoldenSet
-	| { success: false; errors: { field: string; message: string }[] }
-> {
-	const fullPath = resolveGoldenSetPath(configDir, path);
-	const loadResult = await loadGoldenSetFromFile(fullPath);
-
-	if (!loadResult.success) {
-		return loadResult;
-	}
-
-	const gsContent = readFileSync(fullPath, "utf-8");
-	const parsed = load(gsContent) as PreparedGoldenSet["parsed"];
-
-	return {
-		config: undefined as unknown as Config,
-		configContent: "",
-		configDir,
-		goldenSetContent: gsContent,
-		parsed,
-	};
-}
-
-function buildTestCaseParams(
-	prepared: PreparedGoldenSet,
-	tc: PreparedGoldenSet["parsed"]["test_cases"][number],
-	baseline: RunRecord | null,
-): EvaluateTestCaseParams {
-	return {
-		testCase: {
-			id: tc.id,
-			description: tc.description,
-			input: tc.input,
-			system_prompt: null,
-			expected_output: tc.expected_output,
-			actual_output: tc.actual_output ?? null,
-			metrics: tc.metrics,
-			tags: [],
-			weight: tc.weight,
-		},
-		actualOutput: tc.actual_output ?? "",
-		expectedOutput: tc.expected_output,
-		config: prepared.config,
-		baselineRecord: baseline
-			? {
-					run_id: baseline.run_id,
-					golden_set_version: baseline.golden_set_version,
-					suite_score: baseline.suite_score,
-					metric_summary: baseline.metric_summary,
-				}
-			: null,
-		currentGoldenSetVersion: prepared.parsed.version,
-	};
+function validateOption<T>(
+	value: string | undefined,
+	valid: readonly T[],
+	name: string,
+): T | undefined {
+	if (value === undefined) return undefined;
+	if ((valid as readonly string[]).includes(value)) return value as T;
+	printError(
+		`Invalid ${name} "${value}". Valid: ${valid.map((v) => `"${String(v)}"`).join(", ")}`,
+	);
+	process.exit(2);
 }
 
 export async function runCommand(options: RunOptions): Promise<void> {
 	const startTime = Date.now();
-	const trigger = options.trigger ?? "cli";
+	const trigger = validateOption(
+		options.trigger ?? "cli",
+		VALID_TRIGGERS,
+		"trigger",
+	);
+	if (!trigger) return;
 
 	const ciMode = options.ci === true;
 	const noColor = options.noCi ? false : ciMode || isCiEnvironment();
-
 	configureColor(noColor ? "never" : "auto");
 
 	if (options.dryRun) {
@@ -175,9 +67,10 @@ export async function runCommand(options: RunOptions): Promise<void> {
 		return;
 	}
 
-	printHeader(`regtrace run`);
+	printHeader("regtrace run");
 
-	const configPrep = await prepareConfig(options);
+	// Load config
+	const configPrep = await loadConfigFromFile(options.config);
 	if (!configPrep.success) {
 		for (const err of configPrep.errors) {
 			printError(`${err.field}: ${err.message}`);
@@ -187,13 +80,22 @@ export async function runCommand(options: RunOptions): Promise<void> {
 		);
 		process.exit(2);
 	}
+	if (!configPrep.configPath) {
+		printError("Config path not found");
+		process.exit(2);
+	}
 
 	const config = configPrep.data;
-	const configContent = configPrep.configContent ?? "";
-	const configDir = configPrep.configDir ?? process.cwd();
+	const configDir = resolve(configPrep.configPath, "..");
+	const configContent = readFileSync(configPrep.configPath, "utf-8");
 
-	const enabledSets = config.golden_sets.filter((gs) => gs.enabled);
+	// Validate format
+	const format =
+		validateOption(options.format ?? "terminal", VALID_FORMATS, "format") ??
+		"terminal";
 
+	// Filter to requested set
+	let enabledSets = config.golden_sets.filter((gs) => gs.enabled);
 	if (options.setName) {
 		const filtered = enabledSets.filter(
 			(gs) => gs.path === options.setName || gs.alias === options.setName,
@@ -208,14 +110,8 @@ export async function runCommand(options: RunOptions): Promise<void> {
 			);
 			process.exit(2);
 		}
-		enabledSets.length = 0;
-		enabledSets.push(...filtered);
+		enabledSets = filtered;
 	}
-
-	const judgeCfg = buildJudgeConfig(config.judge.primary);
-
-	await ensureRegtraceDir(configDir);
-	const allRunRecords: RunRecord[] = [];
 
 	if (ciMode) {
 		printInfo(
@@ -223,139 +119,21 @@ export async function runCommand(options: RunOptions): Promise<void> {
 		);
 	}
 
-	for (const gsEntry of enabledSets) {
-		const prep = await prepareGoldenSet(configDir, gsEntry.path);
-		if (!("parsed" in prep)) {
-			printError(
-				`Failed to load golden set "${gsEntry.path}": ${prep.errors.map((e) => e.message).join("; ")}`,
-			);
-			continue;
-		}
+	// Run the pipeline
+	const pipelineResults = await runPipeline(
+		config,
+		configDir,
+		configContent,
+		startTime,
+		{
+			generate: options.generate,
+			trigger: trigger as "cli" | "ci" | "watch",
+			quiet: options.quiet,
+		},
+	);
 
-		prep.config = config;
-		prep.configContent = configContent;
-
-		printInfo(
-			`Evaluating "${prep.parsed.name}" (${prep.parsed.test_cases.length} test cases)`,
-		);
-		if (prep.parsed.description) {
-			printInfo(prep.parsed.description);
-		}
-
-		const baseline = await findBaselineRun(
-			configDir,
-			config.metrics.regression.baseline_strategy,
-			config.metrics.regression.pinned_run_id ?? undefined,
-		);
-
-		const testCaseResults: TestCaseResult[] = [];
-		let aggregateScoreSum = 0;
-
-		for (const tc of prep.parsed.test_cases) {
-			if (options.generate && tc.actual_output == null) {
-				const genCfg = config.generator ?? config.judge.primary;
-				printInfo(
-					`  Generating output for "${tc.id}" via ${genCfg.provider}/${genCfg.model}`,
-				);
-				const generated = await generateOutput(tc.input, null, genCfg);
-				tc.actual_output = generated;
-			}
-
-			const params = buildTestCaseParams(prep, tc, baseline);
-			const result = await evaluateTestCase(params);
-			testCaseResults.push(result.testCaseResult);
-			aggregateScoreSum += result.aggregateScore;
-		}
-
-		const suiteScore =
-			testCaseResults.length > 0
-				? aggregateScoreSum / testCaseResults.length
-				: 0;
-
-		const metricSummary: Record<string, { score: number; pass_rate: number }> =
-			{};
-		for (const tcResult of testCaseResults) {
-			for (const [metricName, _mr] of Object.entries(tcResult.metric_results)) {
-				if (!metricSummary[metricName]) {
-					metricSummary[metricName] = { score: 0, pass_rate: 0 };
-				}
-			}
-		}
-		for (const metricName of Object.keys(metricSummary)) {
-			const scores: number[] = [];
-			let passed = 0;
-			for (const tcResult of testCaseResults) {
-				const mr = tcResult.metric_results[metricName];
-				if (mr) {
-					scores.push(mr.score);
-					if (mr.passed) passed++;
-				}
-			}
-			if (scores.length > 0) {
-				metricSummary[metricName] = {
-					score: scores.reduce((a, b) => a + b, 0) / scores.length,
-					pass_rate: passed / scores.length,
-				};
-			}
-		}
-
-		const durationMs = Date.now() - startTime;
-
-		const status =
-			suiteScore >= config.quality_gates.suite_score_minimum
-				? "passed"
-				: "failed";
-
-		const record = await createRunRecord(configDir, {
-			status,
-			trigger,
-			durationMs,
-			regtraceVersion: "0.1.0",
-			judgeProvider: judgeCfg.provider,
-			judgeModel: judgeCfg.model,
-			configContent,
-			goldenSetName: prep.parsed.name,
-			goldenSetVersion: prep.parsed.version,
-			goldenSetContent: prep.goldenSetContent,
-			suiteScore,
-			metricSummary,
-			testCaseResults,
-			regression: {
-				baseline_run_id: baseline?.run_id ?? null,
-				baseline_golden_set_version: baseline?.golden_set_version ?? null,
-				current_golden_set_version: prep.parsed.version,
-				version_change_detected: baseline
-					? baseline.golden_set_version !== prep.parsed.version
-					: false,
-				suite_delta: baseline ? suiteScore - baseline.suite_score : 0,
-				regression_status: "clean",
-				test_cases_excluded: [],
-				metric_deltas: {},
-			},
-		});
-
-		const qualityGates = checkQualityGates(record, config);
-		record.status = qualityGates.passed ? "passed" : "failed";
-
-		allRunRecords.push(record);
-
-		const dbEnabled =
-			config.storage?.db.enabled && gsEntry.store_in_db !== false;
-		if (dbEnabled) {
-			try {
-				const db = initDb(
-					resolve(
-						configDir,
-						config.storage?.db.path ?? ".regtrace/regtrace.db",
-					),
-				);
-				saveRunRecord(db, record);
-			} catch {
-				// DB insert failure is non-fatal — file storage is SSoT
-			}
-		}
-
-		const format = options.format ?? "terminal";
+	// Output results
+	for (const { run: record, qualityGates } of pipelineResults) {
 		if (format === "json") {
 			const reportData: ReportData = { run: record, qualityGates, config };
 			const report = generateReport(reportData, "json");
@@ -364,7 +142,7 @@ export async function runCommand(options: RunOptions): Promise<void> {
 				config.output.report_path ??
 				`.regtrace/report-${record.run_id}.json`;
 			writeFileSync(outputPath, report, "utf-8");
-			writeJson(reportData);
+			console.log(JSON.stringify(reportData, null, 2));
 		} else if (format === "markdown") {
 			const reportData: ReportData = { run: record, qualityGates, config };
 			const report = generateReport(reportData, "markdown");
@@ -376,7 +154,9 @@ export async function runCommand(options: RunOptions): Promise<void> {
 			printInfo(`Report written: ${outputPath}`);
 		} else {
 			printSuiteSummary(record);
-			printTestCaseResults(testCaseResults, { verbose: options.verbose });
+			printTestCaseResults(record.test_case_results, {
+				verbose: options.verbose,
+			});
 			printMetricSummary(record);
 			printQualityGates(qualityGates);
 		}
@@ -387,30 +167,29 @@ export async function runCommand(options: RunOptions): Promise<void> {
 		}
 	}
 
-	const passCount = allRunRecords.filter((r) => r.status === "passed").length;
-	const failCount = allRunRecords.filter((r) => r.status === "failed").length;
+	// Summary
+	const passCount = pipelineResults.filter((r) => r.qualityGates.passed).length;
+	const failCount = pipelineResults.filter(
+		(r) => !r.qualityGates.passed,
+	).length;
 	const totalDurationMs = Date.now() - startTime;
 
-	stderr();
+	console.error();
 	printHeader("Run Complete");
-	printInfo(`${allRunRecords.length} suite(s) evaluated`);
+	printInfo(`${pipelineResults.length} suite(s) evaluated`);
 	printInfo(`${totalDurationMs}ms total`);
 	if (passCount > 0) printSuccess(`${passCount} suite(s) passed`);
 	if (failCount > 0) printError(`${failCount} suite(s) failed`);
-	stderr();
+	console.error();
 
-	if (ciMode && failCount > 0) {
-		process.exit(1);
-	}
-	if (!ciMode && failCount > 0) {
-		// In non-CI mode, just report the failure without exiting
-	}
+	if (ciMode && failCount > 0) process.exit(1);
 }
 
 async function runDryRun(options: RunOptions): Promise<void> {
+	const dryStart = Date.now();
 	printHeader("regtrace dry-run");
 
-	const configPrep = await prepareConfig(options);
+	const configPrep = await loadConfigFromFile(options.config);
 	if (!configPrep.success) {
 		for (const err of configPrep.errors) {
 			printError(`${err.field}: ${err.message}`);
@@ -419,20 +198,28 @@ async function runDryRun(options: RunOptions): Promise<void> {
 	}
 
 	const config = configPrep.data;
-	const configDir = configPrep.configDir ?? process.cwd();
+	const configDir = configPrep.configPath
+		? resolve(configPrep.configPath, "..")
+		: process.cwd();
 	const enabledSets = config.golden_sets.filter((gs) => gs.enabled);
 
 	printInfo(`Config: valid`);
 	printInfo(`Project: ${config.project.name} v${config.project.version}`);
 	printInfo(`Golden sets: ${enabledSets.length} enabled`);
 
+	let hasNullOutput = false;
 	for (const gsEntry of enabledSets) {
-		const fullPath = resolveGoldenSetPath(configDir, gsEntry.path);
+		const fullPath = gsEntry.path.startsWith("/")
+			? gsEntry.path
+			: resolve(configDir, gsEntry.path);
 		const loadResult = await loadGoldenSetFromFile(fullPath);
 		if (loadResult.success) {
 			printSuccess(
 				`  ${gsEntry.path} — ${loadResult.data.test_cases.length} test cases`,
 			);
+			for (const tc of loadResult.data.test_cases) {
+				if (tc.actual_output == null) hasNullOutput = true;
+			}
 		} else {
 			printError(
 				`  ${gsEntry.path} — invalid: ${loadResult.errors.map((e) => e.message).join("; ")}`,
@@ -440,12 +227,33 @@ async function runDryRun(options: RunOptions): Promise<void> {
 		}
 	}
 
+	if (hasNullOutput && !options.generate) {
+		printInfo(
+			"  Some test cases have null actual_output. Use --generate to auto-generate.",
+		);
+	}
+
+	// Check if any env vars are set for the configured providers
+	const judgeProvider = config.judge.primary.provider;
+	const providerEnvMap: Record<string, string> = {
+		openai: "OPENAI_API_KEY",
+		anthropic: "ANTHROPIC_API_KEY",
+		gemini: "GEMINI_API_KEY",
+		groq: "GROQ_API_KEY",
+	};
+	const envVar = providerEnvMap[judgeProvider];
+	if (envVar && !process.env[envVar]) {
+		printInfo(
+			`  ${judgeProvider} provider configured but ${envVar} is not set in environment.`,
+		);
+	}
+
+	printInfo(
+		`Judge provider: ${config.judge.primary.provider}/${config.judge.primary.model}`,
+	);
 	printInfo(
 		"Judge provider connectivity: skipped (dry-run does not call providers)",
 	);
-	printSuccess("Dry-run completed in under 2 seconds");
-}
-
-function stderr(...args: unknown[]): void {
-	console.log(...args);
+	const actualMs = Date.now() - dryStart;
+	printSuccess(`Dry-run completed in ${actualMs}ms`);
 }

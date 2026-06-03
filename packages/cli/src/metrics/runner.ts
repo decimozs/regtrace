@@ -183,7 +183,7 @@ export async function evaluateSuite(
 	let batchCount = 0;
 	for (let i = 0; i < params.testCases.length; i += concurrency) {
 		const batch = params.testCases.slice(i, i + concurrency);
-		if (batchCount > 0) await sleep(20000);
+		if (batchCount > 0) await sleep(0); // inter-batch delay (reserved for future rate limiting)
 		const batchResults = await concurrentMap(
 			batch,
 			(tc) => evaluateTestCase(tc),

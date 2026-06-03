@@ -172,7 +172,12 @@ test_cases:
 async function runCli(
 	args: string[],
 	cwd: string,
-): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+): Promise<{
+	exitCode: number;
+	stdout: string;
+	stderr: string;
+	combined: string;
+}> {
 	const proc = Bun.spawn(["bun", "run", CLI_ENTRY, ...args], {
 		cwd,
 		env: {
@@ -181,11 +186,20 @@ async function runCli(
 			ANTHROPIC_API_KEY: "",
 			OPENAI_API_KEY: "",
 		},
+		stdio: ["inherit", "pipe", "pipe"],
 	});
-	const stdout = await new Response(proc.stdout).text();
-	const stderr = await new Response(proc.stderr).text();
+
+	const [stdout, stderrText] = await Promise.all([
+		new Response(proc.stdout).text(),
+		new Response(proc.stderr).text(),
+	]);
 	const exitCode = await proc.exited;
-	return { exitCode, stdout, stderr };
+	return {
+		exitCode,
+		stdout,
+		stderr: stderrText,
+		combined: stdout + stderrText,
+	};
 }
 
 function latestRecord(dir: string): Record<string, unknown> | null {
@@ -204,9 +218,12 @@ function latestRecord(dir: string): Record<string, unknown> | null {
 describe("init", () => {
 	it("scaffolds project files", async () => {
 		const dir = tmpDir();
-		const { exitCode, stdout } = await runCli(["init", "--dir", dir], dir);
+		const { exitCode, combined } = await runCli(
+			["init", "--dir", dir, "--force"],
+			dir,
+		);
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain("initialized");
+		expect(combined).toContain("initialized");
 		expect(existsSync(resolve(dir, "regtrace.config.yaml"))).toBe(true);
 		expect(existsSync(resolve(dir, "golden-sets", "qa.yaml"))).toBe(true);
 	});
@@ -217,13 +234,13 @@ describe("run", () => {
 		const dir = tmpDir();
 		const { configPath } = writeFiles(dir, BASE_CONFIG(), DEFAULT_GS);
 
-		const { exitCode, stdout } = await runCli(
+		const { exitCode, combined } = await runCli(
 			["run", "--config", configPath],
 			dir,
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain("suite(s) evaluated");
+		expect(combined).toContain("suite(s) evaluated");
 
 		const record = latestRecord(dir);
 		expect(record).not.toBeNull();
@@ -314,13 +331,13 @@ describe("run --generate", () => {
 		const dir = tmpDir();
 		const { configPath } = writeFiles(dir, BASE_CONFIG(), NULL_OUTPUT_GS);
 
-		const { exitCode, stdout } = await runCli(
+		const { exitCode, combined } = await runCli(
 			["run", "--config", configPath, "--generate", "--dry-run"],
 			dir,
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain("Dry-run");
+		expect(combined).toContain("Dry-run");
 	});
 });
 
@@ -332,13 +349,13 @@ describe("list + history", () => {
 		await runCli(["run", "--config", configPath], dir);
 		expect(latestRecord(dir)).not.toBeNull();
 
-		const { exitCode, stdout } = await runCli(
+		const { exitCode, combined } = await runCli(
 			["list", "--config", configPath],
 			dir,
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain("integration-gs");
+		expect(combined).toContain("integration-gs");
 	});
 
 	it("shows specific run with --run-id", async () => {
@@ -349,13 +366,13 @@ describe("list + history", () => {
 		const record = latestRecord(dir);
 		const runId = record?.run_id as string;
 
-		const { exitCode, stdout } = await runCli(
+		const { exitCode, combined } = await runCli(
 			["history", "--config", configPath, "--run-id", runId],
 			dir,
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain(runId);
+		expect(combined).toContain(runId);
 	});
 });
 
@@ -371,13 +388,13 @@ describe("quality gates", () => {
 			DEFAULT_GS,
 		);
 
-		const { exitCode, stdout } = await runCli(
+		const { exitCode, combined } = await runCli(
 			["run", "--config", configPath],
 			dir,
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain("FAILED");
+		expect(combined).toContain("FAILED");
 		const record = latestRecord(dir);
 		expect(record?.status).toBe("failed");
 	});
@@ -393,13 +410,13 @@ describe("quality gates", () => {
 			ALL_PASS_GS,
 		);
 
-		const { exitCode, stdout } = await runCli(
+		const { exitCode, combined } = await runCli(
 			["run", "--config", configPath],
 			dir,
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain("PASSED");
+		expect(combined).toContain("PASSED");
 		const record = latestRecord(dir);
 		expect(record?.status).toBe("passed");
 	});
@@ -420,13 +437,13 @@ describe("error handling", () => {
 		const cfg = BASE_CONFIG().replace("golden-set.yaml", "no-such.yaml");
 		writeFileSync(resolve(dir, "regtrace.config.yaml"), cfg, "utf-8");
 
-		const { exitCode, stdout } = await runCli(
+		const { exitCode, combined } = await runCli(
 			["run", "--config", resolve(dir, "regtrace.config.yaml")],
 			dir,
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain("suite(s) evaluated");
+		expect(combined).toContain("suite(s) evaluated");
 	});
 });
 
