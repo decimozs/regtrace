@@ -71,6 +71,13 @@ confidence scoring, and honest documentation. See
 [Limitations & Caveats](https://regtrace-docs.vercel.app/docs/explanation/limitations) for
 details.
 
+## Agent Skill
+
+`skills/regtrace/` is an agent skill that teaches AI coding agents how
+to use the regtrace CLI — golden sets, evaluation, regression detection,
+and CI integration. Agents load this skill when a user asks about LLM
+output quality or regtrace commands.
+
 ## Support
 
 - [GitHub Issues](https://github.com/decimozs/regtrace/issues) — bug reports, feature requests

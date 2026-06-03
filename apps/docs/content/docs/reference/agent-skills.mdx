@@ -1,0 +1,29 @@
+---
+title: Agent Skill
+description: Agent skill for teaching AI agents about the regtrace CLI
+---
+
+`skills/regtrace/` is an agent skill that teaches AI coding agents how to
+use the regtrace CLI. Agents load it automatically when a user asks about
+LLM output quality, golden sets, or regtrace commands.
+
+## Contents
+
+| File | Purpose |
+|---|---|
+| `SKILL.md` | Trigger phrases, quick-start, golden set format, score interpretation, common tasks |
+| `cli.md` | Full CLI reference: commands, flags, config YAML, golden set format, env vars |
+
+## Coverage
+
+The skill covers:
+
+- Project scaffolding and configuration
+- Golden set YAML format (single-turn and RAG)
+- Evaluation metrics — factuality, format, tone, regression
+- Quality gates and pass/fail criteria
+- All CLI commands and flags
+- CI integration patterns
+- Debugging failing test cases
+- Judge provider configuration
+- Run comparison via `history --diff`

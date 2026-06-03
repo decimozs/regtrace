@@ -23,6 +23,7 @@
     "reference/database",
     "reference/metrics",
     "reference/judge-providers",
+    "reference/agent-skills",
     "---Explanation---",
     "explanation/why-regtrace",
     "explanation/how-regtrace-works",
