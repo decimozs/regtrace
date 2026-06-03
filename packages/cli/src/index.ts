@@ -14,6 +14,7 @@ import { historyCommand, listCommand } from "./cli/list.command";
 import { configureColor, isCiEnvironment } from "./cli/print";
 import { runCommand } from "./cli/run.command";
 import { watchCommand } from "./cli/watch.command";
+import { rebuildDb } from "./storage/db-store";
 
 configureColor(
 	process.env.NO_COLOR ? "never" : isCiEnvironment() ? "never" : "auto",
@@ -179,6 +180,32 @@ program
 			.option("-c, --config <path>", "Path to config file")
 			.action(async (options: { config?: string }) => {
 				await baselineShowCommand(options);
+			}),
+	);
+
+program
+	.command("db")
+	.description("Manage the run database")
+	.addCommand(
+		new Command("rebuild")
+			.description("Rebuild database from .regtrace/runs/ files")
+			.option("-c, --config <path>", "Path to config file")
+			.action(async (options: { config?: string }) => {
+				const { loadConfigFromFile } = await import("./storage/config-loader");
+				const result = await loadConfigFromFile(options.config);
+				if (!result.success || !result.configPath) {
+					console.error(
+						"Config not found. Run `regtrace init` to create a project.",
+					);
+					process.exit(2);
+				}
+				const configDir = resolve(result.configPath, "..");
+				const dbPath = resolve(
+					configDir,
+					result.data.storage?.db.path ?? ".regtrace/regtrace.db",
+				);
+				const count = rebuildDb(configDir, dbPath);
+				console.log(`Rebuilt database: ${count} runs imported.`);
 			}),
 	);
 

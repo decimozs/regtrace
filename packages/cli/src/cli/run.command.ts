@@ -16,6 +16,7 @@ import {
 	type LoadConfigResult,
 	loadConfigFromFile,
 } from "../storage/config-loader";
+import { initDb, saveRunRecord } from "../storage/db-store";
 import { loadGoldenSetFromFile } from "../storage/golden-set-loader";
 import {
 	createRunRecord,
@@ -326,6 +327,22 @@ export async function runCommand(options: RunOptions): Promise<void> {
 		record.status = qualityGates.passed ? "passed" : "failed";
 
 		allRunRecords.push(record);
+
+		const dbEnabled =
+			config.storage?.db.enabled && gsEntry.store_in_db !== false;
+		if (dbEnabled) {
+			try {
+				const db = initDb(
+					resolve(
+						configDir,
+						config.storage?.db.path ?? ".regtrace/regtrace.db",
+					),
+				);
+				saveRunRecord(db, record);
+			} catch {
+				// DB insert failure is non-fatal — file storage is SSoT
+			}
+		}
 
 		const format = options.format ?? "terminal";
 		if (format === "json") {

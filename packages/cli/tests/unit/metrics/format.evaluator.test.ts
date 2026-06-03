@@ -7,7 +7,9 @@ import type { TestCase } from "../../../src/schema/golden-set.schema";
 function makeConfig(): Config {
 	return {
 		project: { name: "test", version: "1.0" },
-		golden_sets: [{ path: "test.yaml", enabled: true, weight: 1 }],
+		golden_sets: [
+			{ path: "test.yaml", enabled: true, weight: 1, store_in_db: true },
+		],
 		metrics: {
 			enabled: ["format"],
 			default_threshold: 0.7,

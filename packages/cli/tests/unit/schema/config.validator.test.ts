@@ -99,7 +99,9 @@ describe("config validator", () => {
 
 	it("fails when no golden sets are enabled", () => {
 		const data = makeMinimalConfig({
-			golden_sets: [{ path: "gs.yaml", enabled: false, weight: 1 }],
+			golden_sets: [
+				{ path: "gs.yaml", enabled: false, weight: 1, store_in_db: true },
+			],
 		});
 		const result = validateConfig(data);
 

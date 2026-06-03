@@ -9,7 +9,9 @@ import type { Config } from "../../../src/schema/config.schema";
 
 const MINIMAL_CONFIG: Config = {
 	project: { name: "test", version: "1.0" },
-	golden_sets: [{ path: "test.yaml", enabled: true, weight: 1 }],
+	golden_sets: [
+		{ path: "test.yaml", enabled: true, weight: 1, store_in_db: true },
+	],
 	metrics: {
 		enabled: ["factuality", "format", "tone"],
 		default_threshold: 0.7,

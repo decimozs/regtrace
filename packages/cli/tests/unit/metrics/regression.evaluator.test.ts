@@ -313,7 +313,9 @@ describe("regressionEvaluator.evaluate", () => {
 			expectedOutput: "expected output",
 			config: {
 				project: { name: "test", version: "1.0" },
-				golden_sets: [{ path: "test.yaml", enabled: true, weight: 1 }],
+				golden_sets: [
+					{ path: "test.yaml", enabled: true, weight: 1, store_in_db: true },
+				],
 				metrics: {
 					enabled: ["regression"],
 					default_threshold: 0.7,

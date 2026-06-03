@@ -8,7 +8,9 @@ import type { RunRecord } from "../../../src/schema/run-record.schema";
 function makeConfig(overrides?: Partial<Config>): Config {
 	const defaults: Config = {
 		project: { name: "test", version: "1.0", description: null },
-		golden_sets: [{ path: "gs.yaml", enabled: true, weight: 1 }],
+		golden_sets: [
+			{ path: "gs.yaml", enabled: true, weight: 1, store_in_db: true },
+		],
 		metrics: {
 			enabled: ["factuality", "format"],
 			default_threshold: 0.7,

@@ -104,6 +104,7 @@ const goldenSetEntrySchema = object({
 	alias: nullable(string()).optional(),
 	enabled: boolean().default(true),
 	weight: number().min(0).default(1),
+	store_in_db: boolean().default(true),
 });
 
 const qualityGatesSchema = object({
@@ -133,6 +134,15 @@ const outputConfigSchema = object({
 	ci_mode_auto_detect: boolean().default(true),
 });
 
+const dbConfigSchema = object({
+	enabled: boolean().default(false),
+	path: string().default(".regtrace/regtrace.db"),
+});
+
+const storageConfigSchema = object({
+	db: dbConfigSchema,
+});
+
 export const configSchema = object({
 	project: object({
 		name: string().min(1),
@@ -149,6 +159,7 @@ export const configSchema = object({
 	run: runConfigSchema,
 	quality_gates: qualityGatesSchema,
 	output: outputConfigSchema,
+	storage: storageConfigSchema.optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;
