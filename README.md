@@ -21,9 +21,7 @@ LLM quality degrades silently. A prompt change, a model update, a new feature â€
 
 ```bash
 # Install
-curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
-chmod +x ./regtrace
-sudo mv ./regtrace /usr/local/bin/regtrace
+curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64 -o regtrace && chmod +x regtrace && sudo mv regtrace /usr/local/bin/regtrace && regtrace --version
 
 # Create a project
 mkdir my-eval && cd my-eval
@@ -48,13 +46,12 @@ See the [getting started tutorial](https://regtrace-docs.vercel.app/docs/tutoria
 
 ```bash
 # macOS (Apple Silicon)
-curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-darwin-arm64
-chmod +x ./regtrace
-sudo mv ./regtrace /usr/local/bin/regtrace
+curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-darwin-arm64 -o regtrace && chmod +x regtrace && sudo mv regtrace /usr/local/bin/regtrace && regtrace --version
 
-# Windows (PowerShell as admin)
-curl -L -o regtrace.exe https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe
-# Move regtrace.exe to a directory in your %PATH%
+# Windows (PowerShell)
+curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe -o regtrace.exe
+# Move regtrace.exe to a directory in your %PATH%, then verify:
+# regtrace --version
 ```
 
 ## Integrations

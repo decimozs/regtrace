@@ -16,22 +16,19 @@ running your first evaluation.
 <Tabs items={['Linux', 'macOS', 'Windows']}>
   <Tab value="Linux">
     ```bash
-    curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
-    chmod +x ./regtrace
-    sudo mv ./regtrace /usr/local/bin/regtrace
+    curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64 -o regtrace && chmod +x regtrace && sudo mv regtrace /usr/local/bin/regtrace && regtrace --version
     ```
   </Tab>
   <Tab value="macOS">
     ```bash
-    curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-darwin-arm64
-    chmod +x ./regtrace
-    sudo mv ./regtrace /usr/local/bin/regtrace
+    curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-darwin-arm64 -o regtrace && chmod +x regtrace && sudo mv regtrace /usr/local/bin/regtrace && regtrace --version
     ```
   </Tab>
   <Tab value="Windows">
     ```powershell
-    curl -L -o regtrace.exe https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe
-    # Move regtrace.exe to a directory in your %PATH%
+    curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe -o regtrace.exe
+    # Move regtrace.exe to a directory in your %PATH%, then verify:
+    # regtrace --version
     ```
   </Tab>
 </Tabs>
