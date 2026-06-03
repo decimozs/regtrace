@@ -13,8 +13,10 @@ import { initCommand } from "./cli/init.command";
 import { historyCommand, listCommand } from "./cli/list.command";
 import { configureColor, isCiEnvironment, printError } from "./cli/print";
 import { runCommand } from "./cli/run.command";
+import { upgradeCommand } from "./cli/upgrade.command";
 import { watchCommand } from "./cli/watch.command";
 import { rebuildDb } from "./storage/db-store";
+import { completeSwap } from "./upgrade/swap";
 
 configureColor(
 	process.env.NO_COLOR ? "never" : isCiEnvironment() ? "never" : "auto",
@@ -26,6 +28,23 @@ process.on("unhandledRejection", (err) => {
 	);
 	process.exit(1);
 });
+
+// Internal flag: completes an in-place upgrade after the old process exits.
+// Handled here before Commander sees it so it never appears in help.
+const upgradeArgIndex = process.argv.indexOf("--complete-upgrade");
+if (upgradeArgIndex !== -1) {
+	const sourcePath = process.argv[upgradeArgIndex + 1];
+	const targetPath = process.argv[upgradeArgIndex + 2];
+	const backupPath = process.argv[upgradeArgIndex + 3];
+	if (!sourcePath || !targetPath || !backupPath) {
+		console.error(
+			"regtrace: --complete-upgrade requires <source> <target> <backup> arguments",
+		);
+		process.exit(1);
+	}
+	const ok = completeSwap(sourcePath, targetPath, backupPath);
+	process.exit(ok ? 0 : 1);
+}
 
 const program = new Command();
 
@@ -50,7 +69,8 @@ Examples:
   regtrace history --diff <a> <b> Compare two runs
   regtrace watch                 Watch files and re-run on change
   regtrace baseline pin <run-id> Pin a run as baseline
-  regtrace baseline show         Show current baseline`,
+  regtrace baseline show         Show current baseline
+  regtrace upgrade               Upgrade regtrace to the latest version`,
 	);
 
 program
@@ -223,6 +243,39 @@ program
 				const count = rebuildDb(configDir, dbPath);
 				console.log(`Rebuilt database: ${count} runs imported.`);
 			}),
+	);
+
+program
+	.command("upgrade")
+	.description("Upgrade the regtrace binary to the latest release")
+	.option("-y, --yes", "Skip confirmation prompt")
+	.option("--prerelease", "Include prerelease (beta/rc) versions")
+	.option("--no-verify", "Skip SHA256 checksum verification")
+	.option("--dry-run", "Show available version without downloading")
+	.addHelpText(
+		"after",
+		`
+Examples:
+  regtrace upgrade                    Interactive upgrade
+  regtrace upgrade -y                 Upgrade without confirmation
+  regtrace upgrade --prerelease       Include beta/rc releases
+  regtrace upgrade --no-verify        Skip checksum check
+  regtrace upgrade --dry-run          Check version without upgrading`,
+	)
+	.action(
+		async (options: {
+			yes?: boolean;
+			prerelease?: boolean;
+			noVerify?: boolean;
+			dryRun?: boolean;
+		}) => {
+			await upgradeCommand({
+				yes: options.yes,
+				prerelease: options.prerelease,
+				noVerify: options.noVerify,
+				dryRun: options.dryRun,
+			});
+		},
 	);
 
 program.parse();
