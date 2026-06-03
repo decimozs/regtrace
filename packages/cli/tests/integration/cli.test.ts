@@ -202,12 +202,25 @@ async function runCli(
 		new Response(proc.stderr).text(),
 	]);
 	const exitCode = await proc.exited;
+	await new Promise((r) => setTimeout(r, 50));
 	return {
 		exitCode,
 		stdout,
 		stderr: stderrText,
 		combined: stdout + stderrText,
 	};
+}
+
+async function waitForFile(
+	path: string,
+	timeoutMs = 2000,
+): Promise<boolean> {
+	const start = Date.now();
+	while (Date.now() - start < timeoutMs) {
+		if (existsSync(path)) return true;
+		await new Promise((r) => setTimeout(r, 50));
+	}
+	return existsSync(path);
 }
 
 function latestRecord(dir: string): Record<string, unknown> | null {
@@ -269,7 +282,7 @@ describe("run", () => {
 		);
 
 		expect(exitCode).toBe(0);
-		expect(existsSync(outPath)).toBe(true);
+		expect(await waitForFile(outPath)).toBe(true);
 		const report = JSON.parse(readFileSync(outPath, "utf-8"));
 		expect(report.suite.name).toBe("integration-gs");
 		expect(report.summary).toBeDefined();
@@ -305,7 +318,7 @@ describe("run", () => {
 		if (exitCode !== 0) {
 			console.error("CLI output for failed markdown test:\n", combined);
 		}
-		expect(existsSync(outPath)).toBe(true);
+		expect(await waitForFile(outPath)).toBe(true);
 		const report = readFileSync(outPath, "utf-8");
 		expect(report).toContain("Regtrace Report");
 		expect(report).toContain("Quality Gates");
