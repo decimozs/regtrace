@@ -53,9 +53,9 @@ cd $env:USERPROFILE
 curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe -o "$env:USERPROFILE\Downloads\regtrace.exe"
 Move-Item "$env:USERPROFILE\Downloads\regtrace.exe" "$env:USERPROFILE\AppData\Local\Microsoft\WindowsApps\regtrace.exe"
 regtrace --version
+```
 
 > **Note:** `WindowsApps` is in PATH by default on most Windows systems. If `regtrace --version` fails, move the binary to another directory in your `%PATH%`.
-```
 
 ## Integrations
 
