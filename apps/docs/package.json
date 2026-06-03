@@ -1,6 +1,12 @@
 {
   "name": "@regtrace/docs",
   "version": "1.0.0",
+  "description": "Regtrace documentation — LLM output evaluation toolkit",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/decimozs/regtrace.git"
+  },
   "private": true,
   "scripts": {
     "build": "next build",

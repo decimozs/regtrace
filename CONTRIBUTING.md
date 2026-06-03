@@ -80,7 +80,6 @@ bun run --cwd apps/docs dev
 3. `git push origin v<version>` — triggers `.github/workflows/release.yml`
 4. Workflow builds binaries for Linux x86-64, macOS ARM64, Windows x86-64 and creates a GitHub release
 
-> **Note:** Private repo — binary downloads require `gh release download` or a PAT-authenticated API call. See [install docs](apps/docs/content/docs/tutorials/getting-started.mdx).
 
 ## Code Style
 
