@@ -13,23 +13,23 @@ init: ## Scaffold a new regtrace project
 	$(BIN) init
 	@sed -i 's/claim_extraction_depth: shallow/claim_extraction_depth: deep/' regtrace.config.yaml
 
-init-claude: init seed ## Scaffold project with Claude 3.5 Sonnet judge
+init-claude: init seed env ## Scaffold project with Claude 3.5 Sonnet judge
 	@echo "✓ Initialized with Anthropic Claude judge"
 	@echo "  Set ANTHROPIC_API_KEY in .env for LLM-judged scores."
 
-init-openai: init seed ## Scaffold project with OpenAI GPT-4o judge
+init-openai: init seed env ## Scaffold project with OpenAI GPT-4o judge
 	@sed -i 's/provider: anthropic/provider: openai/' regtrace.config.yaml
 	@sed -i 's/model: claude-3-5-sonnet-20240620/model: gpt-4o/' regtrace.config.yaml
 	@echo "✓ Initialized with OpenAI GPT-4o judge"
 	@echo "  Set OPENAI_API_KEY in .env for LLM-judged scores."
 
-init-groq: init seed ## Scaffold project with Groq Llama 3.1 judge
+init-groq: init seed env ## Scaffold project with Groq Llama 3.1 judge
 	@sed -i 's/provider: anthropic/provider: groq/' regtrace.config.yaml
 	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama-3.1-70b-versatile/' regtrace.config.yaml
 	@echo "✓ Initialized with Groq Llama 3.1 judge"
 	@echo "  Set GROQ_API_KEY in .env for LLM-judged scores."
 
-init-ollama: init seed ## Scaffold project with Ollama local judge
+init-ollama: init seed env ## Scaffold project with Ollama local judge
 	@sed -i 's/provider: anthropic/provider: ollama/' regtrace.config.yaml
 	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama3.2/' regtrace.config.yaml
 	@echo "✓ Initialized with Ollama Llama 3.2 judge"
@@ -86,11 +86,15 @@ seed: ## Fill golden set with sample outputs so `make run` works immediately
 	@sed -i '0,/actual_output: null/{s/actual_output: null/actual_output: "Paris has a population of approximately 2.1 million people within the city limits."/}' golden-sets/qa.yaml
 	@echo "✓ Golden set seeded with sample outputs"
 
-env: ## Create .env template with API key placeholders
-	@echo '# Regtrace API keys — uncomment the one matching your judge provider' > .env
-	@echo '# Then run: make run' >> .env
-	@echo '# ANTHROPIC_API_KEY=sk-ant-...' >> .env
-	@echo '# OPENAI_API_KEY=sk-...' >> .env
-	@echo '# GROQ_API_KEY=gsk_...' >> .env
-	@echo '# GEMINI_API_KEY=...' >> .env
-	@echo '✓ Created .env template — edit it with your API key'
+env: ## Create .env template with API key placeholders (does not overwrite existing)
+	@if [ ! -f .env ]; then \
+		echo '# Regtrace API keys — uncomment the one matching your judge provider' > .env; \
+		echo '#' >> .env; \
+		echo '# ANTHROPIC_API_KEY=sk-ant-...' >> .env; \
+		echo '# OPENAI_API_KEY=sk-...' >> .env; \
+		echo '# GROQ_API_KEY=gsk_...' >> .env; \
+		echo '# GEMINI_API_KEY=...' >> .env; \
+		echo '✓ Created .env template — edit it with your API key'; \
+	else \
+		echo 'i .env already exists, keeping your existing keys.'; \
+	fi
