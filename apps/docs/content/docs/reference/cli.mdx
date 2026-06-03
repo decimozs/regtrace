@@ -32,14 +32,28 @@ Scaffold a new Regtrace project:
 
 - Creates `regtrace.config.yaml` with defaults
 - Creates `golden-sets/qa.yaml` with sample test cases
-- Creates `.gitignore` with `.regtrace/runs/`
+- Creates `.gitignore` with `.regtrace/runs/` and `.env`
+- Creates `.env.example` with commented API key placeholders
 - Creates `.regtrace/runs/` directory
+
+<TypeTable
+  type={{
+    "--force": { description: "Overwrite existing files without prompt", type: "boolean", default: "false" },
+    "--dir": { description: "Target directory (default: current dir)", type: "string" },
+  }}
+/>
 
 <Callout type="info">
   Required config block that must always be present: `metrics.tone`
   (can disable all sub-dimensions to skip tone evaluation).
   It is populated by `regtrace init`.
 </Callout>
+
+Use `--force` to overwrite existing files:
+
+```bash
+regtrace init --force
+```
 
 ### `run`
 
@@ -59,9 +73,17 @@ Run evaluation on all enabled golden sets.
     "--format": { description: "Output format: `terminal`, `json`, `markdown`", type: "string", default: "terminal" },
     "--output": { description: "Write output to file (requires `--format`)", type: "string" },
     "--set": { description: "Run a specific golden set (matches config `path`)", type: "string" },
+    "--quiet": { description: "Suppress human-readable output (only errors shown)", type: "boolean", default: "false" },
     "--verbose": { description: "Show all test cases, including passing ones", type: "boolean", default: "false" },
+    "--trigger": { description: "Trigger type: `cli`, `ci`, `watch`", type: "string", default: "cli" },
   }}
 />
+
+<Callout type="info">
+  `--format` and `--trigger` values are validated at startup. Invalid values
+  produce an error and exit code 2. Human-readable output goes to stderr;
+  JSON output (`--format json`) goes to stdout for piping.
+</Callout>
 
 Steps:
 

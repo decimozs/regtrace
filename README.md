@@ -11,7 +11,8 @@ LLM quality degrades silently. A prompt change, a model update, a new feature �
 - **4 quality gates** — suite score, max failures, low-confidence ratio, regression status. AND-composed: all must pass for the run to pass.
 - **Parallel evaluation** — `run.concurrency` (default 1, max 20) batches test cases for concurrent LLM-judge calls.
 - **Multiple judge providers** — Anthropic, OpenAI, Groq, Gemini, Ollama.
-- **CI-native** — JSON output, machine-readable pass/fail, exit codes for pipeline integration.
+- **Fallback judge** — configure a secondary provider; Regtrace retries with exponential backoff + jitter, then falls back automatically.
+- **CI-native** — JSON on stdout, human-readable on stderr. Machine-readable pass/fail with exit codes for pipeline integration.
 - **Watch mode** — `regtrace watch` re-runs on golden set changes.
 
 ## Quick Start
@@ -24,10 +25,10 @@ sudo mv ./regtrace /usr/local/bin/regtrace
 
 # Create a project
 mkdir my-eval && cd my-eval
-regtrace init
+regtrace init                    # creates config, golden set, .env.example, .gitignore
 
 # Set up an LLM judge (optional — deterministic metrics work without one)
-echo "ANTHROPIC_API_KEY=sk-..." > .env
+cp .env.example .env             # or: echo "ANTHROPIC_API_KEY=sk-..." > .env
 
 # Populate golden set with model outputs and run
 # (edit golden-sets/qa.yaml, fill actual_output)

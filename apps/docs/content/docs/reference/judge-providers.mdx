@@ -6,10 +6,10 @@ description: Complete reference for LLM judge providers
 ## Provider support
 
 | Provider | Endpoint | Auth | Status |
-|---|---|---|---|
+|---|---|---|---|---|
 | Anthropic | `https://api.anthropic.com/v1/messages` | `ANTHROPIC_API_KEY` | ✅ Stable |
 | OpenAI | `https://api.openai.com/v1/chat/completions` | `OPENAI_API_KEY` | ✅ Stable |
-| Gemini | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` | `GEMINI_API_KEY` | ✅ Stable |
+| Gemini | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` | `GEMINI_API_KEY` (via `x-goog-api-key` header) | ✅ Stable |
 | Groq | `https://api.groq.com/openai/v1/chat/completions` | `GROQ_API_KEY` | ✅ Stable |
 | Ollama | `http://localhost:11434/api/chat` | None | ✅ Stable |
 
@@ -63,6 +63,63 @@ The judge returns structured assessment per sub-dimension.
 ## Default provider
 
 Anthropic is the default provider when no `judge` block is specified.
+
+## Retry with exponential backoff
+
+When a provider request fails (network error, rate limit, server error),
+Regtrace retries with exponential backoff and jitter:
+
+```
+delay = min(1000 × 2^attempt + random(500), 30000)
+```
+
+- Base: 1s, doubles per attempt
+- Jitter: up to 500ms random added
+- Cap: 30s max delay
+- Total attempts: configured by `retry_attempts` (default 3)
+
+## Fallback judge
+
+When the primary judge provider fails after all retries, Regtrace can fall
+back to a secondary provider:
+
+```yaml
+judge:
+  primary:
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    retry_attempts: 3
+
+  fallback:
+    provider: openai
+    model: gpt-5.4-mini-2026-03-17
+    retry_attempts: 2
+```
+
+The fallback is only invoked when the primary exhausts all retries. There is
+no double-fallback — if the fallback also fails, the metric falls back to
+heuristic scoring.
+
+## API key validation
+
+Regtrace validates required API keys before making any HTTP calls. If a key
+is missing, the CLI exits immediately with a descriptive error naming the
+provider and expected environment variable:
+
+```
+Anthropic API key not configured. Set ANTHROPIC_API_KEY or pass apiKey in judge config.
+```
+
+This fail-fast behavior prevents silent degradation — you never discover a
+missing key halfway through a run after spending time on earlier test cases.
+
+## Error sanitization
+
+API error responses are sanitized before display to prevent credential leaks:
+
+- Response body truncated to 400 characters
+- API key patterns redacted (`sk-...`, `gsk_...`, `AIza...`)
+- Error format: `${provider} API error ${status}: ${sanitized}`
 
 ## Generation
 

@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS runs (
     status              TEXT NOT NULL,
     trigger             TEXT NOT NULL,
     duration_ms         INTEGER NOT NULL,
+    regtrace_version    TEXT NOT NULL DEFAULT '',
     suite_score         REAL NOT NULL,
     golden_set_name     TEXT NOT NULL,
     golden_set_version  TEXT NOT NULL,
@@ -79,6 +80,7 @@ These are stored as native SQL types for fast filtering and sorting:
 | `status` | TEXT | `passed`, `failed`, or `errored` |
 | `trigger` | TEXT | `cli`, `ci`, or `watch` |
 | `duration_ms` | INTEGER | Run duration in milliseconds |
+| `regtrace_version` | TEXT | Regtrace version that produced the run |
 | `suite_score` | REAL | Aggregate suite score (0.0–1.0) |
 | `golden_set_name` | TEXT | Name of the evaluated golden set |
 | `golden_set_version` | TEXT | Version of the evaluated golden set |

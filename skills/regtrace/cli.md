@@ -19,8 +19,8 @@ regtrace <command> [options]
 
 ### `init`
 
-Scaffold a new regtrace project. Creates `regtrace.config.yaml` and
-`golden-sets/qa.yaml`.
+Scaffold a new regtrace project. Creates `regtrace.config.yaml`,
+`golden-sets/qa.yaml`, `.env.example`, and `.gitignore`.
 
 ```bash
 regtrace init [options]
@@ -29,6 +29,7 @@ regtrace init [options]
 | Option | Description |
 |--------|-------------|
 | `--dir <path>` | Target directory (default: current dir) |
+| `--force` | Overwrite existing files without prompt |
 
 ### `run`
 
@@ -48,8 +49,10 @@ regtrace run [options]
 | `--ci` | CI mode — exit 1 on quality gate failure |
 | `--no-ci` | Disable CI mode auto-detection |
 | `--verbose` | Show all test cases (including passing) |
+| `--quiet` | Suppress human-readable output (only errors shown) |
 | `--dry-run` | Validate config, golden sets, env without evaluating |
 | `--bail` | Stop after first suite that fails quality gates |
+| `--generate` | Auto-generate actual_output from LLM for null cases |
 
 **Common flag combinations:**
 
@@ -62,6 +65,8 @@ regtrace run --ci                         # CI mode, no color, exit 1 on failure
 regtrace run --ci --bail                  # CI mode, stop early
 regtrace run --dry-run                    # validate without running
 regtrace run --set my-set.yaml            # run a single golden set
+regtrace run --generate                   # auto-generate null outputs then evaluate
+regtrace run --quiet                      # suppress progress, show only errors
 ```
 
 ### `list`
@@ -182,7 +187,17 @@ judge:
     max_tokens: 4096
     timeout_ms: 30000
     retry_attempts: 3
+
+  fallback:                  # optional: used when primary exhausts retries
+    provider: openai
+    model: gpt-5.4-mini-2026-03-17
+    temperature: 0.1
+    max_tokens: 4096
+    timeout_ms: 30000
+    retry_attempts: 2
 ```
+
+Retries use exponential backoff with jitter: `min(1000 × 2^attempt + random(500), 30000)`. On failure after all retries, `judge.fallback` is tried (if configured). No double-fallback.
 
 ### Quality gates
 
@@ -257,8 +272,12 @@ Add `context` with retrieved documents:
 | `ANTHROPIC_API_KEY` | Anthropic judge | See below |
 | `OPENAI_API_KEY` | OpenAI judge | See below |
 | `GROQ_API_KEY` | Groq judge | See below |
-| `GEMINI_API_KEY` | Gemini judge | See below |
+| `GEMINI_API_KEY` | Gemini judge (via `x-goog-api-key` header) | See below |
 
 API keys are only needed when using LLM-judged metrics (factuality deep mode,
 tone). Format metrics are always deterministic and require no API key.
 Ollama requires no key (runs locally).
+
+Missing keys are caught immediately (fail-fast) with a descriptive error
+naming the provider and expected env var — no silent degradation. API error
+responses are sanitized (truncated to 400 chars, key patterns redacted).

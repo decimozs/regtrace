@@ -6,14 +6,24 @@ description: JSON and Markdown report output
 Regtrace can produce structured reports in JSON and Markdown formats for
 pipeline consumption, PR comments, or sharing with stakeholders.
 
+## Output streams
+
+Human-readable output (terminal, markdown, progress, errors) goes to **stderr**.
+Structured data (JSON format) goes to **stdout**. This lets you pipe JSON
+output while still seeing terminal progress:
+
+```bash
+regtrace run --format json 2>/dev/null | jq '.suite.suite_score'
+```
+
 ## Terminal output (default)
 
 ```bash
 regtrace run
 ```
 
-This is the default format. It prints colored output with per-test-case
-results, metric summaries, and quality gates.
+This is the default format. It prints colored output to stderr with
+per-test-case results, metric summaries, and quality gates.
 
 ## JSON output
 

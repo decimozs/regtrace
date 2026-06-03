@@ -36,7 +36,7 @@ All commands run from the repo root or `packages/cli/`:
 
 ```bash
 # Test
-bun test                    # Run all tests (89 unit + 11 integration + 40 CLI binary)
+bun test                    # Run all 159 tests
 bun run --cwd packages/cli test
 
 # Typecheck
@@ -46,8 +46,10 @@ bun run --cwd packages/cli typecheck    # tsc --noEmit
 bun run lint                             # biome check
 
 # Build binary
-bun run build                            # outputs ./regtrace
+bun run build                            # outputs ./regtrace (minified)
 bun run build --outfile ./my-custom-name # custom output path
+bun run build --minify                   # explicit minification flag
+bun run build --no-minify                # skip minification
 
 # Build docs
 bun run --cwd apps/docs build

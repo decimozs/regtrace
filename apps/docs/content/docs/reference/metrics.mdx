@@ -53,7 +53,7 @@ Deterministic structural checks on the actual output.
 | `markdown_structure` | Checks heading hierarchy, list formatting |
 | `required_fields` | Checks specific terms appear in output |
 | `forbidden_content` | Checks specific terms do NOT appear |
-| `regex_match` | Checks output matches a regex pattern |
+| `regex_match` | Checks output matches a regex pattern (patterns > 500 chars rejected; complex quantified patterns rejected as ReDoS protection) |
 
 **Scoring:**
 
