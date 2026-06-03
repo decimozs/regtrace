@@ -30,7 +30,7 @@ jobs:
       - name: Smoke test
         run: |
           chmod +x ${{ matrix.outfile }} || true
-          ${{ matrix.outfile }} --version
+          ./${{ matrix.outfile }} --version
         shell: bash
       - uses: actions/upload-artifact@v4
         with:
