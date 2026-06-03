@@ -43,3 +43,6 @@ packages/kb/
 # regtrace run storage
 .regtrace/
 packages/cli/tests/fixtures/temp-test.db*
+
+# agent skills (auto-installed)
+.agents/skills/
