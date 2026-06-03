@@ -211,10 +211,7 @@ async function runCli(
 	};
 }
 
-async function waitForFile(
-	path: string,
-	timeoutMs = 2000,
-): Promise<boolean> {
+async function waitForFile(path: string, timeoutMs = 2000): Promise<boolean> {
 	const start = Date.now();
 	while (Date.now() - start < timeoutMs) {
 		if (existsSync(path)) return true;
