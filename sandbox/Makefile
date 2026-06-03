@@ -12,6 +12,24 @@ help: ## Show available targets
 init: ## Scaffold a new regtrace project
 	$(BIN) init
 
+init-claude: init seed ## Scaffold project with Anthropic Claude judge (default)
+	@echo "✓ Initialized with Anthropic Claude judge"
+
+init-openai: init seed ## Scaffold project with OpenAI GPT-4o judge
+	@sed -i 's/provider: anthropic/provider: openai/' regtrace.config.yaml
+	@sed -i 's/model: claude-3-5-sonnet-20240620/model: gpt-4o/' regtrace.config.yaml
+	@echo "✓ Initialized with OpenAI GPT-4o judge"
+
+init-groq: init seed ## Scaffold project with Groq Llama 3.1 judge
+	@sed -i 's/provider: anthropic/provider: groq/' regtrace.config.yaml
+	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama-3.1-70b-versatile/' regtrace.config.yaml
+	@echo "✓ Initialized with Groq Llama 3.1 judge"
+
+init-ollama: init seed ## Scaffold project with Ollama local judge
+	@sed -i 's/provider: anthropic/provider: ollama/' regtrace.config.yaml
+	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama3.2/' regtrace.config.yaml
+	@echo "✓ Initialized with Ollama Llama 3.2 judge"
+
 run: ## Run evaluation on all enabled golden sets
 	$(BIN) run
 
