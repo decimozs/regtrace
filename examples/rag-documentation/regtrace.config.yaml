@@ -1,5 +1,6 @@
-# Regtrace config — RAG Documentation example
-# Runs with format metrics by default. Add judge key and enable factuality.
+# Regtrace config — RAG Documentation example (LLM Judge)
+# Uses LLM judge for factuality evaluation on RAG responses.
+# Needs ANTHROPIC_API_KEY in .env.
 project:
   name: rag-documentation-qa
   version: "1.0"
@@ -10,7 +11,7 @@ golden_sets:
     enabled: true
 
 metrics:
-  enabled: [format]
+  enabled: [format, factuality]
   default_threshold: 0.7
   format:
     sub_checks:
@@ -42,7 +43,7 @@ metrics:
 judge:
   primary:
     provider: anthropic
-    model: claude-3-5-sonnet-20240620
+    model: claude-haiku-4-5-20251001
     temperature: 0.1
     max_tokens: 4096
     timeout_ms: 30000

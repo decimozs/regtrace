@@ -12,7 +12,7 @@ test_cases:
     input: "Source (English): 'The UltraBrew Coffee Maker features a 12-cup capacity, programmable timer, and thermal carafe that keeps coffee hot for 4 hours. Includes a reusable gold-tone filter.'"
     system_prompt: "Translate the following English product description to Spanish. Maintain all factual details. Use neutral formal register. Do not add or omit any information."
     expected_output: "La cafetera UltraBrew cuenta con capacidad para 12 tazas, temporizador programable y jarra térmica que mantiene el café caliente durante 4 horas. Incluye un filtro reutilizable de color dorado."
-    actual_output: "La cafetera UltraBrew cuenta con capacidad para 12 tazas, temporizador programable y jarra térmica que mantiene el café caliente durante 4 horas. Incluye un filtro reutilizable de color dorado."
+    actual_output: null
     metrics: [format]
     tags: [accurate, product]
     weight: 1
@@ -22,7 +22,7 @@ test_cases:
     input: "Source (English): 'The Nike Air Max Pulse delivers responsive cushioning with a sleek mesh upper. Available in four colorways. Features Nike's signature Air unit in the heel.'"
     system_prompt: "Translate the following English product description to Spanish. Maintain all factual details including brand names. Use neutral formal register. Do not add or omit any information."
     expected_output: "Las Nike Air Max Pulse ofrecen una amortiguación reactiva con una parte superior de malla elegante. Disponible en cuatro combinaciones de colores. Incluye la unidad Air característica de Nike en el talón."
-    actual_output: "Las Nike Air Max Pulse ofrecen una amortiguación reactiva con una parte superior de malla elegante. Disponible en cuatro colores. Incluye la unidad Aire característica de Nike en el talón."
+    actual_output: null
     metrics: [format]
     tags: [mistranslation, brand]
     weight: 2
@@ -32,7 +32,7 @@ test_cases:
     input: "Source (English): 'This 65-inch OLED TV features 4K resolution, HDR10+ support, and built-in Dolby Atmos speakers. Power consumption: 120W typical. Weight: 22.5 kg.'"
     system_prompt: "Translate the following English product description to Spanish. Maintain all factual details exactly. Do not add or omit any information. Use neutral technical tone."
     expected_output: "Este televisor OLED de 65 pulgadas cuenta con resolución 4K, soporte HDR10+ y altavoces Dolby Atmos integrados. Consumo de energía: 120W típico. Peso: 22.5 kg."
-    actual_output: "Este televisor OLED de 65 pulgadas cuenta con resolución 4K, soporte HDR10+ y altavoces Dolby Atmos integrados. Consumo de energía: 120W típico. Peso: 22.5 kg. Es el mejor televisor del mercado con la calidad de imagen más impresionante que hayas visto nunca."
+    actual_output: null
     metrics: [format]
     tags: [added-content, hallucination]
     weight: 2
@@ -42,7 +42,7 @@ test_cases:
     input: "Source (English): 'The SmartTherm Digital Meat Thermometer provides instant readouts in 2-3 seconds. Features a backlit display for low-light use. Includes magnetic backing for storage on any metal surface. Waterproof design allows for easy cleaning under running water.'"
     system_prompt: "Translate the following English product description to Spanish. Maintain all factual details. Do not add or omit any information. Use neutral formal register."
     expected_output: "El termómetro digital para carne SmartTherm proporciona lecturas instantáneas en 2-3 segundos. Cuenta con pantalla retroiluminada para uso con poca luz. Incluye respaldo magnético para almacenamiento en cualquier superficie metálica. El diseño impermeable permite una limpieza fácil bajo el agua corriente."
-    actual_output: "El termómetro digital para carne SmartTherm proporciona lecturas instantáneas en 2-3 segundos. Cuenta con pantalla retroiluminada para uso con poca luz. El diseño impermeable permite una limpieza fácil bajo el agua corriente."
+    actual_output: null
     metrics: [format]
     tags: [omission, missing-content]
     weight: 1.5
@@ -52,7 +52,7 @@ test_cases:
     input: "Source (English): 'Our premium leather wallet features RFID-blocking technology, fits up to 12 cards, and includes a removable ID window. Dimensions: 4.5 x 3.5 inches. Made in Italy.'"
     system_prompt: "Translate the following English product description to Spanish. Maintain all factual details. Use neutral formal register appropriate for a premium product. Do not add or omit any information."
     expected_output: "Nuestra cartera de cuero premium cuenta con tecnología de bloqueo RFID, admite hasta 12 tarjetas e incluye una ventana extraíble para identificación. Dimensiones: 4.5 x 3.5 pulgadas. Fabricada en Italia."
-    actual_output: "Oye, esta cartera de cuero es súper chévere. Tiene bloqueo RFID, te caben hasta 12 tarjetas y trae una ventanita para tu ID. Mide como 4.5 x 3.5 pulgadas. Hecha en Italia."
+    actual_output: null
     metrics: [format]
     tags: [register, formality]
     weight: 1.5
@@ -62,7 +62,7 @@ test_cases:
     input: "Source (English): 'Get ready faster with our new QuickDry Hair Dryer. Features ionic technology for frizz-free results, 3 heat settings, and a concentrator nozzle for precise styling. 1875 watts of power.'"
     system_prompt: "Translate the following English product description to Spanish. Maintain all factual details. Use natural Latin American Spanish register appropriate for a beauty product. Do not add or omit any information."
     expected_output: "Prepárate más rápido con nuestro nuevo secador QuickDry. Cuenta con tecnología iónica para resultados sin frizz, 3 ajustes de calor y un concentrador para peinado preciso. 1875 vatios de potencia."
-    actual_output: "Prepárate más rápido con nuestro nuevo secador QuickDry. Cuenta con tecnología iónica para resultados sin frizz, 3 ajustes de calor y un concentrador para peinado preciso. 1875 vatios de potencia."
+    actual_output: null
     metrics: [format]
     tags: [idiomatic, accurate, passing]
     weight: 1

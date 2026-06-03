@@ -12,7 +12,7 @@ test_cases:
     input: "Article: 'OpenAI announced on Tuesday that it has raised $6.6 billion in new funding, valuing the company at $157 billion. The funding round was led by Thrive Capital and included participation from Microsoft, Nvidia, and SoftBank. The company plans to use the funds to accelerate AI research, increase compute capacity, and build new data centers. OpenAI reported that ChatGPT now has over 250 million weekly active users.'"
     system_prompt: "Summarize the following news article in 2-3 sentences. Be concise and factual. Do not add information not present in the source."
     expected_output: "OpenAI raised $6.6 billion in new funding at a $157 billion valuation. The round was led by Thrive Capital with participation from Microsoft, Nvidia, and SoftBank. The funds will go toward AI research, compute capacity, and data centers, while ChatGPT now has over 250 million weekly active users."
-    actual_output: "OpenAI raised $6.6 billion in new funding at a $157 billion valuation. The round was led by Thrive Capital with participation from Microsoft, Nvidia, and SoftBank. The funds will go toward AI research, compute capacity, and data centers, while ChatGPT now has over 250 million weekly active users."
+    actual_output: null
     metrics: [format]
     tags: [accurate, technology]
     weight: 1
@@ -22,7 +22,7 @@ test_cases:
     input: "Article: 'The Federal Reserve kept interest rates unchanged at its September meeting, maintaining the benchmark rate at 5.25-5.50 percent. Chair Jerome Powell indicated that rate cuts could begin in 2025 if inflation continues to moderate. The decision was unanimous. Stock markets rose slightly following the announcement.'"
     system_prompt: "Summarize the following news article in 2-3 sentences. Be concise and factual. Do not add information not present in the source."
     expected_output: "The Federal Reserve held interest rates steady at 5.25-5.50 percent at its September meeting. Chair Jerome Powell signaled potential rate cuts in 2025 if inflation moderates. The unanimous decision led to a slight rise in stock markets."
-    actual_output: "Federal Reserve Chair Jerome Powell and board member Michelle Bowman kept interest rates unchanged at 5.25-5.50 percent. Powell hinted at rate cuts in 2025. Markets rose slightly on the news."
+    actual_output: null
     metrics: [format]
     tags: [hallucination, person]
     weight: 2
@@ -32,7 +32,7 @@ test_cases:
     input: "Article: 'Apple announced the iPhone 16 at its annual September event. The new model features a faster A18 chip, improved camera system with 48MP sensor, and a new Capture Button for photos and videos. Pricing starts at $799. Pre-orders begin Friday with availability starting September 20.'"
     system_prompt: "Summarize the following news article in 2-3 sentences. Be concise and factual. Do not add information not present in the source."
     expected_output: "Apple announced the iPhone 16 with an A18 chip, improved 48MP camera, and a new Capture Button. Pricing starts at $799. Pre-orders begin Friday with availability on September 20."
-    actual_output: "Apple announced the iPhone 16 with an A18 chip and 48MP camera. The new Capture Button lets users take photos faster. Early reviews show 95% positive ratings, and analysts predict 200 million units will ship this year."
+    actual_output: null
     metrics: [format]
     tags: [fabrication, statistic]
     weight: 2
@@ -42,7 +42,7 @@ test_cases:
     input: "Article: 'Thousands of flights were canceled across the United States on Friday after a major IT outage affected Delta, United, and American Airlines. The outage was traced to a failed software update from cybersecurity firm CrowdStrike that caused Windows systems to crash. Airlines expect normal operations to resume within 48 hours.'"
     system_prompt: "Summarize the following news article in 2-3 sentences. Be concise and factual. Do not add information not present in the source."
     expected_output: "Thousands of US flights were canceled after a major IT outage hit Delta, United, and American Airlines. The outage was caused by a CrowdStrike software update that crashed Windows systems. Airlines expect normal operations within 48 hours."
-    actual_output: "Thousands of flights were canceled across the US on Friday affecting major airlines. The issue is expected to be resolved within 48 hours."
+    actual_output: null
     metrics: [format]
     tags: [missing-detail, omission]
     weight: 1.5
@@ -52,7 +52,7 @@ test_cases:
     input: "Article: 'Tesla reported Q3 delivery numbers that exceeded analyst expectations. The company delivered 462,890 vehicles globally, up from 435,059 in Q2. The stock rose 3.2% in after-hours trading. Tesla attributed the growth to improved production efficiency at its factories.'"
     system_prompt: "Summarize the following news article in 2-3 sentences. Be concise and factual. Use neutral professional tone. Do not add information not present in the source."
     expected_output: "Tesla's Q3 deliveries exceeded expectations at 462,890 vehicles, up from 435,059 in Q2. The stock rose 3.2% in after-hours trading. Growth was attributed to improved production efficiency."
-    actual_output: "Tesla absolutely crushed it in Q3, smashing expectations with 462,890 deliveries! The stock is surging 3.2% because investors love what they see. This company just keeps winning."
+    actual_output: null
     metrics: [format]
     tags: [tone, inflammatory]
     weight: 1.5
@@ -62,7 +62,7 @@ test_cases:
     input: "Article: 'Starbucks announced it will eliminate the upcharge for non-dairy milk alternatives at its company-operated stores in the US and Canada starting November 7. The change applies to drinks ordered in-store, through drive-thru, on the app, or via delivery. CEO Brian Niccol said the move aligns with customer expectations for customization without extra fees.'"
     system_prompt: "Summarize the following news article in 2-3 sentences. Be concise and factual. Do not add information not present in the source."
     expected_output: "Starbucks will remove the non-dairy milk surcharge at company-operated stores in the US and Canada starting November 7. The change applies to all order methods. CEO Brian Niccol said it aligns with customer expectations."
-    actual_output: "Starbucks has announced a major policy change that will take effect on November 7 at all of its company-operated store locations across both the United States and Canada. Specifically, the coffee chain will no longer charge customers extra for non-dairy milk alternatives such as oat milk, almond milk, soy milk, and coconut milk. This change applies regardless of whether customers order their beverages in-store, through the drive-thru window, via the Starbucks mobile application, or through third-party delivery services. The decision was made by CEO Brian Niccol, who previously served as CEO of Chipotle, and he stated that the move aligns with what customers want — the ability to customize their drinks without paying additional fees."
+    actual_output: null
     metrics: [format]
     tags: [verbose, length]
     weight: 1
@@ -72,7 +72,7 @@ test_cases:
     input: "Article: 'Scientists at MIT have developed a new type of battery that uses a solid-state electrolyte instead of the liquid electrolytes found in traditional lithium-ion batteries. The prototype achieved 500 charge cycles while retaining 80% capacity. The solid-state design reduces fire risk and could enable longer-range electric vehicles. The researchers estimate commercial production is still 3-5 years away.'"
     system_prompt: "Summarize the following news article in 2-3 sentences. Be concise and factual. Do not add information not present in the source."
     expected_output: "MIT scientists developed a solid-state battery prototype that retains 80% capacity after 500 charge cycles. The design reduces fire risk and could enable longer-range EVs, but commercial production is still 3-5 years away."
-    actual_output: "MIT scientists developed a solid-state battery prototype that retains 80% capacity after 500 charge cycles. The design reduces fire risk and could enable longer-range EVs, but commercial production is still 3-5 years away."
+    actual_output: null
     metrics: [format]
     tags: [concise, accurate]
     weight: 1

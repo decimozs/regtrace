@@ -1,14 +1,26 @@
-# RAG Legal Example
+# RAG Legal Example (Advanced Config)
 
-This example evaluates LLM responses grounded in regulatory and legal text.
-It demonstrates Regtrace's RAG interaction type with precision-critical
-factuality — where paraphrase that changes meaning is as dangerous as
-outright hallucination.
+Evaluates RAG response precision for legal/regulatory Q&A with strict
+factuality mode and per-metric quality gates. Needs ANTHROPIC_API_KEY
+in `.env`.
 
-## Scenario
+## Config highlights
 
-Six RAG test cases for a compliance chatbot answering from official GDPR
-regulation text. Precision is non-negotiable:
+```yaml
+factuality:
+  mode: strict
+  claim_extraction_depth: deep
+quality_gates:
+  metric_score_minimums:
+    factuality: 0.8
+```
+
+Strict claim extraction and a dedicated factuality gate (0.8) ensure
+precision-critical legal evaluation.
+
+## What's tested
+
+Six GDPR compliance test cases:
 
 | Case | Description | Expected |
 |---|---|---|
@@ -16,7 +28,7 @@ regulation text. Precision is non-negotiable:
 | rag-legal-002 | Oversimplified — meaning changed | Fail |
 | rag-legal-003 | Adds unsourced legal advice | Fail |
 | rag-legal-004 | Correct but confusingly structured | Fail |
-| rag-legal-005 | Confidently refuses when unsure | Pass |
+| rag-legal-005 | Correctly refuses when unsure | Pass |
 | rag-legal-006 | Partially incorrect legal detail | Fail |
 
 ## Run
@@ -27,8 +39,6 @@ regtrace run
 
 ## Next steps
 
-- Add an LLM judge key (`.env`) and enable `[factuality, format]` for
-  strict claim-level factuality evaluation
-- Set `factuality.mode: strict` and `claim_extraction_depth: deep` for
-  precision-critical legal evaluation
-- Run `regtrace run --format json` for compliance audit trail
+- Add `judge.fallback` with a second Claude model for high availability
+- Add regression baseline for tracking legal accuracy over time
+- Use `regtrace run --format json` for compliance audit trail

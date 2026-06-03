@@ -1,5 +1,6 @@
 # Regtrace config — RAG Legal example
-# Runs with format metrics by default. Add judge key and enable factuality for strict eval.
+# Uses factuality with strict mode for precision-critical legal evaluation.
+# Needs ANTHROPIC_API_KEY in .env for LLM judge calls.
 project:
   name: rag-legal-compliance
   version: "1.0"
@@ -10,7 +11,7 @@ golden_sets:
     enabled: true
 
 metrics:
-  enabled: [format]
+  enabled: [format, factuality]
   default_threshold: 0.7
   format:
     sub_checks:
@@ -42,7 +43,7 @@ metrics:
 judge:
   primary:
     provider: anthropic
-    model: claude-3-5-sonnet-20240620
+    model: claude-haiku-4-5-20251001
     temperature: 0.1
     max_tokens: 4096
     timeout_ms: 30000
@@ -56,6 +57,8 @@ quality_gates:
   max_failed_test_cases: 1
   max_low_confidence_ratio: 0.1
   regression_gate: true
+  metric_score_minimums:
+    factuality: 0.8
 
 output:
   run_history_limit: 50

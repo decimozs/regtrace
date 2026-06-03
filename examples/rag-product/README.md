@@ -1,14 +1,26 @@
-# RAG Product Search Example
+# RAG Product Search Example (Advanced Config)
 
-This example evaluates LLM responses grounded in product catalog data for an
-e-commerce product search chatbot. It demonstrates Regtrace's RAG interaction
-type with structured data — verifying spec accuracy, pricing, and feature
-faithfulness.
+Combines generate mode with RAG context. Claude generates product responses
+grounded in catalog data, then Regtrace evaluates format and factuality.
+Needs ANTHROPIC_API_KEY in `.env`.
 
-## Scenario
+## Config highlights
 
-Five RAG test cases for a product search bot answering from structured
-catalog data. Accuracy on specifications and pricing is critical:
+```yaml
+generator:
+  provider: anthropic
+  model: claude-haiku-4-5-20251001
+metrics:
+  enabled: [format, factuality]
+```
+
+The `generator` block produces outputs from test case inputs. Each test case
+includes `context.documents` from a product catalog. The LLM judge evaluates
+factuality against the provided context.
+
+## What's tested
+
+Five e-commerce product search test cases:
 
 | Case | Description | Expected |
 |---|---|---|
@@ -21,12 +33,11 @@ catalog data. Accuracy on specifications and pricing is critical:
 ## Run
 
 ```bash
-regtrace run
+regtrace run --generate
 ```
 
 ## Next steps
 
-- Add an LLM judge key (`.env`) and enable `[factuality, format]` for
-  full factuality evaluation on numerical and spec accuracy
-- Add more test cases with complex product comparisons
-- Run `regtrace run --format json` for structured product search audit
+- Tune `generator.temperature` for more or less creative responses
+- Add regression tracking to catch spec accuracy drift over time
+- Use `regtrace run --format json` for structured product search audit

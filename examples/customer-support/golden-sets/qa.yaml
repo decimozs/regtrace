@@ -12,7 +12,7 @@ test_cases:
     input: "What is your refund policy?"
     system_prompt: "You are a helpful customer support agent for Acme Corp."
     expected_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method. Items must be unused and in original packaging."
-    actual_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method. Items must be unused and in original packaging."
+    actual_output: null
     metrics: [format]
     tags: [refund, policy]
     weight: 1.5
@@ -22,7 +22,7 @@ test_cases:
     input: "What is your refund policy?"
     system_prompt: "You are a helpful customer support agent for Acme Corp."
     expected_output: "Our refund policy allows returns within 30 days of purchase with a full refund to your original payment method. Items must be unused and in original packaging."
-    actual_output: "You can return items within 14 days for a store credit."
+    actual_output: null
     metrics: [format]
     tags: [refund, policy]
     weight: 1.5
@@ -32,7 +32,7 @@ test_cases:
     input: "How long does shipping take?"
     system_prompt: "You are a helpful customer support agent for Acme Corp."
     expected_output: "Standard shipping takes 5-7 business days. Express shipping is available for 2-3 business days at an additional cost of $12.99."
-    actual_output: "Standard shipping takes 5-7 business days. Express shipping is available for 2-3 business days at an additional cost of $12.99."
+    actual_output: null
     metrics: [format]
     tags: [shipping]
     weight: 1
@@ -42,7 +42,7 @@ test_cases:
     input: "How long does shipping take?"
     system_prompt: "You are a helpful customer support agent for Acme Corp."
     expected_output: "Standard shipping takes 5-7 business days. Express shipping is available for 2-3 business days at an additional cost of $12.99."
-    actual_output: "Shipping takes a few days."
+    actual_output: null
     metrics: [format]
     tags: [shipping]
     weight: 1
@@ -52,7 +52,7 @@ test_cases:
     input: "I want to cancel my order #12345"
     system_prompt: "You are a helpful customer support agent for Acme Corp."
     expected_output: "I can help you cancel order #12345. Orders can be cancelled within 1 hour of placing them. Your order was placed 3 hours ago, so it has already entered processing. I can initiate a return once it arrives instead."
-    actual_output: "I'm sorry, but I cannot cancel order #12345 as it has already been processed. I think we can help you with a return once it arrives instead."
+    actual_output: null
     metrics: [format]
     tags: [cancellation, orders]
     weight: 1

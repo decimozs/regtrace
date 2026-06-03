@@ -17,7 +17,7 @@ test_cases:
           content: "Product: MacBook Pro 14-inch. Processor: Apple M3 Pro (12-core CPU, 18-core GPU). Memory: 18GB unified memory. Storage: 512GB SSD. Display: 14.2-inch Liquid Retina XDR. Ports: 3x Thunderbolt 4, HDMI, SDXC slot, MagSafe 3. Battery: Up to 17 hours. Price: $1,999. Weight: 3.5 lbs. Color options: Space Black, Silver."
           retrieval_score: 0.96
     expected_output: "The MacBook Pro 14-inch features the Apple M3 Pro chip with a 12-core CPU and 18-core GPU. It comes with 18GB unified memory, 512GB SSD, and a 14.2-inch Liquid Retina XDR display. Ports include 3 Thunderbolt 4, HDMI, SDXC slot, and MagSafe 3. Battery lasts up to 17 hours. Price is $1,999. Available in Space Black and Silver."
-    actual_output: "The MacBook Pro 14-inch features the Apple M3 Pro chip with a 12-core CPU and 18-core GPU. It comes with 18GB unified memory, 512GB SSD, and a 14.2-inch Liquid Retina XDR display. Ports include 3 Thunderbolt 4, HDMI, SDXC slot, and MagSafe 3. Battery lasts up to 17 hours. Price is $1,999. Available in Space Black and Silver."
+    actual_output: null
     metrics: [format]
     tags: [accurate, specs]
     weight: 1
@@ -32,7 +32,7 @@ test_cases:
           content: "Product: Sony WH-1000XM5 Wireless Noise Cancelling Headphones. Type: Over-ear. Noise Cancellation: Industry-leading Dual Processor. Battery: 30 hours (ANC on), 40 hours (ANC off). Charging: USB-C, quick charge (3 min = 30 min playback). Driver: 30mm. Frequency response: 4Hz-40,000Hz. Weight: 250g. Price: $349.99. Colors: Black, Midnight Blue, Silver."
           retrieval_score: 0.94
     expected_output: "The Sony WH-1000XM5 wireless noise cancelling headphones are priced at $349.99. They feature dual-processor noise cancellation, 30 hours battery with ANC on, and USB-C quick charging. Available in Black, Midnight Blue, and Silver."
-    actual_output: "The Sony WH-1000XM5 wireless noise cancelling headphones are priced at $399.99. They are considered the best noise cancelling headphones on the market with excellent sound quality and comfort."
+    actual_output: null
     metrics: [format]
     tags: [wrong-price, inaccurate]
     weight: 2
@@ -47,7 +47,7 @@ test_cases:
           content: "Product: Samsung Galaxy Tab S9 Ultra. Display: 14.6-inch Dynamic AMOLED 2X, 120Hz. Processor: Qualcomm Snapdragon 8 Gen 2 for Galaxy. Memory: 12GB/16GB RAM. Storage: 256GB/512GB/1TB. Battery: 11,200mAh. Cameras: 13MP + 8MP ultra-wide (rear), 12MP + 12MP ultra-wide (front). S Pen included. Weight: 737g. Price: From $1,199.99. Colors: Graphite, Beige."
           retrieval_score: 0.91
     expected_output: "The provided product catalog does not mention water resistance for the Galaxy Tab S9 Ultra. The catalog covers the display, processor, memory, storage, battery, cameras, S Pen, weight, and pricing. I cannot confirm water resistance based on the available data."
-    actual_output: "Yes, the Samsung Galaxy Tab S9 Ultra has an IP68 water resistance rating. It can survive in up to 1.5 meters of water for 30 minutes. This makes it great for reading by the pool or using it in the bathroom."
+    actual_output: null
     metrics: [format]
     tags: [hallucinated-feature, water-resistance]
     weight: 2
@@ -62,7 +62,7 @@ test_cases:
           content: "Product: Dell XPS 16. Processor: Intel Core Ultra 9 185H. Graphics: NVIDIA GeForce RTX 4070 (8GB). Memory: 32GB DDR5. Storage: 1TB SSD. Display: 16.3-inch 4K OLED, 400-nit. Ports: 3x Thunderbolt 4, HDMI 2.1, USB-A, headphone jack. Battery: 99.5Wh, up to 13 hours. Weight: 4.2 lbs. Price: $2,499.99. Colors: Platinum, Graphite."
           retrieval_score: 0.93
     expected_output: "The Dell XPS 16 has an Intel Core Ultra 9 185H processor, NVIDIA GeForce RTX 4070 graphics, 32GB DDR5 RAM, 1TB SSD, and a 16.3-inch 4K OLED display. Ports include 3 Thunderbolt 4, HDMI 2.1, USB-A, and a headphone jack. Battery is 99.5Wh with up to 13 hours. Weighs 4.2 lbs. Price is $2,499.99 in Platinum or Graphite."
-    actual_output: "The Dell XPS 16 has an Intel Core Ultra 9 processor, 32GB of RAM, and a 4K OLED display. It costs $2,499.99."
+    actual_output: null
     metrics: [format]
     tags: [incomplete, missing-specs]
     weight: 1
@@ -77,7 +77,7 @@ test_cases:
           content: "Product: Kindle Scribe. Display: 10.2-inch 300ppi E Ink. Storage: 16GB, 32GB, 64GB. Pen: Premium Pen (included). Battery: Up to 12 weeks. Weight: 433g. Price: From $339.99. Colors: Tungsten. Special features: Notebook functionality, sticky notes, convert handwriting to text."
           retrieval_score: 0.97
     expected_output: "The Kindle Scribe comes in Tungsten."
-    actual_output: "The Kindle Scribe comes in Tungsten."
+    actual_output: null
     metrics: [format]
     tags: [accurate, colors, passing]
     weight: 1

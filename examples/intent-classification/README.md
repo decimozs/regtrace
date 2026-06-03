@@ -1,23 +1,22 @@
-# Intent Classification Example
+# Intent Classification Example (Zero-Setup)
 
-This example evaluates LLM-generated intent classification for a customer
-service routing system. It demonstrates Regtrace's deterministic format
-metrics — no API key required.
+Evaluates structured JSON intent classification outputs with deterministic
+format metrics. Demonstrates `json_validity` and `json_schema` sub-checks.
+No API key required.
 
-## Scenario
+## What's tested
 
 Six test cases covering correct classification, wrong intent, missing fields,
-malformed JSON, non-standard formats, and multi-intent edge cases. Four pass,
-two fail:
+malformed JSON, invalid intent values, and correct routing:
 
 | Case | Description | Expected |
 |---|---|---|
-| ic-001 | Correct intent with confidence | Pass |
+| ic-001 | Correctly classified billing intent | Pass |
 | ic-002 | Wrong intent assigned | Fail |
-| ic-003 | Missing required confidence field | Fail |
+| ic-003 | Missing confidence field | Fail |
 | ic-004 | Malformed JSON output | Fail |
-| ic-005 | Non-standard but valid format | Pass |
-| ic-006 | Multi-intent handled correctly | Pass |
+| ic-005 | Invalid intent value not in schema | Fail |
+| ic-006 | Correct routing to general support | Pass |
 
 ## Run
 
@@ -27,7 +26,6 @@ regtrace run
 
 ## Next steps
 
-- Add an LLM judge key (`.env`) and enable `factuality` in `metrics.enabled`
-  to verify the classifier's reasoning matches the input
-- Enable `json_schema` to enforce precise output schema validation
-- Run `regtrace run --format json` to pipe classification results downstream
+- Add ANTHROPIC_API_KEY and enable `factuality` to verify extracted values
+- Add more intents and complex routing rules
+- Use `regtrace run --format json` for structured intent audit

@@ -1,13 +1,12 @@
-# Translation Example
+# Translation Example (Generate Mode)
 
-This example evaluates LLM-generated Spanish translations of English product
-descriptions. It demonstrates Regtrace's factuality and format metrics —
-detecting mistranslations, missing content, and wrong register.
+Claude generates Spanish translations of English product descriptions, then
+Regtrace evaluates format quality. Needs ANTHROPIC_API_KEY in `.env`.
 
-## Scenario
+## What's tested
 
-Six test cases covering accurate translation, mistranslated brand names,
-added content, omissions, wrong formality, and correct use of idioms:
+Six translation test cases covering accurate translation, mistranslated brand
+names, added content, omissions, wrong formality, and correct local idioms:
 
 | Case | Description | Expected |
 |---|---|---|
@@ -21,14 +20,11 @@ added content, omissions, wrong formality, and correct use of idioms:
 ## Run
 
 ```bash
-regtrace run
+regtrace run --generate
 ```
-
-Two pass, four fail.
 
 ## Next steps
 
-- Add an LLM judge key (`.env`) and enable `[factuality, format, tone]` in
-  `metrics.enabled` for full cross-language factuality evaluation
+- Enable `tone` in `metrics.enabled` for formality register evaluation
+- Enable `factuality` for cross-language information preservation
 - Tune `length_tolerance` for source-to-target length ratios
-- Run `regtrace run --format json` for structured translation quality reports

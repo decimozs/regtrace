@@ -1,5 +1,6 @@
-# Regtrace config — Summarization example
-# Runs with format metrics by default. Add judge key and enable factuality+tone.
+# Regtrace config — Summarization example (Generate Mode)
+# Claude generates summaries via `regtrace run --generate`.
+# Needs ANTHROPIC_API_KEY in .env.
 project:
   name: news-summarization
   version: "1.0"
@@ -41,11 +42,19 @@ metrics:
 judge:
   primary:
     provider: anthropic
-    model: claude-3-5-sonnet-20240620
+    model: claude-haiku-4-5-20251001
     temperature: 0.1
     max_tokens: 4096
     timeout_ms: 30000
     retry_attempts: 3
+
+generator:
+  provider: anthropic
+  model: claude-haiku-4-5-20251001
+  temperature: 0.1
+  max_tokens: 4096
+  timeout_ms: 60000
+  retry_attempts: 3
 
 run:
   concurrency: 1

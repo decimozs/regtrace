@@ -1,69 +1,90 @@
 ---
 title: Examples Overview
-description: Real-world production examples demonstrating Regtrace across different use cases
+description: Ready-to-run Regtrace examples organized by evaluation pattern
 ---
 
 The [examples/](https://github.com/decimozs/regtrace/tree/main/examples) directory
-contains ready-to-run Regtrace projects covering real-world production scenarios.
-Each example is self-contained — its own golden sets, config, and README.
+contains ready-to-run Regtrace projects organized into four categories based on
+how they operate.
 
 ## How to run
 
-Pick an example and run it:
-
 ```bash
 cd examples/<name>
-regtrace run
+regtrace run          # for zero-setup and LLM-judge examples
+regtrace run --generate  # for generate-mode examples
 ```
 
-No API key needed for format-only examples — they use deterministic metrics.
-For full factuality and tone evaluation, add an LLM judge key (`.env`) and
-enable the relevant metrics in `regtrace.config.yaml`.
+Each example's README specifies which command to use and whether it needs
+`ANTHROPIC_API_KEY` in `.env`.
+
+All LLM-powered examples use a single Claude model (`claude-haiku-4-5-20251001`).
+No other provider API keys needed.
 
 ## Examples
 
-### Format-only (deterministic, no API key)
+### A: Zero-Setup (no API key needed)
 
-These run entirely on deterministic format checks. Zero cost, zero latency.
+Deterministic format checks — markdown structure, JSON validity, forbidden
+content. Runs immediately, zero cost, no external calls.
 
-| Example | Scenario | What it tests |
-|---------|----------|--------------|
-| [customer-support](https://github.com/decimozs/regtrace/tree/main/examples/customer-support) | E-commerce customer support agent | Format sub-checks: length, required fields, forbidden content |
-| [content-moderation](https://github.com/decimozs/regtrace/tree/main/examples/content-moderation) | Toxicity and abuse filtering pipeline | Forbidden patterns, required fields, content classification |
-| [intent-classification](https://github.com/decimozs/regtrace/tree/main/examples/intent-classification) | Chatbot intent routing | JSON validity, JSON schema, required JSON fields |
-| [data-extraction](https://github.com/decimozs/regtrace/tree/main/examples/data-extraction) | Structured invoice extraction from text | JSON schema compliance, field types, completeness |
-| [code-generation](https://github.com/decimozs/regtrace/tree/main/examples/code-generation) | AI coding assistant output | Markdown structure, code block fencing, security patterns |
+| Example | Scenario | Format sub-checks |
+|---|---|---|
+| [code-generation](https://github.com/decimozs/regtrace/tree/main/examples/code-generation) | AI coding assistant output | `markdown_structure`, `required_fields`, `forbidden_content` |
+| [content-moderation](https://github.com/decimozs/regtrace/tree/main/examples/content-moderation) | Toxicity filtering pipeline | `required_fields`, `forbidden_content`, `length` |
+| [intent-classification](https://github.com/decimozs/regtrace/tree/main/examples/intent-classification) | Chatbot intent routing | `json_validity`, `json_schema` |
+| [data-extraction](https://github.com/decimozs/regtrace/tree/main/examples/data-extraction) | Invoice extraction from text | `json_validity`, `json_schema` |
 
-### LLM-judged (API key recommended)
+### B: Generate Mode (needs `ANTHROPIC_API_KEY`)
 
-These default to format-only but unlock deeper evaluation with an LLM judge.
+Regtrace calls Claude to generate `actual_output` for each test case, then
+evaluates against `expected_output`. Uses `regtrace run --generate`.
 
-| Example | Scenario | Full metric set |
-|---------|----------|-----------------|
-| [summarization](https://github.com/decimozs/regtrace/tree/main/examples/summarization) | News article summarization | factuality + format + tone |
-| [translation](https://github.com/decimozs/regtrace/tree/main/examples/translation) | Spanish product description translation | factuality + format + tone |
-| [content-generation](https://github.com/decimozs/regtrace/tree/main/examples/content-generation) | Brand marketing copy | tone + format |
-| [email-drafting](https://github.com/decimozs/regtrace/tree/main/examples/email-drafting) | Customer outreach emails | tone + format |
-| [rag-documentation](https://github.com/decimozs/regtrace/tree/main/examples/rag-documentation) | API documentation RAG chatbot | factuality + format |
-| [rag-legal](https://github.com/decimozs/regtrace/tree/main/examples/rag-legal) | GDPR compliance Q&A | factuality + format |
-| [rag-product](https://github.com/decimozs/regtrace/tree/main/examples/rag-product) | E-commerce product search | factuality + format |
+| Example | Metrics | What gets generated |
+|---|---|---|
+| [customer-support](https://github.com/decimozs/regtrace/tree/main/examples/customer-support) | format | Support email responses |
+| [email-drafting](https://github.com/decimozs/regtrace/tree/main/examples/email-drafting) | format, tone | Sales & support emails |
+| [translation](https://github.com/decimozs/regtrace/tree/main/examples/translation) | format | Spanish product descriptions |
+| [summarization](https://github.com/decimozs/regtrace/tree/main/examples/summarization) | format | News article summaries |
+
+### C: LLM Judge Evaluation (needs `ANTHROPIC_API_KEY`)
+
+Pre-provided outputs are scored by the LLM judge for tone, factuality, and
+format. Uses `regtrace run`.
+
+| Example | Enabled metrics | What the judge evaluates |
+|---|---|---|
+| [content-generation](https://github.com/decimozs/regtrace/tree/main/examples/content-generation) | format, tone | Brand voice: formality, sentiment, persona consistency |
+| [rag-documentation](https://github.com/decimozs/regtrace/tree/main/examples/rag-documentation) | format, factuality | RAG faithfulness to API documentation |
+
+### D: Advanced Config (needs `ANTHROPIC_API_KEY`)
+
+Showcases deeper configuration: strict factuality modes, per-metric quality
+gates, and combining generate mode with RAG context.
+
+| Example | Pattern | Config highlight |
+|---|---|---|
+| [rag-legal](https://github.com/decimozs/regtrace/tree/main/examples/rag-legal) | Strict factuality + per-metric gates | `factuality.mode: strict`, `metric_score_minimums` |
+| [rag-product](https://github.com/decimozs/regtrace/tree/main/examples/rag-product) | Generate mode + RAG context | `interaction_type: rag` + `generator` block |
 
 ## Feature coverage
 
-Each example exercises different Regtrace features:
-
 - **Quality gates** — all examples configure `suite_score_minimum`,
-  `max_failed_test_cases`, and `regression_gate`
+  `max_failed_test_cases`, `regression_gate`; rag-legal adds per-metric gates
 - **Regression tracking** — every run stores a baseline for delta comparison
+- **Generate mode** — five examples use the `generator` config block with
+  `regtrace run --generate`
 - **Format sub-checks** — length, JSON validity, JSON schema, markdown structure,
   required fields, forbidden content
-- **Deterministic by default** — all examples default to format-only so you can
-  run them immediately
-- **RAG interaction type** — three RAG examples demonstrate
-  `context.documents` with retrieval scores and faithfulness evaluation
+- **Tone evaluation** — two examples use LLM-judged tone with five sub-dimensions
+- **Factuality evaluation** — three examples use LLM-judged factuality for
+  RAG faithfulness and claim verification
+- **RAG interaction type** — three examples demonstrate `context.documents`
+  with retrieval scores and context-based evaluation
 
 ## Next steps
 
+- Pick a Zero-Setup example to try without any API key
+- Add `ANTHROPIC_API_KEY` and try a Generate Mode example
 - Run `regtrace run --format json` for machine-readable output
-- Run `regtrace run` twice on the same example to see regression detection
 - Clone an example as a starting point for your own evaluation project

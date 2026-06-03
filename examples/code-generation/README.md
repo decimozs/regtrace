@@ -1,10 +1,9 @@
-# Code Generation Example
+# Code Generation Example (Zero-Setup)
 
-This example evaluates LLM-generated code snippets. It demonstrates Regtrace's
-format metrics for code block structure and language tagging — no API key
-required.
+Evaluates LLM-generated code snippets with deterministic format metrics.
+Works immediately — no API key required.
 
-## Scenario
+## What's tested
 
 Six test cases covering correct code, missing code blocks, hallucinated APIs,
 insecure code, wrong language tags, and correct code without explanation:
@@ -24,11 +23,11 @@ insecure code, wrong language tags, and correct code without explanation:
 regtrace run
 ```
 
-Two pass, four fail.
+Two pass, four fail — demonstrating `markdown_structure`, `required_fields`,
+and `forbidden_content` sub-checks.
 
 ## Next steps
 
-- Add an LLM judge key (`.env`) and enable `factuality` in `metrics.enabled`
-  to evaluate code correctness claims and API usage
-- Enable `regex_match` to enforce code patterns (e.g. no try-catch swallows)
-- Run `regtrace run --format json` for structured code quality audit
+- Enable `regex_match` to enforce code patterns (no try-catch swallows)
+- Add ANTHROPIC_API_KEY and enable `factuality` in `metrics.enabled` for
+  deeper code correctness evaluation with LLM judge

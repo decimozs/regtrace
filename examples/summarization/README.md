@@ -1,13 +1,13 @@
-# Summarization Example
+# Summarization Example (Generate Mode)
 
-This example evaluates LLM-generated news article summaries. It demonstrates
-Regtrace's factuality and format metrics — detecting hallucination,
-missing key points, and structural issues in AI-generated summaries.
+Claude generates news article summaries, then Regtrace evaluates format quality.
+Needs ANTHROPIC_API_KEY in `.env`.
 
-## Scenario
+## What's tested
 
-Seven test cases covering accurate summaries, hallucination, fabricated
-details, inflammatory tone, verbosity, and conciseness:
+Seven summarization test cases covering accurate summaries, hallucinated names,
+fabricated statistics, missing details, inflammatory tone, verbosity, and
+concise writing:
 
 | Case | Description | Expected |
 |---|---|---|
@@ -15,21 +15,18 @@ details, inflammatory tone, verbosity, and conciseness:
 | sum-002 | Hallucinated person name | Fail |
 | sum-003 | Fabricated statistic | Fail |
 | sum-004 | Missing key detail | Fail |
-| sum-005 | Correct but inflammatory tone | Fail |
-| sum-006 | Overly verbose summary | Fail |
+| sum-005 | Inflammatory tone | Fail |
+| sum-006 | Overly verbose | Fail |
 | sum-007 | Perfect concise summary | Pass |
 
 ## Run
 
 ```bash
-regtrace run
+regtrace run --generate
 ```
-
-Three cases pass, four fail — demonstrating hallucination detection in action.
 
 ## Next steps
 
-- Add an LLM judge key (`.env`) and enable `[factuality, format, tone]` in
-  `metrics.enabled` for full hallucination and tone evaluation
-- Adjust `claim_extraction_depth` to deep for stricter factuality scoring
-- Run `regtrace run --format json` for structured summarization audit
+- Enable `factuality` in `metrics.enabled` for hallucination detection
+- Enable `tone` for sentiment and formality scoring
+- Set `claim_extraction_depth: deep` for stricter summary factuality
