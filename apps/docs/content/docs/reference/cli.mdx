@@ -203,6 +203,32 @@ Manage the SQLite run record database.
 Rebuilding imports all existing JSON run records into the SQLite database.
 Existing records are replaced. Corrupt files are skipped.
 
+### `upgrade`
+
+```bash
+regtrace upgrade [options]
+```
+
+Upgrade the `regtrace` binary to the latest GitHub release. Checks your current
+version against the latest stable release, downloads the matching binary for
+your platform (linux-x64, darwin-arm64, or windows-x64), verifies its SHA256
+checksum, and replaces the running binary in-place.
+
+<TypeTable
+  type={{
+    "-y, --yes": { description: "Skip confirmation prompt", type: "boolean", default: "false" },
+    "--prerelease": { description: "Include prerelease (beta/rc) versions", type: "boolean", default: "false" },
+    "--no-verify": { description: "Skip SHA256 checksum verification", type: "boolean", default: "false" },
+    "--dry-run": { description: "Check for available version without downloading", type: "boolean", default: "false" },
+  }}
+/>
+
+<Callout type="info">
+  The old binary is backed up to `.backup` before the swap. If the new binary
+  fails verification, the backup is restored automatically. If `regtrace`
+  was installed with `sudo`, run `sudo regtrace upgrade`.
+</Callout>
+
 ## Quality gates
 
 Quality gates are checked after every run. They determine pass/fail.

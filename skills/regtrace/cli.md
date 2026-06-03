@@ -137,6 +137,26 @@ regtrace db rebuild [options]
 |--------|-------------|
 | `--config <path>` | Path to config file |
 
+### `upgrade`
+
+Upgrade the regtrace binary to the latest GitHub release.
+
+```bash
+regtrace upgrade [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-y, --yes` | Skip confirmation prompt |
+| `--prerelease` | Include prerelease (beta/rc) versions |
+| `--no-verify` | Skip SHA256 checksum verification |
+| `--dry-run` | Check version without downloading |
+
+Checks GitHub Releases API for the latest release, downloads the matching
+platform binary, verifies SHA256, spawns the new binary to complete the swap
+in-place, and exits 0. Backs up the old binary to `.backup`; restores it if
+the new binary fails `--version` verification.
+
 ## Config file reference
 
 Minimal `regtrace.config.yaml`:
