@@ -10,6 +10,27 @@ function tokenize(text: string): string[] {
 		.filter((t) => t.length > 0);
 }
 
+function truncateJudgeError(rawMessage: string): string {
+	const cleaned = rawMessage.trim();
+	const jsonMatch = cleaned.match(
+		/"code"\s*:\s*"([^"]+)"[^}]*"message"\s*:\s*"([^"]+)"/,
+	);
+	if (jsonMatch) {
+		const code = jsonMatch[1] as string;
+		const msg = jsonMatch[2] as string;
+		if (msg.length > 80) return `${code}: ${msg.slice(0, 80)}...`;
+		return `${code}: ${msg}`;
+	}
+	const shortMatch = cleaned.match(/(\w+_error|rate_limit|model_\w+)[^:]*/i);
+	if (shortMatch) {
+		const snippet = shortMatch[0];
+		if (snippet.length > 100) return `${snippet.slice(0, 100)}...`;
+		return snippet;
+	}
+	if (cleaned.length > 120) return `${cleaned.slice(0, 120)}...`;
+	return cleaned;
+}
+
 function wordOverlapScore(actual: string, expected: string): number {
 	const actualTokens = tokenize(actual);
 	const expectedTokens = tokenize(expected);
@@ -149,7 +170,7 @@ export const factualityEvaluator: MetricEvaluator = {
 					confidence: 0.5,
 					passed: fallback.score >= input.threshold,
 					threshold: input.threshold,
-					explanation: `LLM judge failed (${message}), fallback: ${fallback.explanation}`,
+					explanation: `LLM judge failed (${truncateJudgeError(message)}), fallback: ${fallback.explanation}`,
 					evaluation_type: "deterministic",
 					token_cost: 0,
 				};

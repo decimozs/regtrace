@@ -12,6 +12,9 @@ help: ## Show available targets
 init: ## Scaffold a new regtrace project
 	$(BIN) init
 	@sed -i 's/claim_extraction_depth: shallow/claim_extraction_depth: deep/' regtrace.config.yaml
+	@sed -i 's/json_validity: true/json_validity: false/' regtrace.config.yaml
+	@sed -i 's/json_schema: true/json_schema: false/' regtrace.config.yaml
+	@sed -i 's/markdown_structure: true/markdown_structure: false/' regtrace.config.yaml
 
 init-claude: init seed env ## Scaffold project with Claude 3.5 Sonnet judge
 	@echo "✓ Initialized with Anthropic Claude judge"

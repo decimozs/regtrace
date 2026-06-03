@@ -60,6 +60,11 @@ function estimateTokenCost(
 		"anthropic/claude-3-haiku": { input: 0.25, output: 1.25 },
 		"gemini/gemini-1.5-pro": { input: 3.5, output: 10.5 },
 		"gemini/gemini-1.5-flash": { input: 0.075, output: 0.3 },
+		"groq/llama-3.3-70b-versatile": { input: 0.59, output: 0.79 },
+		"groq/llama-3.1-70b-versatile": { input: 0.59, output: 0.79 },
+		"groq/llama3-70b-8192": { input: 0.59, output: 0.79 },
+		"groq/llama3-8b-8192": { input: 0.05, output: 0.08 },
+		"groq/mixtral-8x7b-32768": { input: 0.24, output: 0.24 },
 	};
 
 	const rate = rates[modelKey];
