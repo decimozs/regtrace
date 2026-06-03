@@ -53,3 +53,4 @@ sandbox/.regtrace/
 sandbox/golden-sets/
 sandbox/report.*
 sandbox/.gitignore
+sandbox/.env
