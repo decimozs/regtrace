@@ -43,3 +43,13 @@ packages/kb/
 # regtrace run storage
 .regtrace/
 packages/cli/tests/fixtures/temp-test.db*
+
+# sandbox testing directory (binary and generated files)
+sandbox/regtrace
+sandbox/regtrace.exe
+sandbox/regtrace.config.yaml
+sandbox/regtrace.config.yml
+sandbox/.regtrace/
+sandbox/golden-sets/
+sandbox/report.*
+sandbox/.gitignore
