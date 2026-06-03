@@ -55,3 +55,4 @@ sandbox/golden-sets/
 sandbox/report.*
 sandbox/.gitignore
 sandbox/.env
+.test-tmp/
