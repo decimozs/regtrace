@@ -34,7 +34,7 @@ echo "ANTHROPIC_API_KEY=sk-..." > .env
 regtrace run
 ```
 
-See the [getting started tutorial](apps/docs/content/docs/tutorials/getting-started.mdx) for detailed walkthroughs.
+See the [getting started tutorial](https://regtrace-docs.vercel.app/docs/tutorials/getting-started) for detailed walkthroughs.
 
 ## Integrations
 
@@ -68,13 +68,13 @@ Full `.github/workflows/ci.yml` template is included in the repo.
 LLM-as-judge evaluation has known biases — verbosity bias, self-preference,
 position bias. Regtrace mitigates these with deterministic fallbacks,
 confidence scoring, and honest documentation. See
-[Limitations & Caveats](apps/docs/content/docs/explanation/limitations.mdx) for
+[Limitations & Caveats](https://regtrace-docs.vercel.app/docs/explanation/limitations) for
 details.
 
 ## Support
 
 - [GitHub Issues](https://github.com/decimozs/regtrace/issues) — bug reports, feature requests
-- [Documentation](apps/docs/content/docs/) — tutorials, how-to guides, reference
+- [Documentation](https://regtrace-docs.vercel.app/docs/) — tutorials, how-to guides, reference
 
 ## Contributing
 
