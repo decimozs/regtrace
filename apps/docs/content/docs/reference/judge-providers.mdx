@@ -64,22 +64,6 @@ The judge returns structured assessment per sub-dimension.
 
 Anthropic is the default provider when no `judge` block is specified.
 
-## Token cost estimation
-
-Token costs are estimated using per-model pricing tables. Costs for Groq
-models are not yet tracked and report as $0 in run records.
-
-| Provider | Model | Input/1M tokens | Output/1M tokens |
-|---|---|---|---|
-| Anthropic | claude-3-haiku-20240307 | $0.25 | $1.25 |
-| Anthropic | claude-3-5-sonnet-20241022 | $3.00 | $15.00 |
-| OpenAI | gpt-4o-mini | $0.15 | $0.60 |
-| OpenAI | gpt-4o | $2.50 | $10.00 |
-| Gemini | gemini-1.5-flash | $0.075 | $0.30 |
-| Gemini | gemini-1.5-pro | $1.25 | $5.00 |
-| Groq | (all models) | not tracked | not tracked |
-| Ollama | (any local) | $0 | $0 |
-
 ## Known limitations
 
 LLM-as-judge evaluation has known biases and failure modes. See
