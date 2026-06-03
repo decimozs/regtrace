@@ -51,7 +51,13 @@ db-rebuild: ## Rebuild SQLite database from JSON run files
 clean: ## Remove all run history and cached data
 	rm -rf .regtrace
 
-reset: clean ## Remove everything and re-init
+reset: clean ## Remove everything and re-init with seed data
 	rm -f regtrace.config.yaml
 	rm -rf golden-sets
 	$(MAKE) init
+	$(MAKE) seed
+
+seed: ## Fill golden set with sample outputs so `make run` works immediately
+	@sed -i '0,/actual_output: null/{s/actual_output: null/actual_output: "The capital of France is Paris."/}' golden-sets/qa.yaml
+	@sed -i '0,/actual_output: null/{s/actual_output: null/actual_output: "Paris has a population of approximately 2.1 million people within the city limits."/}' golden-sets/qa.yaml
+	@echo "✓ Golden set seeded with sample outputs"
