@@ -20,7 +20,7 @@ export function baseOptions(): BaseLayoutProps {
     },
     links: [
       {
-        text: "Documentation",
+        text: "Index",
         url: "/docs",
       },
     ],
