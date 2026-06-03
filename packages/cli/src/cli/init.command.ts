@@ -46,7 +46,7 @@ metrics:
 judge:
   primary:
     provider: anthropic
-    model: claude-3-5-sonnet-20240620
+    model: claude-haiku-4-5-20251001
     temperature: 0.1
     max_tokens: 4096
     timeout_ms: 30000

@@ -21,25 +21,25 @@ init: ## Scaffold a new regtrace project
 	@echo '    enabled: true' >> regtrace.config.yaml
 	@echo '    path: .regtrace/sandbox.db' >> regtrace.config.yaml
 
-init-claude: init seed env ## Scaffold project with Claude 3.5 Sonnet judge
+init-claude: init seed env ## Scaffold project with Claude Haiku 4-5 judge
 	@echo "✓ Initialized with Anthropic Claude judge"
 	@echo "  Set ANTHROPIC_API_KEY in .env for LLM-judged scores."
 
-init-openai: init seed env ## Scaffold project with OpenAI GPT-4o judge
+init-openai: init seed env ## Scaffold project with OpenAI GPT-5.4-mini judge
 	@sed -i 's/provider: anthropic/provider: openai/' regtrace.config.yaml
-	@sed -i 's/model: claude-3-5-sonnet-20240620/model: gpt-4o/' regtrace.config.yaml
-	@echo "✓ Initialized with OpenAI GPT-4o judge"
+	@sed -i 's/model: claude-haiku-4-5-20251001/model: gpt-5.4-mini-2026-03-17/' regtrace.config.yaml
+	@echo "✓ Initialized with OpenAI GPT-5.4-mini judge"
 	@echo "  Set OPENAI_API_KEY in .env for LLM-judged scores."
 
 init-groq: init seed env ## Scaffold project with Groq Llama 3.3 judge
 	@sed -i 's/provider: anthropic/provider: groq/' regtrace.config.yaml
-	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama-3.3-70b-versatile/' regtrace.config.yaml
+	@sed -i 's/model: claude-haiku-4-5-20251001/model: llama-3.3-70b-versatile/' regtrace.config.yaml
 	@echo "✓ Initialized with Groq Llama 3.3 judge"
 	@echo "  Set GROQ_API_KEY in .env for LLM-judged scores."
 
-init-ollama: init seed env ## Scaffold project with Ollama local judge
+init-ollama: init seed env ## Scaffold project with Ollama Llama 3 judge
 	@sed -i 's/provider: anthropic/provider: ollama/' regtrace.config.yaml
-	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama3.2/' regtrace.config.yaml
+	@sed -i 's/model: claude-haiku-4-5-20251001/model: llama3/' regtrace.config.yaml
 	@echo "✓ Initialized with Ollama Llama 3.2 judge"
 	@echo "  Make sure Ollama is running locally (http://localhost:11434)."
 
