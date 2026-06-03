@@ -12,21 +12,20 @@ function tokenize(text: string): string[] {
 
 function truncateJudgeError(rawMessage: string): string {
 	const cleaned = rawMessage.trim();
-	const jsonMatch = cleaned.match(
-		/"code"\s*:\s*"([^"]+)"[^}]*"message"\s*:\s*"([^"]+)"/,
+	// Extract error code from JSON API responses (order-agnostic)
+	const codeMatch = cleaned.match(/"code"\s*:\s*"([^"]+)"/);
+	const msgMatch = cleaned.match(/"message"\s*:\s*"([^"]+)"/);
+	if (codeMatch) {
+		const code = codeMatch[1] as string;
+		const msg = msgMatch ? (msgMatch[1] as string) : "";
+		if (msg && msg.length > 80) return `${code}: ${msg.slice(0, 80)}...`;
+		if (msg) return `${code}: ${msg}`;
+		return code;
+	}
+	const shortMatch = cleaned.match(
+		/\b(rate_limit_exceeded|model_decommissioned|invalid_request_error|authentication_error)\b/,
 	);
-	if (jsonMatch) {
-		const code = jsonMatch[1] as string;
-		const msg = jsonMatch[2] as string;
-		if (msg.length > 80) return `${code}: ${msg.slice(0, 80)}...`;
-		return `${code}: ${msg}`;
-	}
-	const shortMatch = cleaned.match(/(\w+_error|rate_limit|model_\w+)[^:]*/i);
-	if (shortMatch) {
-		const snippet = shortMatch[0];
-		if (snippet.length > 100) return `${snippet.slice(0, 100)}...`;
-		return snippet;
-	}
+	if (shortMatch) return shortMatch[0] as string;
 	if (cleaned.length > 120) return `${cleaned.slice(0, 120)}...`;
 	return cleaned;
 }
