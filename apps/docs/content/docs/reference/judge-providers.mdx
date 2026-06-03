@@ -21,7 +21,7 @@ Each provider uses a common configuration shape:
 judge:
   primary:
     provider: anthropic      # provider name
-    model: claude-3-haiku-20240307  # model identifier
+    model: claude-haiku-4-5-20251001  # model identifier
     temperature: 0.1         # generation temperature
     max_tokens: 4096         # max response tokens
     timeout_ms: 30000        # request timeout
@@ -63,6 +63,13 @@ The judge returns structured assessment per sub-dimension.
 ## Default provider
 
 Anthropic is the default provider when no `judge` block is specified.
+
+## Generation
+
+The same providers are also used by `regtrace run --generate` to produce
+`actual_output` for test cases with null output. By default the generator uses
+`judge.primary`. Override with an optional `generator` block in the config file
+(see [config file reference](/docs/reference/config-file)).
 
 ## Known limitations
 

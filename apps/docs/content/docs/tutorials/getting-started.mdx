@@ -93,13 +93,23 @@ For other providers see [switching providers](/docs/how-to/switch-provider).
 
 ## Populate the golden set with outputs
 
-Edit `golden-sets/qa.yaml` and fill in `actual_output` for both cases. Without
-an LLM provider, Regtrace falls back to heuristic scoring — for meaningful
-results, provide model responses:
+Two options to fill `actual_output`:
+
+**Option A — manually:** Edit `golden-sets/qa.yaml` and fill in `actual_output`
+for both cases:
 
 ```yaml
 actual_output: "The capital of France is Paris."
 ```
+
+**Option B — auto-generate:** Run with the `--generate` flag. Regtrace calls
+the configured LLM provider to produce `actual_output` for every null case:
+
+```bash
+regtrace run --generate
+```
+
+Either way, Regtrace scores each output against the expected value.
 
 ## Run evaluation
 

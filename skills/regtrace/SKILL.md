@@ -43,7 +43,8 @@ test_cases:
     weight: 1.0
 ```
 
-- `actual_output` is evaluated (fill it in). Set to `null` to skip this case.
+- `actual_output` is evaluated (fill it in). Set to `null` to auto-generate
+  via `regtrace run --generate`.
 - Expected output can be the ideal response. The judge compares actual vs expected.
 - Metrics default to all four pillars; you can override per-case.
 
@@ -82,6 +83,19 @@ Use in CI: `regtrace run --ci` exits 1 on gate failure.
 Edit the golden set YAML. Add a new entry under `test_cases:` with a unique
 `id`, `input`, `expected_output`, and fill in `actual_output` with the
 model's response. Run `regtrace run` to evaluate.
+
+### Generate outputs from LLM
+
+Leave `actual_output: null` in the golden set, then run:
+
+```bash
+regtrace run --generate
+```
+
+Regtrace calls the configured judge provider (or an optional `generator` block)
+to produce `actual_output` for every null case, then evaluates normally. The
+generated output is stored in the run record only — the golden set YAML is
+never modified.
 
 ### Debug a failing test case
 

@@ -80,7 +80,6 @@ RAG test cases (when `interaction_type: rag`) require a `context` block:
 - `metrics` values must be recognized metric names (`factuality`, `format`, `tone`, `regression`)
 - `interaction_type` must be `single_turn` or `rag`
 - RAG test cases must have a non-null `context` with at least one document
-- All-null `actual_output` across the entire set is rejected (add inline outputs or a judge provider)
 - `weight` must be a positive number
 - `thresholds` keys must match metric names
 
