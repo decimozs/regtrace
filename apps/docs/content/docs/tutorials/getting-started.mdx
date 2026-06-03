@@ -26,10 +26,13 @@ running your first evaluation.
   </Tab>
   <Tab value="Windows">
     ```powershell
-    curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe -o regtrace.exe
-    # Move regtrace.exe to a directory in your %PATH%, then verify:
-    # regtrace --version
+    cd $env:USERPROFILE
+    curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe -o "$env:USERPROFILE\Downloads\regtrace.exe"
+    Move-Item "$env:USERPROFILE\Downloads\regtrace.exe" "$env:USERPROFILE\AppData\Local\Microsoft\WindowsApps\regtrace.exe"
+    regtrace --version
     ```
+
+    > **Note:** `WindowsApps` is in PATH by default on most systems. If `regtrace --version` fails, move the binary to another directory in your `%PATH%`.
   </Tab>
 </Tabs>
 

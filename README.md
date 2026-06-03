@@ -48,10 +48,13 @@ See the [getting started tutorial](https://regtrace-docs.vercel.app/docs/tutoria
 # macOS (Apple Silicon)
 curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-darwin-arm64 -o regtrace && chmod +x regtrace && sudo mv regtrace /usr/local/bin/regtrace && regtrace --version
 
-# Windows (PowerShell)
-curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe -o regtrace.exe
-# Move regtrace.exe to a directory in your %PATH%, then verify:
-# regtrace --version
+# Windows (PowerShell, normal user — not admin)
+cd $env:USERPROFILE
+curl -L https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe -o "$env:USERPROFILE\Downloads\regtrace.exe"
+Move-Item "$env:USERPROFILE\Downloads\regtrace.exe" "$env:USERPROFILE\AppData\Local\Microsoft\WindowsApps\regtrace.exe"
+regtrace --version
+
+> **Note:** `WindowsApps` is in PATH by default on most Windows systems. If `regtrace --version` fails, move the binary to another directory in your `%PATH%`.
 ```
 
 ## Integrations
