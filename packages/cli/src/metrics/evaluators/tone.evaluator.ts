@@ -235,6 +235,9 @@ export const toneEvaluator: MetricEvaluator = {
 	async evaluate(input: EvaluateInput): Promise<MetricResult> {
 		try {
 			const judgeCfg = buildJudgeConfig(input.config.judge.primary);
+			const fallbackCfg = input.config.judge.fallback
+				? buildJudgeConfig(input.config.judge.fallback)
+				: undefined;
 			const toneProfile = input.metricConfig.tone_profile as
 				| string
 				| null
@@ -246,6 +249,7 @@ export const toneEvaluator: MetricEvaluator = {
 				input.actualOutput,
 				judgeCfg,
 				toneProfile,
+				fallbackCfg,
 			);
 
 			return {

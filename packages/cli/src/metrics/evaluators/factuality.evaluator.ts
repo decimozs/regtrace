@@ -121,6 +121,9 @@ async function evaluateDeep(input: EvaluateInput): Promise<{
 	tokenCost: number;
 }> {
 	const judgeCfg = buildJudgeConfig(input.config.judge.primary);
+	const fallbackCfg = input.config.judge.fallback
+		? buildJudgeConfig(input.config.judge.fallback)
+		: undefined;
 	const claimDepth =
 		(input.metricConfig.claim_extraction_depth as string) ?? "deep";
 
@@ -130,6 +133,7 @@ async function evaluateDeep(input: EvaluateInput): Promise<{
 		input.actualOutput,
 		judgeCfg,
 		claimDepth as "shallow" | "deep",
+		fallbackCfg,
 	);
 
 	return {

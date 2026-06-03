@@ -83,13 +83,16 @@ async function callWithRetry(
 	config: JudgeConfig,
 	retriesLeft: number,
 ): Promise<JudgeProviderResponse> {
+	const attempt = config.retryAttempts - retriesLeft;
 	try {
 		return await provider.evaluate(messages, config);
 	} catch (err) {
 		if (retriesLeft <= 0) throw err;
+		const delay = Math.min(1000 * 2 ** attempt + Math.random() * 500, 30000);
 		logger.warn(
-			`Judge call failed, retrying (${retriesLeft} left): ${err instanceof Error ? err.message : String(err)}`,
+			`Judge call failed, retrying in ${Math.round(delay)}ms (${retriesLeft} left): ${err instanceof Error ? err.message : String(err)}`,
 		);
+		await new Promise((r) => setTimeout(r, delay));
 		return callWithRetry(provider, messages, config, retriesLeft - 1);
 	}
 }
@@ -132,33 +135,45 @@ function parseJsonScore(response: string): {
 async function judgeMetric(
 	promptBuilder: () => JudgeMessage[],
 	judgeConfig: JudgeConfig,
+	fallbackConfig?: JudgeConfig,
 ): Promise<JudgeResult> {
-	requireProviderApiKey(judgeConfig.provider, judgeConfig.apiKey);
-	const provider = createProvider(judgeConfig.provider);
-	const messages = promptBuilder();
+	try {
+		requireProviderApiKey(judgeConfig.provider, judgeConfig.apiKey);
+		const provider = createProvider(judgeConfig.provider);
+		const messages = promptBuilder();
 
-	const response = await callWithRetry(
-		provider,
-		messages,
-		judgeConfig,
-		judgeConfig.retryAttempts,
-	);
-	const { score, confidence, explanation } = parseJsonScore(response.content);
-	const tokenCost = estimateTokenCost(
-		judgeConfig.provider,
-		judgeConfig.model,
-		response.inputTokens,
-		response.outputTokens,
-	);
+		const response = await callWithRetry(
+			provider,
+			messages,
+			judgeConfig,
+			judgeConfig.retryAttempts,
+		);
+		const { score, confidence, explanation } = parseJsonScore(response.content);
+		const tokenCost = estimateTokenCost(
+			judgeConfig.provider,
+			judgeConfig.model,
+			response.inputTokens,
+			response.outputTokens,
+		);
 
-	return {
-		score,
-		confidence,
-		explanation,
-		tokenCost,
-		inputTokens: response.inputTokens,
-		outputTokens: response.outputTokens,
-	};
+		return {
+			score,
+			confidence,
+			explanation,
+			tokenCost,
+			inputTokens: response.inputTokens,
+			outputTokens: response.outputTokens,
+		};
+	} catch (err) {
+		// Try fallback provider if primary fails
+		if (fallbackConfig) {
+			logger.warn(
+				`Primary judge ${judgeConfig.provider}/${judgeConfig.model} failed, trying fallback ${fallbackConfig.provider}/${fallbackConfig.model}: ${err instanceof Error ? err.message : String(err)}`,
+			);
+			return judgeMetric(promptBuilder, fallbackConfig, undefined);
+		}
+		throw err;
+	}
 }
 
 export async function judgeFactuality(
@@ -167,11 +182,13 @@ export async function judgeFactuality(
 	actualOutput: string,
 	judgeConfig: JudgeConfig,
 	claimDepth: "shallow" | "deep",
+	fallbackConfig?: JudgeConfig,
 ): Promise<JudgeResult> {
 	return judgeMetric(
 		() =>
 			buildFactualityPrompt(input, expectedOutput, actualOutput, claimDepth),
 		judgeConfig,
+		fallbackConfig,
 	);
 }
 
@@ -181,10 +198,12 @@ export async function judgeTone(
 	actualOutput: string,
 	judgeConfig: JudgeConfig,
 	toneProfile: string | null | undefined,
+	fallbackConfig?: JudgeConfig,
 ): Promise<JudgeResult> {
 	return judgeMetric(
 		() => buildTonePrompt(input, expectedOutput, actualOutput, toneProfile),
 		judgeConfig,
+		fallbackConfig,
 	);
 }
 

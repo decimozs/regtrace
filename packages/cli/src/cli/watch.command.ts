@@ -71,7 +71,13 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
 				timer = null;
 
 				printInfo(`Change detected: ${changed.join(", ")}`);
-				await runEvaluation(configPath);
+				try {
+					await runEvaluation(configPath);
+				} catch (err) {
+					printError(
+						`Evaluation failed: ${err instanceof Error ? err.message : String(err)}`,
+					);
+				}
 			}, 500);
 		});
 

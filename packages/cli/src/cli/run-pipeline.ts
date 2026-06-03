@@ -210,8 +210,6 @@ export async function runPipeline(
 			);
 		}
 
-		results.push({ run: record, qualityGates });
-
 		// Write to DB if enabled
 		const dbEnabled =
 			config.storage?.db.enabled && gsEntry.store_in_db !== false;
@@ -230,6 +228,8 @@ export async function runPipeline(
 				);
 			}
 		}
+
+		results.push({ run: record, qualityGates });
 	}
 
 	return results;

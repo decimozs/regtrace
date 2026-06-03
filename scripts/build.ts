@@ -10,7 +10,7 @@ const outfile = process.argv[2] ?? "./regtrace";
 const defineArg = `__VERSION__="${version}"`;
 
 const result =
-	await $`bun build --compile ./packages/cli/src/index.ts --outfile ${outfile} --define ${defineArg}`;
+	await $`bun build --compile --minify ./packages/cli/src/index.ts --outfile ${outfile} --define ${defineArg}`;
 
 if (result.exitCode === 0) {
 	const size = Bun.file(outfile).size;

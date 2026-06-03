@@ -11,7 +11,7 @@ import {
 } from "./cli/baseline.command";
 import { initCommand } from "./cli/init.command";
 import { historyCommand, listCommand } from "./cli/list.command";
-import { configureColor, isCiEnvironment } from "./cli/print";
+import { configureColor, isCiEnvironment, printError } from "./cli/print";
 import { runCommand } from "./cli/run.command";
 import { watchCommand } from "./cli/watch.command";
 import { rebuildDb } from "./storage/db-store";
@@ -19,6 +19,13 @@ import { rebuildDb } from "./storage/db-store";
 configureColor(
 	process.env.NO_COLOR ? "never" : isCiEnvironment() ? "never" : "auto",
 );
+
+process.on("unhandledRejection", (err) => {
+	printError(
+		`Unhandled error: ${err instanceof Error ? err.message : String(err)}`,
+	);
+	process.exit(1);
+});
 
 const program = new Command();
 

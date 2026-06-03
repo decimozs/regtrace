@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS runs (
     status              TEXT NOT NULL,
     trigger             TEXT NOT NULL,
     duration_ms         INTEGER NOT NULL,
+    regtrace_version    TEXT NOT NULL DEFAULT '',
     suite_score         REAL NOT NULL,
     golden_set_name     TEXT NOT NULL,
     golden_set_version  TEXT NOT NULL,
@@ -29,16 +30,18 @@ CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
 const INSERT_SQL = `
 INSERT OR REPLACE INTO runs (
     run_id, timestamp, status, trigger, duration_ms,
+    regtrace_version,
     suite_score, golden_set_name, golden_set_version,
     judge_provider, judge_model,
     metric_summary, test_case_results, regression,
     config_hash, golden_set_file_hash
 ) VALUES (
     ?1, ?2, ?3, ?4, ?5,
-    ?6, ?7, ?8,
-    ?9, ?10,
-    ?11, ?12, ?13,
-    ?14, ?15
+    ?6,
+    ?7, ?8, ?9,
+    ?10, ?11,
+    ?12, ?13, ?14,
+    ?15, ?16
 );
 `;
 
@@ -89,6 +92,7 @@ export function saveRunRecord(db: Database, record: RunRecord): void {
 		record.status,
 		record.trigger,
 		record.duration_ms,
+		record.regtrace_version,
 		record.suite_score,
 		record.golden_set_name,
 		record.golden_set_version,
@@ -123,7 +127,7 @@ function mapRowToRecord(row: Record<string, unknown>): RunRecord {
 		status: row.status as RunRecord["status"],
 		trigger: row.trigger as RunRecord["trigger"],
 		duration_ms: row.duration_ms as number,
-		regtrace_version: "", // not stored in DB for now
+		regtrace_version: (row.regtrace_version as string) ?? "",
 		judge_provider: row.judge_provider as string,
 		judge_model: row.judge_model as string,
 		config_hash: (row.config_hash as string) ?? "",
@@ -161,6 +165,7 @@ export function rebuildDb(basePath: string, dbPath: string): number {
 				record.status,
 				record.trigger,
 				record.duration_ms,
+				record.regtrace_version,
 				record.suite_score,
 				record.golden_set_name,
 				record.golden_set_version,

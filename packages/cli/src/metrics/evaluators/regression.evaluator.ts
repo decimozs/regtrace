@@ -111,9 +111,7 @@ export const regressionEvaluator: MetricEvaluator = {
 		const criticalThreshold =
 			(input.metricConfig.critical_threshold as number) ?? 0.15;
 
-		const regCtx = input.metricConfig._regressionContext as
-			| RegressionContext
-			| undefined;
+		const regCtx = input.regressionContext as RegressionContext | undefined;
 		const baseline = regCtx?.baseline ?? null;
 
 		if (!baseline) {

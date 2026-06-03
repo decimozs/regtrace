@@ -124,7 +124,7 @@ export async function evaluateTestCase(
 			};
 
 			if (metricName === "regression") {
-				evaluateInput.metricConfig._regressionContext = {
+				evaluateInput.regressionContext = {
 					baseline: baselineRecord,
 					currentGoldenSetVersion,
 				};

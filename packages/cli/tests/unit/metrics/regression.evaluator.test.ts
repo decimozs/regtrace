@@ -402,11 +402,11 @@ describe("regressionEvaluator.evaluate", () => {
 			metricConfig: {
 				tolerance: 0.05,
 				critical_threshold: 0.15,
-				_regressionContext: {
-					baseline: makeBaselineRecord({ suite_score: 0.85 }),
-					currentGoldenSetVersion: "1.0.0",
-				},
 				_currentScore: 0.87,
+			},
+			regressionContext: {
+				baseline: makeBaselineRecord({ suite_score: 0.85 }),
+				currentGoldenSetVersion: "1.0.0",
 			},
 		});
 		const result = await regressionEvaluator.evaluate(input);
@@ -420,11 +420,11 @@ describe("regressionEvaluator.evaluate", () => {
 			metricConfig: {
 				tolerance: 0.05,
 				critical_threshold: 0.15,
-				_regressionContext: {
-					baseline: makeBaselineRecord({ suite_score: 0.85 }),
-					currentGoldenSetVersion: "1.0.0",
-				},
 				_currentScore: 0.79,
+			},
+			regressionContext: {
+				baseline: makeBaselineRecord({ suite_score: 0.85 }),
+				currentGoldenSetVersion: "1.0.0",
 			},
 		});
 		const result = await regressionEvaluator.evaluate(input);
@@ -438,11 +438,11 @@ describe("regressionEvaluator.evaluate", () => {
 			metricConfig: {
 				tolerance: 0.05,
 				critical_threshold: 0.15,
-				_regressionContext: {
-					baseline: makeBaselineRecord({ suite_score: 0.85 }),
-					currentGoldenSetVersion: "1.0.0",
-				},
 				_currentScore: 0.6,
+			},
+			regressionContext: {
+				baseline: makeBaselineRecord({ suite_score: 0.85 }),
+				currentGoldenSetVersion: "1.0.0",
 			},
 		});
 		const result = await regressionEvaluator.evaluate(input);
@@ -456,11 +456,11 @@ describe("regressionEvaluator.evaluate", () => {
 			metricConfig: {
 				tolerance: 0.1,
 				critical_threshold: 0.3,
-				_regressionContext: {
-					baseline: makeBaselineRecord({ suite_score: 0.85 }),
-					currentGoldenSetVersion: "1.0.0",
-				},
 				_currentScore: 0.78,
+			},
+			regressionContext: {
+				baseline: makeBaselineRecord({ suite_score: 0.85 }),
+				currentGoldenSetVersion: "1.0.0",
 			},
 		});
 		const result = await regressionEvaluator.evaluate(input);
