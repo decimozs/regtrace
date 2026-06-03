@@ -15,6 +15,11 @@ init: ## Scaffold a new regtrace project
 	@sed -i 's/json_validity: true/json_validity: false/' regtrace.config.yaml
 	@sed -i 's/json_schema: true/json_schema: false/' regtrace.config.yaml
 	@sed -i 's/markdown_structure: true/markdown_structure: false/' regtrace.config.yaml
+	@echo '' >> regtrace.config.yaml
+	@echo 'storage:' >> regtrace.config.yaml
+	@echo '  db:' >> regtrace.config.yaml
+	@echo '    enabled: true' >> regtrace.config.yaml
+	@echo '    path: .regtrace/sandbox.db' >> regtrace.config.yaml
 
 init-claude: init seed env ## Scaffold project with Claude 3.5 Sonnet judge
 	@echo "✓ Initialized with Anthropic Claude judge"
@@ -73,6 +78,9 @@ baseline-unpin: ## Revert to last_passing baseline strategy
 
 db-rebuild: ## Rebuild SQLite database from JSON run files
 	$(BIN) db rebuild
+
+db-stats: ## Show run count and stats from the SQLite database
+	@bun -e "const {Database} = require('bun:sqlite'); const db = new Database('.regtrace/sandbox.db'); const cnt = db.prepare('SELECT COUNT(*) as c FROM runs').get(); console.log('Runs in database: ' + (cnt ? cnt.c : 0)); const latest = db.prepare('SELECT run_id, suite_score, golden_set_name, timestamp FROM runs ORDER BY timestamp DESC LIMIT 1').get(); if (latest) console.log('Latest run: ' + latest.run_id + ' (' + (latest.suite_score * 100).toFixed(1) + '%)'); db.close();" 2>/dev/null || echo "No database found. Run 'make run' first."
 
 clean: ## Remove all run history and cached data
 	rm -rf .regtrace
