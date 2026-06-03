@@ -14,6 +14,7 @@ import { historyCommand, listCommand } from "./cli/list.command";
 import { configureColor, isCiEnvironment } from "./cli/print";
 import { runCommand } from "./cli/run.command";
 import { watchCommand } from "./cli/watch.command";
+import { webCommand } from "./cli/web.command";
 import { rebuildDb } from "./storage/db-store";
 
 configureColor(
@@ -42,7 +43,8 @@ Examples:
   regtrace history --diff <a> <b> Compare two runs
   regtrace watch                 Watch files and re-run on change
   regtrace baseline pin <run-id> Pin a run as baseline
-  regtrace baseline show         Show current baseline`,
+  regtrace baseline show         Show current baseline
+  regtrace web                   Open visual dashboard in browser`,
 	);
 
 program
@@ -207,6 +209,30 @@ program
 				const count = rebuildDb(configDir, dbPath);
 				console.log(`Rebuilt database: ${count} runs imported.`);
 			}),
+	);
+
+program
+	.command("web")
+	.description("Generate and open a visual dashboard in the browser")
+	.option("-c, --config <path>", "Path to config file")
+	.option("-o, --output <path>", "Output HTML file path")
+	.option("--no-open", "Do not open browser automatically")
+	.addHelpText(
+		"after",
+		`
+Examples:
+  regtrace web
+  regtrace web --output ./dashboard.html
+  regtrace web --no-open`,
+	)
+	.action(
+		async (options: { config?: string; output?: string; noOpen?: boolean }) => {
+			await webCommand({
+				config: options.config,
+				output: options.output,
+				noOpen: options.noOpen,
+			});
+		},
 	);
 
 program.parse();
