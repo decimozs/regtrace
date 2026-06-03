@@ -23,7 +23,6 @@ interface DbRow {
 export async function webCommand(options: {
 	config?: string;
 	output?: string;
-	noOpen?: boolean;
 }): Promise<void> {
 	printHeader("regtrace web");
 
@@ -87,15 +86,13 @@ export async function webCommand(options: {
 
 	printSuccess(`Dashboard written: ${outputPath}`);
 
-	if (!options.noOpen) {
-		const { platform } = process;
-		const openCmd = platform === "darwin" ? "open" : "xdg-open";
-		try {
-			Bun.spawnSync([openCmd, outputPath]);
-			printInfo(`Browser opened (${openCmd} ${outputPath})`);
-		} catch {
-			printInfo(`Open manually: ${outputPath}`);
-		}
+	const { platform } = process;
+	const openCmd = platform === "darwin" ? "open" : "xdg-open";
+	try {
+		Bun.spawnSync([openCmd, outputPath]);
+		printInfo(`Browser opened (${openCmd} ${outputPath})`);
+	} catch {
+		printInfo(`Open manually: ${outputPath}`);
 	}
 }
 

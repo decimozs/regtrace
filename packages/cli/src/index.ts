@@ -216,24 +216,19 @@ program
 	.description("Generate and open a visual dashboard in the browser")
 	.option("-c, --config <path>", "Path to config file")
 	.option("-o, --output <path>", "Output HTML file path")
-	.option("--no-open", "Do not open browser automatically")
 	.addHelpText(
 		"after",
 		`
 Examples:
   regtrace web
-  regtrace web --output ./dashboard.html
-  regtrace web --no-open`,
+  regtrace web --output ./dashboard.html`,
 	)
-	.action(
-		async (options: { config?: string; output?: string; noOpen?: boolean }) => {
-			await webCommand({
-				config: options.config,
-				output: options.output,
-				noOpen: options.noOpen,
-			});
-		},
-	);
+	.action(async (options: { config?: string; output?: string }) => {
+		await webCommand({
+			config: options.config,
+			output: options.output,
+		});
+	});
 
 program.parse();
 
