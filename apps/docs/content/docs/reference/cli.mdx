@@ -32,7 +32,7 @@ Scaffold a new Regtrace project:
 
 - Creates `regtrace.config.yaml` with defaults
 - Creates `golden-sets/qa.yaml` with sample test cases
-- Creates `.gitignore` with `.regtrace/runs/` and `.env`
+- Creates `.gitignore` with `.regtrace/` and `.env*`
 - Creates `.env.example` with commented API key placeholders
 - Creates `.regtrace/runs/` directory
 
@@ -72,10 +72,10 @@ Run evaluation on all enabled golden sets.
     "--generate": { description: "Generate `actual_output` from LLM for test cases with null output, then evaluate", type: "boolean", default: "false" },
     "--format": { description: "Output format: `terminal`, `json`, `markdown`", type: "string", default: "terminal" },
     "--output": { description: "Write output to file (requires `--format`)", type: "string" },
-    "--set": { description: "Run a specific golden set (matches config `path`)", type: "string" },
+    "--set": { description: "Run a specific golden set (matches config `path`). Example: `--set golden-sets/qa.yaml`", type: "string" },
     "--quiet": { description: "Suppress human-readable output (only errors shown)", type: "boolean", default: "false" },
     "--verbose": { description: "Show all test cases, including passing ones", type: "boolean", default: "false" },
-    "--trigger": { description: "Trigger type: `cli`, `ci`, `watch`", type: "string", default: "cli" },
+    "--trigger": { description: "Trigger type: `cli`, `ci`, `watch`. Use `regtrace watch` for file-watch mode, `--ci` for pipeline mode.", type: "string", default: "cli" },
   }}
 />
 
@@ -100,8 +100,6 @@ flowchart TD
   Next -->|No| Report[Print Terminal Report]
   Report --> Persist[Persist Run Record]
 ```
-
-Originally:
 
 #### Dry-run mode
 
@@ -143,6 +141,7 @@ List recent evaluation runs.
     "--limit": { description: "Number of runs to show", type: "number", default: "10" },
     "--suite": { description: "Filter by suite name", type: "string" },
     "--status": { description: "Filter by status: `passed`, `failed`", type: "string" },
+    "--format": { description: "Output format: `terminal`, `json`", type: "string", default: "terminal" },
   }}
 />
 

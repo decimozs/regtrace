@@ -139,7 +139,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
 	await writeFile(configPath, DEFAULT_CONFIG);
 	await writeFile(goldenSetPath, DEFAULT_GOLDEN_SET);
 	await writeFile(envExamplePath, DEFAULT_ENV_EXAMPLE);
-	await writeFile(resolve(targetDir, ".gitignore"), ".regtrace/runs/\n.env\n");
+	await writeFile(resolve(targetDir, ".gitignore"), ".regtrace/\n.env*\n");
 	await mkdir(resolve(targetDir, ".regtrace", "runs"), { recursive: true });
 
 	printSuccess(`Created ${configPath}`);

@@ -1,0 +1,159 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when using Regtrace
+---
+
+## API key not configured
+
+Error:
+
+```
+anthropic API key not configured. Set ANTHROPIC_API_KEY in .env (see .env.example)
+or pass apiKey in judge config.
+```
+
+**Cause:** You're running with an LLM-judged metric (`factuality` deep mode,
+`tone`) but `ANTHROPIC_API_KEY` is not set.
+
+**Solution:** Create a `.env` file in the project directory:
+
+```bash
+cp .env.example .env
+# Edit .env and uncomment the key for your provider
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+```
+
+Or export the variable in your shell:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+## Golden set has all null outputs
+
+```
+Suite Score: 0.0%
+```
+
+**Cause:** All test cases have `actual_output: null` and you ran `regtrace run`
+without `--generate`. The evaluator has nothing to compare against.
+
+**Solution A:** Auto-generate outputs via LLM:
+
+```bash
+regtrace run --generate
+```
+
+**Solution B:** Fill `actual_output` manually in the golden set YAML:
+
+```yaml
+test_cases:
+  - id: qa-001
+    input: "What is the capital of France?"
+    expected_output: "The capital of France is Paris."
+    actual_output: "The capital of France is Paris."  # fill this in
+```
+
+## Config file not found
+
+```
+No regtrace.config.yaml or regtrace.config.yml found in current or parent
+directories. Run `regtrace init` to create one.
+```
+
+**Cause:** No config file exists in the current directory or any parent.
+
+**Solution:** Run `regtrace init` to scaffold a new project, or point to a
+config file with `--config`:
+
+```bash
+regtrace run --config /path/to/regtrace.config.yaml
+```
+
+## Schema validation errors
+
+```
+golden_sets.0.path: Required
+```
+
+**Cause:** A required field is missing or has an invalid value in the config
+or golden set file.
+
+**Solution:** The error message includes the field path and a description.
+Check the [config file reference](/docs/reference/config-file) or
+[golden set reference](/docs/reference/golden-set) for the correct schema.
+
+Common fixes:
+
+- `provider` must be one of: `anthropic`, `openai`, `gemini`, `groq`, `ollama`
+- `interaction_type` must be `single_turn` or `rag`
+- `metrics` array must contain valid metric names
+- `concurrency` must be between 1 and 20
+
+## Ollama connection refused
+
+```
+Ollama API error: connect ECONNREFUSED http://localhost:11434
+```
+
+**Cause:** Regtrace tried to reach Ollama at `localhost:11434` but the Ollama
+server is not running.
+
+**Solution:** Start Ollama:
+
+```bash
+ollama serve
+```
+
+If Ollama is running on a different host or port, set `local_endpoint` in the
+judge config:
+
+```yaml
+judge:
+  primary:
+    provider: ollama
+    model: llama3
+    local_endpoint: http://192.168.1.100:11434
+```
+
+## Provider timeout or unreachable
+
+```
+anthropic API error 408: Request timed out
+```
+
+**Cause:** The LLM provider endpoint is unreachable, rate-limited, or too slow.
+
+**Solution:**
+
+- Check your internet connection
+- Increase `timeout_ms` in the judge config (default: 30000ms)
+- Add a `fallback` provider in case the primary is down:
+
+```yaml
+judge:
+  primary:
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    timeout_ms: 60000
+  fallback:
+    provider: openai
+    model: gpt-4.1-mini
+    timeout_ms: 60000
+```
+
+## Binary won't run on macOS
+
+```
+"regtrace" cannot be opened because the developer cannot be verified
+```
+
+**Cause:** macOS Gatekeeper blocks unsigned binaries.
+
+**Solution:** Remove the quarantine attribute:
+
+```bash
+xattr -d com.apple.quarantine ./regtrace
+```
+
+Or allow the binary in System Settings > Privacy & Security.

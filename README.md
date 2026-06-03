@@ -12,13 +12,15 @@ LLM quality degrades silently. A prompt change, a model update, a new feature �
 - **Parallel evaluation** — `run.concurrency` (default 1, max 20) batches test cases for concurrent LLM-judge calls.
 - **Multiple judge providers** — Anthropic, OpenAI, Groq, Gemini, Ollama.
 - **Fallback judge** — configure a secondary provider; Regtrace retries with exponential backoff + jitter, then falls back automatically.
+- **Generate mode** — `regtrace run --generate` auto-fills test case outputs from your LLM provider, skipping manual golden set authoring.
 - **CI-native** — JSON on stdout, human-readable on stderr. Machine-readable pass/fail with exit codes for pipeline integration.
 - **Watch mode** — `regtrace watch` re-runs on golden set changes.
+- **Run history** — `regtrace list` and `regtrace history --diff` track quality over time.
 
 ## Quick Start
 
 ```bash
-# Install (Linux x86-64)
+# Install
 curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
 chmod +x ./regtrace
 sudo mv ./regtrace /usr/local/bin/regtrace
@@ -30,12 +32,30 @@ regtrace init                    # creates config, golden set, .env.example, .gi
 # Set up an LLM judge (optional — deterministic metrics work without one)
 cp .env.example .env             # or: echo "ANTHROPIC_API_KEY=sk-..." > .env
 
-# Populate golden set with model outputs and run
-# (edit golden-sets/qa.yaml, fill actual_output)
+# Auto-generate outputs via LLM and evaluate
+regtrace run --generate
+```
+
+For deterministic evaluation (no API key needed):
+```bash
+# Edit golden-sets/qa.yaml and fill actual_output manually
 regtrace run
 ```
 
 See the [getting started tutorial](https://regtrace-docs.vercel.app/docs/tutorials/getting-started) for detailed walkthroughs.
+
+## Install on other platforms
+
+```bash
+# macOS (Apple Silicon)
+curl -L -o regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-darwin-arm64
+chmod +x ./regtrace
+sudo mv ./regtrace /usr/local/bin/regtrace
+
+# Windows (PowerShell as admin)
+curl -L -o regtrace.exe https://github.com/decimozs/regtrace/releases/latest/download/regtrace-windows-x64.exe
+# Move regtrace.exe to a directory in your %PATH%
+```
 
 ## Integrations
 
@@ -44,6 +64,22 @@ See the [getting started tutorial](https://regtrace-docs.vercel.app/docs/tutoria
 | Judge providers | Anthropic, OpenAI, Groq, Gemini, Ollama, Azure OpenAI, AWS Bedrock |
 | Output formats | Terminal, JSON, Markdown |
 | CI platforms | GitHub Actions (`.github/workflows/ci.yml` included), any CLI-capable pipeline |
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `regtrace init` | Scaffold a new project (config, golden set, gitignore) |
+| `regtrace run` | Evaluate all golden sets |
+| `regtrace run --generate` | Auto-fill null outputs from LLM, then evaluate |
+| `regtrace list` | List recent run history with scores and status |
+| `regtrace history --run-id <id>` | Show detailed run results |
+| `regtrace history --diff <a> [b]` | Compare two runs for regression |
+| `regtrace baseline pin <run-id>` | Pin regression baseline to a specific run |
+| `regtrace watch` | Re-run on golden set file changes |
+| `regtrace run --dry-run` | Validate config without spending tokens |
+
+All commands support `--config` for custom config paths.
 
 ## Deployment (CI)
 

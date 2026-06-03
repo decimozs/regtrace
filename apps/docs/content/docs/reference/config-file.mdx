@@ -81,11 +81,11 @@ judge:
 # Generator provider configuration (optional)
 # Falls back to judge.primary when absent
 generator:
-  provider: groq
-  model: llama-3.3-70b-versatile
-  temperature: 0.7
+  provider: anthropic
+  model: claude-haiku-4-5-20251001
+  temperature: 0.4
   max_tokens: 4096
-  timeout_ms: 30000
+  timeout_ms: 60000
   retry_attempts: 3
 
 # Runtime configuration
@@ -113,9 +113,22 @@ storage:
     path: .regtrace/regtrace.db
 ```
 
-## Golden set entry
+## Generator block
 
 | Field | Type | Default | Description |
+|---|---|---|---|
+| `provider` | string | — | Provider name: `anthropic`, `openai`, `gemini`, `groq`, `ollama` |
+| `model` | string | — | Model identifier (e.g. `claude-haiku-4-5-20251001`) |
+| `temperature` | number | `0.1` | Generation temperature (0–2). Higher values increase creativity. Use `0.1` for factual tasks, `0.4` for creative writing. |
+| `max_tokens` | integer | `4096` | Maximum response tokens |
+| `timeout_ms` | integer | `30000` | Request timeout in milliseconds |
+| `retry_attempts` | integer | `3` | Retries on failure |
+
+When `generator` is absent, `regtrace run --generate` falls back to
+`judge.primary`. Generated output is stored in the run record only;
+golden set YAML files are never modified.
+
+## Golden set entry
 |---|---|---|---|
 | `path` | string | — | Path to golden set YAML file |
 | `enabled` | boolean | `true` | Include this set in evaluations |
@@ -133,10 +146,23 @@ storage:
 | Gate | Type | Default | Description |
 |---|---|---|---|
 | `suite_score_minimum` | number | `0.7` | Minimum suite aggregate score (0.0–1.0) |
-| `metric_score_minimums` | object | — | Per-metric minimum thresholds |
+| `metric_score_minimums` | object | — | Per-metric minimum thresholds. See example below. |
 | `max_failed_test_cases` | integer | `0` | Maximum allowed failed test cases |
 | `max_low_confidence_ratio` | number | `0.1` | Max fraction of results with confidence < 0.6 |
 | `regression_gate` | boolean | `true` | Fail on critical regression |
+
+Example — factuality must score 80%+ and format 60%+:
+
+```yaml
+quality_gates:
+  suite_score_minimum: 0.7
+  metric_score_minimums:
+    factuality: 0.8
+    format: 0.6
+  max_failed_test_cases: 1
+  max_low_confidence_ratio: 0.1
+  regression_gate: true
+```
 
 ## Output configuration
 
@@ -146,7 +172,29 @@ storage:
 | `default_format` | string | `terminal` | Output format: `terminal`, `json`, `markdown` |
 | `color` | string | `auto` | Color mode: `auto`, `always`, `never` |
 | `ci_mode_auto_detect` | boolean | `true` | Auto-detect CI environments from env vars |
-| `report_path` | string | — | Default report output path |
+| `report_path` | string | — | Default report output path. Overridden by `--output` flag. |
+
+## Tone configuration
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `tone_profile` | string or null | — | Expected tone description passed to the LLM judge. E.g. `"confident, approachable, professional"`. |
+| `sub_dimensions` | object | all `true` | Per-dimension toggle: `formality`, `sentiment`, `assertiveness`, `persona_consistency`, `verbosity` |
+| `sub_dimension_weights` | object | — | Custom weight per dimension. E.g. `{ formality: 2.0, verbosity: 0.5 }` |
+
+Example — custom profile per dimension weights:
+
+```yaml
+tone:
+  tone_profile: "friendly but professional, concise"
+  sub_dimensions:
+    formality: true
+    sentiment: true
+    persona_consistency: true
+  sub_dimension_weights:
+    formality: 1.5
+    verbosity: 0.3
+```
 
 ## Storage configuration
 

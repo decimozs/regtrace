@@ -24,7 +24,7 @@ function requireGenerateApiKey(
 		if (fromEnv && fromEnv !== "") return fromEnv;
 		// Providers with an env var require a key
 		throw new Error(
-			`${providerName} API key not configured for generation. Set ${envVar} or pass apiKey in generator config.`,
+			`${providerName} API key not configured for generation. Set ${envVar} in .env (see .env.example) or pass apiKey in generator config.`,
 		);
 	}
 	// Providers without an env var (ollama) don't need a key

@@ -9,10 +9,10 @@ metrics. Swap between them by changing a single config line.
 ## Supported providers
 
 | Provider | Env variable | Models |
-|---|---|---|
-| Anthropic | `ANTHROPIC_API_KEY` | claude-3-haiku, claude-3-5-sonnet |
-| OpenAI | `OPENAI_API_KEY` | gpt-4o, gpt-4o-mini |
-| Gemini | `GEMINI_API_KEY` | gemini-1.5-pro, gemini-1.5-flash |
+|---|---|---|---|
+| Anthropic | `ANTHROPIC_API_KEY` | claude-haiku-4-5-20251001, claude-sonnet-4-20250514 |
+| OpenAI | `OPENAI_API_KEY` | gpt-4o, gpt-4o-mini, gpt-4.1, gpt-4.1-mini |
+| Gemini | `GEMINI_API_KEY` | gemini-2.5-pro, gemini-2.5-flash |
 | Groq | `GROQ_API_KEY` | llama-3.1-8b-instant, llama-3.3-70b-versatile |
 | Ollama | *(none)* | Any local model |
 
@@ -35,7 +35,7 @@ Set the provider in `regtrace.config.yaml`:
     judge:
       primary:
         provider: anthropic
-        model: claude-3-haiku-20240307
+        model: claude-haiku-4-5-20251001
         temperature: 0.1
         max_tokens: 4096
         timeout_ms: 30000
@@ -47,11 +47,11 @@ Set the provider in `regtrace.config.yaml`:
     judge:
       primary:
         provider: openai
-        model: gpt-4o-mini
-        temperature: 0.1
-        max_tokens: 4096
-        timeout_ms: 30000
-        retry_attempts: 3
+    model: gpt-4.1-mini
+    temperature: 0.1
+    max_tokens: 4096
+    timeout_ms: 30000
+    retry_attempts: 3
     ```
   </Tab>
   <Tab value="Gemini">
@@ -59,7 +59,7 @@ Set the provider in `regtrace.config.yaml`:
     judge:
       primary:
         provider: gemini
-        model: gemini-1.5-flash
+        model: gemini-2.5-flash
         temperature: 0.1
         max_tokens: 4096
         timeout_ms: 30000
@@ -104,7 +104,7 @@ Configure a fallback if the primary provider fails after retries:
 judge:
   primary:
     provider: anthropic
-    model: claude-3-haiku-20240307
+    model: claude-haiku-4-5-20251001
     temperature: 0.1
     max_tokens: 4096
     timeout_ms: 30000

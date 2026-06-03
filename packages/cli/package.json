@@ -1,9 +1,15 @@
 {
 	"name": "@regtrace/cli",
 	"version": "1.0.0",
+	"description": "Regtrace CLI — evaluate LLM outputs with deterministic and LLM-judged metrics",
 	"module": "index.ts",
 	"type": "module",
 	"private": true,
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/decimozs/regtrace.git"
+	},
 	"scripts": {
 		"test": "bun test",
 		"typecheck": "bunx tsc --noEmit",

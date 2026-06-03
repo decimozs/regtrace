@@ -24,12 +24,21 @@ function getBasePath(options: { config?: string }): string {
 	return process.cwd();
 }
 
-export async function listCommand(options: { config?: string }): Promise<void> {
+export async function listCommand(options: {
+	config?: string;
+	format?: string;
+}): Promise<void> {
 	const basePath = getBasePath(options);
 	const records = await listRunRecords(basePath);
 
 	if (records.length === 0) {
-		printInfo("No run records found");
+		if (options.format !== "json") printInfo("No run records found");
+		else console.log(JSON.stringify([]));
+		return;
+	}
+
+	if (options.format === "json") {
+		console.log(JSON.stringify(records, null, 2));
 		return;
 	}
 
