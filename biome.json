@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**", "!.agents/skills", "!.github/skills"]
+		"includes": ["**"]
 	},
 	"formatter": {
 		"enabled": true,
