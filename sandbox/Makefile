@@ -23,10 +23,10 @@ init-openai: init seed env ## Scaffold project with OpenAI GPT-4o judge
 	@echo "✓ Initialized with OpenAI GPT-4o judge"
 	@echo "  Set OPENAI_API_KEY in .env for LLM-judged scores."
 
-init-groq: init seed env ## Scaffold project with Groq Llama 3.1 judge
+init-groq: init seed env ## Scaffold project with Groq Llama 3.3 judge
 	@sed -i 's/provider: anthropic/provider: groq/' regtrace.config.yaml
-	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama-3.1-70b-versatile/' regtrace.config.yaml
-	@echo "✓ Initialized with Groq Llama 3.1 judge"
+	@sed -i 's/model: claude-3-5-sonnet-20240620/model: llama-3.3-70b-versatile/' regtrace.config.yaml
+	@echo "✓ Initialized with Groq Llama 3.3 judge"
 	@echo "  Set GROQ_API_KEY in .env for LLM-judged scores."
 
 init-ollama: init seed env ## Scaffold project with Ollama local judge
