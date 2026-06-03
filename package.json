@@ -21,7 +21,8 @@
 		"docs:dev": "bun run --cwd apps/docs dev",
 		"docs:build": "bun run --cwd apps/docs build",
 		"docs:start": "bun run --cwd apps/docs start",
-		"docs:typecheck": "bun run --cwd apps/docs types:check"
+		"docs:typecheck": "bun run --cwd apps/docs types:check",
+		"stats": "bun scripts/download-stats.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.16",
