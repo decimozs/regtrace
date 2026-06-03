@@ -1,16 +1,12 @@
 name: Release
-
 on:
   push:
     tags: ["v*"]
-
 permissions:
   contents: write
-
 jobs:
   test:
     uses: ./.github/workflows/ci.yml
-
   build:
     needs: test
     strategy:
@@ -18,29 +14,28 @@ jobs:
         include:
           - os: ubuntu-latest
             asset_name: regtrace-linux-x64
-            outfile: ./regtrace-linux-x64
+            outfile: regtrace-linux-x64
           - os: macos-latest
             asset_name: regtrace-darwin-arm64
-            outfile: ./regtrace-darwin-arm64
+            outfile: regtrace-darwin-arm64
           - os: windows-latest
             asset_name: regtrace-windows-x64.exe
-            outfile: ./regtrace-windows-x64.exe
+            outfile: regtrace-windows-x64.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
-      - run: bun run build --outfile ${{ matrix.outfile }}
+      - run: bun run scripts/build.ts ${{ matrix.outfile }}
       - name: Smoke test
         run: |
           chmod +x ${{ matrix.outfile }} || true
-          ./${{ matrix.outfile }} --version
+          ${{ matrix.outfile }} --version
         shell: bash
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
           path: ${{ matrix.outfile }}
-
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -60,7 +55,6 @@ jobs:
           find . -type f -name "regtrace*" -exec \
             gh release upload "${{ github.ref_name }}" {} \
               --repo "${{ github.repository }}" \;
-          # Generate and upload SHA256 checksums
           find . -type f -name "regtrace*" -not -name "*.sha256" | while read f; do
             sha256sum "$f" > "$f.sha256"
             gh release upload "${{ github.ref_name }}" "$f.sha256" \
