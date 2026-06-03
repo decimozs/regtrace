@@ -8,11 +8,14 @@ expectations and reports whether quality is maintained or degraded.
 
 ## High-level flow
 
-```
-golden-sets/*.yaml  →  validate  →  evaluate  →  aggregate  →  report
-                                    ↑
-regtrace.config.yaml               |
-       └──────────────────── threshold config
+```mermaid
+flowchart LR
+  A[Golden Sets] --> B[Validate]
+  B --> C[Evaluate]
+  C --> D[Aggregate]
+  D --> E[Quality Gates]
+  E --> F[Report]
+  F --> G[Persist]
 ```
 
 Each run is:
@@ -29,15 +32,15 @@ Each run is:
 
 For each test case:
 
-```
-test_case
-  ├── factuality evaluator (LLM or heuristic)
-  ├── format evaluator (deterministic sub-checks)
-  └── tone evaluator (LLM or heuristic)
-         ↓
-    metric results
-         ↓
-    aggregated test case score
+```mermaid
+flowchart TD
+  TC[Test Case] --> FE[Factuality Evaluator]
+  TC --> FmE[Format Evaluator]
+  TC --> TE[Tone Evaluator]
+  FE --> MR[Metric Results]
+  FmE --> MR
+  TE --> MR
+  MR --> AS[Aggregated Score]
 ```
 
 Each evaluator produces a score (0.0–1.0), a pass/fail decision, confidence
@@ -47,28 +50,30 @@ level, and an explanation.
 
 After evaluation, Regtrace checks for an existing baseline:
 
-```
-If baseline exists:
-  Compare current suite score to baseline score
-  Compute deltas per-metric and per-test-case
-  Classify regression status (clean/warning/critical)
-
-If no baseline:
-  Mark status as "new"
+```mermaid
+flowchart TD
+  Eval[Evaluation Complete] --> Check{Baseline Exists?}
+  Check -->|Yes| Compare[Compare suite scores]
+  Compare --> Deltas[Compute per-metric deltas]
+  Deltas --> Classify{Delta vs Tolerance}
+  Classify -->|Within tolerance| Clean[Status: Clean]
+  Classify -->|Between tolerance and critical| Warning[Status: Warning]
+  Classify -->|Exceeds critical threshold| Critical[Status: Critical]
+  Check -->|No| New[Status: New]
 ```
 
 ## Quality gates
 
 Quality gates are final pass/fail checks:
 
-```
-suite_score >= minimum?
-failed cases <= max?
-low-confidence ratio <= max?
-regression status != critical?
-                    ↓
-            All pass → suite passes
-            Any fail → suite fails
+```mermaid
+flowchart LR
+  SQ{Suite Score >= Minimum?} --> AND{All Pass?}
+  FC{Failed Cases <= Max?} --> AND
+  LC{Low-Conf Ratio <= Max?} --> AND
+  RG{Regression Status != Critical?} --> AND
+  AND -->|Yes| PASS[Suite Passes]
+  AND -->|No| FAIL[Suite Fails]
 ```
 
 ## Run storage
@@ -79,16 +84,34 @@ listing, history review, and regression comparison.
 
 ## Architecture layers
 
-```
-┌─────────────────────────────────────────────────┐
-│                  CLI (Commander)                 │
-│   init / run / list / history / watch / baseline │
-├─────────────────────────────────────────────────┤
-│                  Orchestrator                    │
-│   config → golden sets → metrics → report       │
-├──────────────┬──────────────────┬────────────────┤
-│   Schema     │    Metrics       │   Reports      │
-│   & Storage  │    Evaluators    │   JSON/MD      │
-│   Zod + YAML │   Judge + Det    │   Terminal     │
-└──────────────┴──────────────────┴────────────────┘
+```mermaid
+flowchart TD
+  subgraph CLI [CLI Layer]
+    Init[init]
+    Run[run]
+    List[list]
+    History[history]
+    Watch[watch]
+    Baseline[baseline]
+  end
+  subgraph Core [Orchestrator]
+    Config[config] --> GS[golden sets]
+    GS --> Metrics[metrics]
+    Metrics --> Report[report]
+  end
+  subgraph Schema [Schema & Storage]
+    Zod[Zod + YAML]
+  end
+  subgraph Metrics2 [Metrics]
+    Eval[Evaluators]
+    Judge[Judge + Det]
+  end
+  subgraph Reports [Reports]
+    Json[JSON]
+    Md[Markdown]
+    Term[Terminal]
+  end
+  Core --> Schema
+  Core --> Metrics2
+  Core --> Reports
 ```

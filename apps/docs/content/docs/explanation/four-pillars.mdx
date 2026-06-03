@@ -79,17 +79,12 @@ specific problem, and together they form a complete evaluation system.
 
 ## How the pillars connect
 
-```
-Golden sets ──define what to test──▶ Metrics
-                                     │
-                                     ▼
-Metrics ──produce scores──▶ Regression baseline
-                            │
-                            ▼
-Regression ──detects drops──▶ Quality gates
-                              │
-                              ▼
-Quality gates ──decides──▶ pass/fail
+```mermaid
+flowchart LR
+  GS[Golden Sets] -->|define what to test| M[Metrics]
+  M -->|produce scores| RB[Regression Baseline]
+  RB -->|detects drops| QG[Quality Gates]
+  QG -->|decides| PF[Pass / Fail]
 ```
 
 Each pillar depends on the previous one. Without golden sets, metrics have

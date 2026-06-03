@@ -102,11 +102,17 @@ in application code:
 
 The database is a **derived cache**, not the source of truth:
 
-- **JSON files** (`regtrace run`) in `.regtrace/runs/` are always written
-- **SQLite insert** happens after the file write if enabled
-- DB insert failures are non-fatal — the run record is always safe in the
-  JSON file
-- The database can be rebuilt from the JSON files at any time
+```mermaid
+flowchart LR
+  Run[regtrace run] --> File[JSON File]
+  File -->|Primary| Storage[Source of Truth]
+  Run --> DB{DB Enabled?}
+  DB -->|Yes| Insert[SQLite Insert]
+  DB -->|No| Skip[Skip DB Write]
+  Insert --> Cache[Derived Cache]
+  Rebuild[db rebuild] -->|Reads all files| RebuildInsert[Batch Insert]
+  RebuildInsert --> Cache
+```
 
 ## Rebuilding the database
 

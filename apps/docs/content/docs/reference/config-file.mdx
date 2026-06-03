@@ -154,9 +154,12 @@ See the [database reference](/docs/reference/database) for the full schema.
 
 Weights form a three-level cascade:
 
-- **Config `default_weight`** — applied to all metrics unless overridden
-- **Golden set `weight`** — how much this golden set counts in a multi-set run
-- **Test case `weight`** — how much this case counts within its set
+```mermaid
+flowchart TD
+  DW[Config default_weight] -->|Applied unless overridden| AllMetrics[All Metrics]
+  GSW[Golden Set weight] -->|Multi-set run contribution| GS[Each Golden Set]
+  TCW[Test Case weight] -->|Contribution within a set| TC[Each Test Case]
+```
 
 All weights default to `1`.
 

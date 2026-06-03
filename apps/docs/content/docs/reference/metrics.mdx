@@ -117,9 +117,12 @@ Statistical comparison against a baseline run.
 
 ## Scoring cascade
 
-1. **Sub-check scores** → aggregated to **metric score** (weighted average)
-2. **Metric scores** → aggregated to **test case score** (weighted by metric weight)
-3. **Test case scores** → aggregated to **suite score** (weighted by test case weight)
-4. **Suite scores** → aggregated to **overall score** (weighted by golden set weight)
+```mermaid
+flowchart LR
+  SC[Sub-Check Scores] -->|Weighted Average| MS[Metric Score]
+  MS -->|Weighted by Metric Weight| TCS[Test Case Score]
+  TCS -->|Weighted by Case Weight| SS[Suite Score]
+  SS -->|Weighted by Set Weight| OS[Overall Score]
+```
 
 Scoring method: `weighted_average` (default). All weights default to `1`.

@@ -30,11 +30,21 @@ i Press Ctrl+C to stop
 
 ## Workflow
 
-1. Start watch mode in one terminal
-2. Edit a golden set file in another
-3. Save the file
-4. Watch mode detects the change and re-runs evaluation
-5. Results appear in the watch terminal
+```mermaid
+sequenceDiagram
+  participant Dev as Developer
+  participant Watch as Regtrace Watch
+  participant Eval as Evaluation Engine
+
+  Dev->>Watch: Start watch mode
+  Note over Watch: Watching golden set files
+  Dev->>Dev: Edit golden set file
+  Dev->>Dev: Save file
+  Watch->>Watch: Debounce 500ms
+  Watch->>Eval: Trigger re-run
+  Eval->>Watch: Evaluation results
+  Watch->>Dev: Display results
+```
 
 ```
 i Change detected: golden-sets/qa.yaml

@@ -64,15 +64,21 @@ Run evaluation on all enabled golden sets.
 
 Steps:
 
-1. Load config from `regtrace.config.yaml`
-2. Load and validate all enabled golden sets
-3. For each golden set:
-   a. Validate test cases
-   b. Run each case through enabled metrics
-   c. Aggregate scores
-   d. Check quality gates
-4. Print terminal report
-5. Persist run record
+```mermaid
+flowchart TD
+  Load[Load Config & Golden Sets] --> Validate[Validate Schema & Rules]
+  Validate --> Loop{For Each Golden Set}
+  Loop --> Cases[Validate Test Cases]
+  Cases --> Evaluate[Run Each Case Through Metrics]
+  Evaluate --> Aggregate[Aggregate Scores]
+  Aggregate --> Gates[Check Quality Gates]
+  Gates --> Next{More Sets?}
+  Next -->|Yes| Loop
+  Next -->|No| Report[Print Terminal Report]
+  Report --> Persist[Persist Run Record]
+```
+
+Originally:
 
 #### Dry-run mode
 

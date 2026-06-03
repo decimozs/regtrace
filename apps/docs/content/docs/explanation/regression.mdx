@@ -25,12 +25,13 @@ known-good reference point.
 Every run produces an evaluation record. The next run compares against a
 baseline:
 
-```
-Run 1: suite score 0.85  →  baseline = none  →  status: new
-Run 2: suite score 0.82  →  baseline = run 1 →  delta: -3.5%
-                           →  status: clean (within 5% tolerance)
-Run 3: suite score 0.71  →  baseline = run 1 →  delta: -16.5%
-                           →  status: critical (past 15% threshold)
+```mermaid
+flowchart LR
+  R1[Run 1: 0.85] -->|no baseline| N[Status: New]
+  R2[Run 2: 0.82] -->|baseline = Run 1| D1[Delta: -3.5%]
+  D1 --> C1[Status: Clean]
+  R3[Run 3: 0.71] -->|baseline = Run 1| D2[Delta: -16.5%]
+  D2 --> C2[Status: Critical]
 ```
 
 The delta transforms an opaque absolute score into a meaningful comparison:
@@ -90,16 +91,15 @@ External factors that affect model output.
 
 When a regression is detected, Regtrace reports deltas at three levels:
 
-```
-Suite delta: -16.5% (critical)
-  factuality:  -18.2%
-  format:       -2.1%
-  tone:        -11.4%
-  Test cases:
-    qa-001: -22% (regressed)
-    qa-002:  +3% (improved)
-    qa-003: new test case
-    qa-004: unchanged
+```mermaid
+flowchart TD
+  Suite[Suite Delta: -16.5%] --> Factuality[Factuality: -18.2%]
+  Suite --> Format[Format: -2.1%]
+  Suite --> Tone[Tone: -11.4%]
+  Factuality --> QA001[qa-001: -22% regressed]
+  Factuality --> QA002[qa-002: +3% improved]
+  Format --> QA003[qa-003: new]
+  Tone --> QA004[qa-004: unchanged]
 ```
 
 This hierarchy lets you drill in:

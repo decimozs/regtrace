@@ -93,11 +93,18 @@ quality_gates:
 
 All four gates must pass for the suite to succeed:
 
-```
-suite_score >= minimum
-    AND failed <= max_per_suite
-    AND low_confidence_ratio <= max_ratio
-    AND regression status != critical
+```mermaid
+flowchart LR
+  SQ{Score >= Minimum?}
+  FC{Failed <= Max?}
+  LC{Low-Conf <= Max?}
+  RG{Status != Critical?}
+  SQ --> AND{All Gates Pass?}
+  FC --> AND
+  LC --> AND
+  RG --> AND
+  AND -->|Yes| PASS[Suite Passes]
+  AND -->|No| FAIL[Suite Fails]
 ```
 
 This AND logic means any single deficiency can block the pipeline. It also

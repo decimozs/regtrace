@@ -4,6 +4,7 @@ import * as TabsComponents from "fumadocs-ui/components/tabs";
 import { TypeTable } from "fumadocs-ui/components/type-table";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
+import { Mermaid } from "./mdx/mermaid";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -12,12 +13,7 @@ export function getMDXComponents(components?: MDXComponents) {
     ...AccordionComponents,
     ...StepsComponents,
     TypeTable,
+    Mermaid,
     ...(components as MDXComponents | undefined),
   } satisfies MDXComponents;
-}
-
-export const useMDXComponents = getMDXComponents;
-
-declare global {
-  type MDXProvidedComponents = ReturnType<typeof getMDXComponents>;
 }
