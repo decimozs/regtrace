@@ -270,10 +270,17 @@ describe("run", () => {
 
 	it("outputs Markdown report with --format markdown", async () => {
 		const dir = tmpDir();
-		const { configPath } = writeFiles(dir, BASE_CONFIG(), DEFAULT_GS);
+		const { configPath } = writeFiles(
+			dir,
+			BASE_CONFIG(`  suite_score_minimum: 0
+  max_failed_test_cases: 5
+  max_low_confidence_ratio: 1.0
+  regression_gate: false`),
+			DEFAULT_GS,
+		);
 		const outPath = resolve(dir, "report.md");
 
-		const { exitCode } = await runCli(
+		const { exitCode, combined } = await runCli(
 			[
 				"run",
 				"--config",
@@ -287,6 +294,9 @@ describe("run", () => {
 		);
 
 		expect(exitCode).toBe(0);
+		if (exitCode !== 0) {
+			console.error("CLI output for failed markdown test:\n", combined);
+		}
 		expect(existsSync(outPath)).toBe(true);
 		const report = readFileSync(outPath, "utf-8");
 		expect(report).toContain("Regtrace Report");

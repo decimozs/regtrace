@@ -1,23 +1,10 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
-// Mock judge module so tests are deterministic regardless of API keys
-mock.module("../../../src/judge/judge", () => ({
-	buildJudgeConfig: (config: Record<string, unknown>) => ({
-		provider: String(config.provider),
-		model: String(config.model),
-		temperature: Number(config.temperature),
-		maxTokens: Number(config.max_tokens),
-		timeoutMs: Number(config.timeout_ms),
-		retryAttempts: Number(config.retry_attempts),
-		localEndpoint: undefined,
-	}),
-	judgeTone: mock(async () => {
-		throw new Error("Mocked judge failure — testing fallback");
-	}),
-	judgeFactuality: mock(async () => {
-		throw new Error("Mocked judge failure");
-	}),
-}));
+// Clear API keys so judge calls throw → evaluators use heuristic fallback
+process.env.ANTHROPIC_API_KEY = "";
+process.env.OPENAI_API_KEY = "";
+process.env.GROQ_API_KEY = "";
+process.env.GEMINI_API_KEY = "";
 
 import {
 	type EvaluateSuiteParams,
