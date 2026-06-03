@@ -1,5 +1,6 @@
 # compiled binary
 regtrace
+!skills/regtrace/
 regtrace.exe
 
 # dependencies (bun install)
