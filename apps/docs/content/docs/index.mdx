@@ -3,30 +3,68 @@ title: Regtrace Documentation
 description: LLM evaluation and benchmarking tool
 ---
 
+import {
+	BookOpen,
+	BookOpenCheck,
+	Download,
+	Folder,
+	Info,
+	Lightbulb,
+	List,
+	Rocket,
+	Scale,
+	Wrench,
+} from "lucide-react";
+
 Regtrace is a CLI tool for evaluating and benchmarking LLM outputs. It helps you
 detect regressions, enforce quality gates, and understand how your model performs
 across multiple dimensions.
 
+## Getting started
+
+<Cards>
+  <Card title="Quick Start" href="/docs/tutorials/getting-started" icon={<Rocket />}>
+    Install Regtrace and run your first evaluation in under 5 minutes. No API
+    key needed for format checks.
+  </Card>
+  <Card title="What is Regtrace?" href="/docs/explanation/how-regtrace-works" icon={<Info />}>
+    Understand the four pillars — Factuality, Format, Tone, and Regression —
+    and how the linter-for-LLM-outputs mental model works.
+  </Card>
+  <Card title="Installation" href="/docs/tutorials/getting-started#install" icon={<Download />}>
+    Download a standalone binary for Linux, macOS, or Windows. No runtime
+    dependencies needed.
+  </Card>
+  <Card title="Comparisons" href="/docs/explanation/why-regtrace" icon={<Scale />}>
+    How Regtrace differs from DeepEval and other LLM evaluation frameworks.
+    Human-label-first philosophy with four deep pillars.
+  </Card>
+  <Card title="Guides" href="/docs/how-to/ci-integration" icon={<BookOpenCheck />}>
+    Practical how-to recipes for CI/CD integration, metric configuration,
+    report generation, and provider setup.
+  </Card>
+</Cards>
+
 ## How this documentation is organized
 
 <Cards>
-  <Card title="Tutorials" href="/docs/tutorials/getting-started" icon="book-open">
+  <Card title="Tutorials" href="/docs/tutorials/getting-started" icon={<BookOpen />}>
     Start here if you are new to Regtrace. Follow step-by-step lessons to install,
     create golden sets, and run your first evaluation.
   </Card>
-  <Card title="How-to Guides" href="/docs/how-to/ci-integration" icon="wrench">
+  <Card title="How-to Guides" href="/docs/how-to/ci-integration" icon={<Wrench />}>
     Practical recipes for common tasks: CI integration, metric configuration,
     report generation, and provider setup.
   </Card>
-  <Card title="Reference" href="/docs/reference/cli" icon="list">
+  <Card title="Reference" href="/docs/reference/cli" icon={<List />}>
     Technical descriptions of the CLI commands, config schema, golden set format,
     and run record structure.
   </Card>
-  <Card title="Examples" href="/docs/examples/overview" icon="folder">
+  <Card title="Examples" href="/docs/examples/overview" icon={<Folder />}>
     Ready-to-run production examples: customer support, content moderation,
     RAG documentation, code generation, translation, and more.
   </Card>
-  <Card title="Explanation" href="/docs/explanation/how-regtrace-works" icon="lightbulb">
+  <Card title="Explanation" href="/docs/explanation/how-regtrace-works" icon={<Lightbulb />}>
     Deep dives into how Regtrace evaluates outputs, why regression detection is
     the core feature, and the trade-offs between deterministic and LLM-judged metrics.
   </Card>
