@@ -153,4 +153,25 @@ describe("config validator", () => {
 			expect(error).toBeDefined();
 		}
 	});
+
+	it("passes when storage.db is enabled with boolean value", () => {
+		const data = makeMinimalConfig({
+			storage: { db: { enabled: true } },
+		});
+		const result = validateConfig(data);
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.storage?.db.enabled).toBe(true);
+		}
+	});
+
+	it("fails when storage.db.enabled has invalid type (string)", () => {
+		const data = makeMinimalConfig({
+			storage: { db: { enabled: "yes" } },
+		});
+
+		const result = validateConfig(data);
+		expect(result.success).toBe(false);
+	});
 });

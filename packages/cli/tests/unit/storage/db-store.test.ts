@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { existsSync, unlinkSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	rmSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { resolve } from "node:path";
 import type { RunRecord } from "../../../src/schema/run-record.schema";
 import {
@@ -7,6 +13,7 @@ import {
 	getDb,
 	initDb,
 	listRunRecords,
+	rebuildDb,
 	saveRunRecord,
 } from "../../../src/storage/db-store";
 
@@ -169,5 +176,107 @@ describe("db-store", () => {
 
 		const results = listRunRecords(db);
 		expect(results.length).toBe(1);
+	});
+});
+
+function writeRunFile(
+	dir: string,
+	runId: string,
+	overrides: Partial<RunRecord> = {},
+): void {
+	const record = {
+		run_id: runId,
+		timestamp: "2026-01-01T00:00:00.000Z",
+		status: "passed",
+		trigger: "cli",
+		duration_ms: 100,
+		regtrace_version: "0.1.0",
+		judge_provider: "anthropic",
+		judge_model: "claude-3-5-sonnet-20240620",
+		config_hash: "abc123",
+		golden_set_name: "test-suite",
+		golden_set_version: "1.0.0",
+		golden_set_file_hash: "def456",
+		suite_score: 0.85,
+		metric_summary: {},
+		test_case_results: [],
+		regression: {
+			baseline_run_id: null,
+			baseline_golden_set_version: null,
+			current_golden_set_version: "1.0.0",
+			version_change_detected: false,
+			suite_delta: 0,
+			regression_status: "clean",
+			test_cases_excluded: [],
+			metric_deltas: {},
+		},
+		...overrides,
+	};
+	writeFileSync(resolve(dir, `${runId}.json`), JSON.stringify(record), "utf-8");
+}
+
+describe("rebuildDb", () => {
+	const BASE = resolve(__dirname, "../../fixtures/temp-rebuild");
+	const RUNS_DIR = resolve(BASE, ".regtrace", "runs");
+	const DB_PATH = resolve(BASE, "rebuilt.db");
+
+	beforeEach(() => {
+		closeDb();
+		rmSync(BASE, { recursive: true, force: true });
+		mkdirSync(RUNS_DIR, { recursive: true });
+	});
+
+	afterEach(() => {
+		closeDb();
+		rmSync(BASE, { recursive: true, force: true });
+	});
+
+	it("imports runs from .regtrace/runs/ directory", () => {
+		writeRunFile(RUNS_DIR, "run_001");
+		writeRunFile(RUNS_DIR, "run_002");
+		writeRunFile(RUNS_DIR, "run_003");
+
+		const count = rebuildDb(BASE, DB_PATH);
+		expect(count).toBe(3);
+
+		const db = initDb(DB_PATH);
+		const rows = db
+			.prepare("SELECT run_id FROM runs ORDER BY run_id")
+			.all() as unknown as Record<string, unknown>[];
+		expect(rows).toHaveLength(3);
+		expect(rows[0]?.run_id).toBe("run_001");
+		expect(rows[1]?.run_id).toBe("run_002");
+		expect(rows[2]?.run_id).toBe("run_003");
+		db.close();
+	});
+
+	it("returns 0 when runs directory is empty", () => {
+		const count = rebuildDb(BASE, DB_PATH);
+		expect(count).toBe(0);
+	});
+
+	it("returns 0 when runs directory does not exist", () => {
+		const count = rebuildDb("/tmp/nonexistent-0123456789", DB_PATH);
+		expect(count).toBe(0);
+	});
+
+	it("skips corrupt JSON files", () => {
+		writeRunFile(RUNS_DIR, "run_valid");
+		writeFileSync(
+			resolve(RUNS_DIR, "run_corrupt.json"),
+			"not valid json{",
+			"utf-8",
+		);
+
+		const count = rebuildDb(BASE, DB_PATH);
+		expect(count).toBe(1);
+
+		const db = initDb(DB_PATH);
+		const rows = db
+			.prepare("SELECT run_id FROM runs")
+			.all() as unknown as Record<string, unknown>[];
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.run_id).toBe("run_valid");
+		db.close();
 	});
 });

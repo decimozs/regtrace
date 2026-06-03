@@ -108,6 +108,10 @@ output:
   default_format: terminal
   color: always
   ci_mode_auto_detect: false
+storage:
+  db:
+    enabled: true
+    path: .regtrace/test.db
 `;
 
 const DEFAULT_GS = `name: integration-gs
@@ -391,5 +395,73 @@ describe("error handling", () => {
 
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain("suite(s) evaluated");
+	});
+});
+
+describe("db rebuild", () => {
+	it("creates database from existing run records", async () => {
+		const dir = tmpDir();
+		const cfg = BASE_CONFIG().replace("golden-set.yaml", "gs.yaml");
+		writeFileSync(resolve(dir, "regtrace.config.yaml"), cfg, "utf-8");
+
+		const runsDir = resolve(dir, ".regtrace", "runs");
+		mkdirSync(runsDir, { recursive: true });
+		const sampleRecord = {
+			run_id: "run_rebuild_001",
+			timestamp: "2026-01-01T00:00:00.000Z",
+			status: "passed",
+			trigger: "cli",
+			duration_ms: 100,
+			regtrace_version: "0.1.0",
+			judge_provider: "anthropic",
+			judge_model: "claude-3-5-sonnet-20240620",
+			config_hash: "abc",
+			golden_set_name: "test-suite",
+			golden_set_version: "1.0.0",
+			golden_set_file_hash: "def",
+			suite_score: 0.85,
+			metric_summary: {},
+			test_case_results: [],
+			regression: {
+				baseline_run_id: null,
+				baseline_golden_set_version: null,
+				current_golden_set_version: "1.0.0",
+				version_change_detected: false,
+				suite_delta: 0,
+				regression_status: "clean",
+				test_cases_excluded: [],
+				metric_deltas: {},
+			},
+		};
+		writeFileSync(
+			resolve(runsDir, "run_rebuild_001.json"),
+			JSON.stringify(sampleRecord),
+			"utf-8",
+		);
+
+		const { stdout } = await runCli(
+			["db", "rebuild", "--config", resolve(dir, "regtrace.config.yaml")],
+			dir,
+		);
+
+		expect(stdout).toContain("Rebuilt database");
+		expect(stdout).toContain("1 runs imported");
+
+		const dbPath = resolve(dir, ".regtrace", "test.db");
+		expect(existsSync(dbPath)).toBe(true);
+	});
+
+	it("reports 0 when no run records exist", async () => {
+		const dir = tmpDir();
+		const cfg = BASE_CONFIG().replace("golden-set.yaml", "gs.yaml");
+		writeFileSync(resolve(dir, "regtrace.config.yaml"), cfg, "utf-8");
+
+		const { stdout } = await runCli(
+			["db", "rebuild", "--config", resolve(dir, "regtrace.config.yaml")],
+			dir,
+		);
+
+		expect(stdout).toContain("Rebuilt database");
+		expect(stdout).toContain("0 runs imported");
 	});
 });
