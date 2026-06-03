@@ -1,4 +1,3 @@
-import { getEnv } from "../../utils/env";
 import type {
 	JudgeConfig,
 	JudgeMessage,
@@ -12,7 +11,11 @@ export class AnthropicProvider extends BaseProvider implements JudgeProvider {
 		messages: JudgeMessage[],
 		config: JudgeConfig,
 	): Promise<JudgeProviderResponse> {
-		const apiKey = config.apiKey ?? getEnv("ANTHROPIC_API_KEY") ?? "";
+		const apiKey = this.requireApiKey(
+			config.apiKey,
+			"anthropic",
+			"ANTHROPIC_API_KEY",
+		);
 		const url = config.localEndpoint ?? "https://api.anthropic.com/v1/messages";
 
 		const systemMsg = messages.find((m) => m.role === "system");
@@ -41,7 +44,7 @@ export class AnthropicProvider extends BaseProvider implements JudgeProvider {
 
 		if (!response.ok) {
 			const text = await response.text();
-			throw new Error(`Anthropic API error ${response.status}: ${text}`);
+			throw new Error(this.sanitizeError("Anthropic", response.status, text));
 		}
 
 		const data = (await response.json()) as {

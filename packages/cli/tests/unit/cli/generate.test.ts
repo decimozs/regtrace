@@ -1,9 +1,16 @@
-import { afterAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { rmSync } from "node:fs";
 
 import { generateOutput } from "../../../src/cli/generate";
 
 const tempDirs: string[] = [];
+
+beforeEach(() => {
+	process.env.OPENAI_API_KEY = "sk-test-openai";
+	process.env.GROQ_API_KEY = "gsk-test-groq";
+	process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+	process.env.GEMINI_API_KEY = "AIza-test-gemini";
+});
 
 afterAll(() => {
 	for (const dir of tempDirs) {

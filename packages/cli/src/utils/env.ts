@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 export interface EnvVars {
 	ANTHROPIC_API_KEY?: string;
 	OPENAI_API_KEY?: string;
@@ -18,7 +19,6 @@ let loaded = false;
 export function loadEnv(): void {
 	if (loaded) return;
 
-	const dotenv = require("dotenv");
 	dotenv.config();
 
 	const missing: string[] = [];

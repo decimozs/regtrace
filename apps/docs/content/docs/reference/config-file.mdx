@@ -77,9 +77,6 @@ judge:
     max_tokens: 4096
     timeout_ms: 30000
     retry_attempts: 2
-  cost_controls:
-    max_tokens_per_run: 100000
-    warn_at_tokens: 80000
 
 # Generator provider configuration (optional)
 # Falls back to judge.primary when absent
@@ -181,7 +178,6 @@ them with defaults:
 | Block | Why required |
 |---|---|
 | `metrics.tone` | Zod schema requires it. Disable all sub-dimensions to skip tone evaluation. |
-| `judge.cost_controls` | Zod schema requires it. Defaults: 100K max tokens, 80K warn threshold. |
 | `metrics.factuality` | Required. Defaults: `strict` mode, `shallow` extraction depth. |
 | `metrics.format` | Required. Defaults: all 7 sub-checks enabled. |
 | `metrics.regression` | Required. Defaults: `last_passing` strategy. |

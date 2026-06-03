@@ -35,6 +35,5 @@ Do not submit via email or public channels. We'll respond within 48 hours with a
 ## Best Practices
 
 1. Use dedicated API keys with minimum required permissions for each LLM provider.
-2. Set `max_tokens_per_run` and `warn_at_tokens` in `judge.cost_controls` to cap usage.
-3. Run in CI with `--format json` for machine-readable pass/fail output.
-4. Pin your judge provider version to avoid unexpected behavior from model updates.
+2. Run in CI with `--format json` for machine-readable pass/fail output.
+3. Pin your judge provider version to avoid unexpected behavior from model updates.

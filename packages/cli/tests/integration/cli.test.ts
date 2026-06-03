@@ -96,9 +96,6 @@ judge:
     max_tokens: 4096
     timeout_ms: 5000
     retry_attempts: 0
-  cost_controls:
-    max_tokens_per_run: 100000
-    warn_at_tokens: 80000
 run:
   concurrency: 1
 quality_gates:

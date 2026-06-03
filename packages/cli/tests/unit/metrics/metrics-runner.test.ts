@@ -60,7 +60,6 @@ const MINIMAL_CONFIG: Config = {
 			timeout_ms: 30000,
 			retry_attempts: 3,
 		},
-		cost_controls: { max_tokens_per_run: 100000, warn_at_tokens: 80000 },
 	},
 	run: { concurrency: 1 },
 	quality_gates: {

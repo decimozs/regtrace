@@ -1,4 +1,3 @@
-import { getEnv } from "../../utils/env";
 import type {
 	JudgeConfig,
 	JudgeMessage,
@@ -19,7 +18,11 @@ export class OpenAiProvider extends BaseProvider implements JudgeProvider {
 		messages: JudgeMessage[],
 		config: JudgeConfig,
 	): Promise<JudgeProviderResponse> {
-		const apiKey = config.apiKey ?? getEnv("OPENAI_API_KEY") ?? "";
+		const apiKey = this.requireApiKey(
+			config.apiKey,
+			"openai",
+			"OPENAI_API_KEY",
+		);
 		const url =
 			config.localEndpoint ?? "https://api.openai.com/v1/chat/completions";
 
@@ -42,7 +45,7 @@ export class OpenAiProvider extends BaseProvider implements JudgeProvider {
 
 		if (!response.ok) {
 			const text = await response.text();
-			throw new Error(`OpenAI API error ${response.status}: ${text}`);
+			throw new Error(this.sanitizeError("OpenAI", response.status, text));
 		}
 
 		const data = (await response.json()) as {

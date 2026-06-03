@@ -29,11 +29,6 @@ const judgeConfigSchema = object({
 	local_endpoint: nullable(string()).optional(),
 });
 
-const costControlsSchema = object({
-	max_tokens_per_run: number().int().positive().default(100000),
-	warn_at_tokens: number().int().positive().default(80000),
-});
-
 const subChecksSchema = object({
 	length: boolean().default(true),
 	json_validity: boolean().default(true),
@@ -154,7 +149,6 @@ export const configSchema = object({
 	judge: object({
 		primary: judgeConfigSchema,
 		fallback: nullable(judgeConfigSchema).optional(),
-		cost_controls: costControlsSchema,
 	}),
 	generator: judgeConfigSchema.optional(),
 	run: runConfigSchema,

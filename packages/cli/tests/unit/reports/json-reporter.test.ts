@@ -117,7 +117,6 @@ function makeReportData(overrides?: Partial<ReportData>): ReportData {
 					retry_attempts: 3,
 					local_endpoint: null,
 				},
-				cost_controls: { max_tokens_per_run: 100000, warn_at_tokens: 80000 },
 			},
 			quality_gates: {
 				suite_score_minimum: 0.7,

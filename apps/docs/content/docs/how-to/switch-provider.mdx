@@ -119,16 +119,6 @@ judge:
     retry_attempts: 2
 ```
 
-## Cost controls
-
-```yaml
-judge:
-  cost_controls:
-    max_tokens_per_run: 100000
-    warn_at_tokens: 80000
-```
-
-Regtrace tracks token usage per run and aborts if the hard limit is exceeded.
 
 ## API key validation
 

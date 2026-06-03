@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import {
 	existsSync,
 	mkdirSync,
@@ -12,6 +12,11 @@ import { resolve } from "node:path";
 import { runCommand } from "../../../src/cli/run.command";
 
 const tempDirs: string[] = [];
+
+beforeEach(() => {
+	process.env.OPENAI_API_KEY = "sk-test-openai";
+	process.env.GROQ_API_KEY = "gsk-test-groq";
+});
 
 afterAll(() => {
 	for (const dir of tempDirs) {
@@ -104,9 +109,6 @@ judge:
     max_tokens: 4096
     timeout_ms: 5000
     retry_attempts: 0
-  cost_controls:
-    max_tokens_per_run: 100000
-    warn_at_tokens: 80000
 ${
 	generateProvided
 		? `generator:

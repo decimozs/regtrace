@@ -1,6 +1,7 @@
+import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { printHeader, printSuccess } from "./print";
+import { printError, printHeader, printSuccess } from "./print";
 
 const DEFAULT_CONFIG = `# regtrace configuration
 project:
@@ -51,9 +52,6 @@ judge:
     max_tokens: 4096
     timeout_ms: 30000
     retry_attempts: 3
-  cost_controls:
-    max_tokens_per_run: 100000
-    warn_at_tokens: 80000
 
 run:
   concurrency: 1
@@ -69,6 +67,15 @@ output:
   default_format: terminal
   color: auto
   ci_mode_auto_detect: true
+`;
+
+const DEFAULT_ENV_EXAMPLE = `# API keys for LLM providers (at least one required)
+# You can also set these in your shell environment.
+
+# ANTHROPIC_API_KEY=sk-ant-...
+# OPENAI_API_KEY=sk-proj-...
+# GROQ_API_KEY=gsk_...
+# GEMINI_API_KEY=...
 `;
 
 const DEFAULT_GOLDEN_SET = `name: my-qa-set
@@ -103,6 +110,7 @@ test_cases:
 
 interface InitOptions {
 	dir?: string;
+	force?: boolean;
 }
 
 export async function initCommand(options: InitOptions): Promise<void> {
@@ -110,8 +118,19 @@ export async function initCommand(options: InitOptions): Promise<void> {
 	const configPath = resolve(targetDir, "regtrace.config.yaml");
 	const goldenSetDir = resolve(targetDir, "golden-sets");
 	const goldenSetPath = resolve(goldenSetDir, "qa.yaml");
+	const envExamplePath = resolve(targetDir, ".env.example");
 
 	printHeader("regtrace init");
+
+	if (!options.force) {
+		const existing = [configPath, goldenSetPath].filter((p) => existsSync(p));
+		if (existing.length > 0) {
+			printError(
+				`Files already exist: ${existing.join(", ")}. Use --force to overwrite.`,
+			);
+			process.exit(2);
+		}
+	}
 
 	await mkdir(targetDir, { recursive: true });
 	await mkdir(goldenSetDir, { recursive: true });
@@ -119,13 +138,19 @@ export async function initCommand(options: InitOptions): Promise<void> {
 
 	await writeFile(configPath, DEFAULT_CONFIG);
 	await writeFile(goldenSetPath, DEFAULT_GOLDEN_SET);
-	await writeFile(resolve(targetDir, ".gitignore"), ".regtrace/runs/\n");
+	await writeFile(envExamplePath, DEFAULT_ENV_EXAMPLE);
+	await writeFile(resolve(targetDir, ".gitignore"), ".regtrace/runs/\n.env\n");
 	await mkdir(resolve(targetDir, ".regtrace", "runs"), { recursive: true });
 
 	printSuccess(`Created ${configPath}`);
 	printSuccess(`Created ${goldenSetPath}`);
+	printSuccess(`Created ${envExamplePath}`);
 	printSuccess(`Created ${resolve(targetDir, ".gitignore")}`);
 	printSuccess(`Created ${resolve(targetDir, ".regtrace", "runs")}/`);
 	console.log();
-	printSuccess("Project initialized! Run `regtrace run` to evaluate.");
+	printSuccess("Project initialized!");
+	printSuccess("Next steps:");
+	printSuccess("  1. Set API keys in .env (copy from .env.example)");
+	printSuccess("  2. Edit golden-sets/qa.yaml with your test cases");
+	printSuccess("  3. Run `regtrace run` or `regtrace run --generate`");
 }

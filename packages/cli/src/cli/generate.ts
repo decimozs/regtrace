@@ -5,7 +5,6 @@ import type {
 	JudgeProviderResponse,
 } from "../judge/types";
 import type { EnvVars } from "../utils/env";
-import { getEnv } from "../utils/env";
 
 const PROVIDER_ENV_MAP: Record<string, keyof EnvVars> = {
 	openai: "OPENAI_API_KEY",
@@ -13,6 +12,24 @@ const PROVIDER_ENV_MAP: Record<string, keyof EnvVars> = {
 	gemini: "GEMINI_API_KEY",
 	groq: "GROQ_API_KEY",
 };
+
+function requireGenerateApiKey(
+	providerName: string,
+	configApiKey?: string,
+): string | undefined {
+	if (configApiKey && configApiKey !== "") return configApiKey;
+	const envVar = PROVIDER_ENV_MAP[providerName];
+	if (envVar) {
+		const fromEnv = process.env[envVar];
+		if (fromEnv && fromEnv !== "") return fromEnv;
+		// Providers with an env var require a key
+		throw new Error(
+			`${providerName} API key not configured for generation. Set ${envVar} or pass apiKey in generator config.`,
+		);
+	}
+	// Providers without an env var (ollama) don't need a key
+	return undefined;
+}
 
 export async function generateOutput(
 	input: string,
@@ -27,8 +44,12 @@ export async function generateOutput(
 		local_endpoint?: string | null;
 	},
 ): Promise<string> {
-	const apiKey =
-		getEnv(PROVIDER_ENV_MAP[config.provider] ?? "OPENAI_API_KEY") ?? "";
+	const ProviderClass = PROVIDER_MAP[config.provider];
+	if (!ProviderClass) {
+		throw new Error(`Unknown judge provider: "${config.provider}"`);
+	}
+
+	const apiKey = requireGenerateApiKey(config.provider);
 
 	const judgeConfig: JudgeConfig = {
 		provider: config.provider,
@@ -40,11 +61,6 @@ export async function generateOutput(
 		localEndpoint: config.local_endpoint ?? undefined,
 		apiKey,
 	};
-
-	const ProviderClass = PROVIDER_MAP[config.provider];
-	if (!ProviderClass) {
-		throw new Error(`Unknown judge provider: "${config.provider}"`);
-	}
 
 	const provider = new ProviderClass();
 	const messages: JudgeMessage[] = [];

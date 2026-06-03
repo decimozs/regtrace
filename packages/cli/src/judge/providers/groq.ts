@@ -1,4 +1,3 @@
-import { getEnv } from "../../utils/env";
 import type {
 	JudgeConfig,
 	JudgeMessage,
@@ -19,7 +18,7 @@ export class GroqProvider extends BaseProvider implements JudgeProvider {
 		messages: JudgeMessage[],
 		config: JudgeConfig,
 	): Promise<JudgeProviderResponse> {
-		const apiKey = config.apiKey ?? getEnv("GROQ_API_KEY") ?? "";
+		const apiKey = this.requireApiKey(config.apiKey, "groq", "GROQ_API_KEY");
 		const url =
 			config.localEndpoint ?? "https://api.groq.com/openai/v1/chat/completions";
 
@@ -42,7 +41,7 @@ export class GroqProvider extends BaseProvider implements JudgeProvider {
 
 		if (!response.ok) {
 			const text = await response.text();
-			throw new Error(`Groq API error ${response.status}: ${text}`);
+			throw new Error(this.sanitizeError("Groq", response.status, text));
 		}
 
 		const data = (await response.json()) as {

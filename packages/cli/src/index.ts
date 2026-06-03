@@ -31,6 +31,7 @@ program
 		`
 Examples:
   regtrace init                  Create a new project
+  regtrace init --force          Overwrite existing files
   regtrace run                   Run all golden sets
   regtrace run --set qa.yaml     Run a specific set
   regtrace run --format json     JSON output (stdout)
@@ -49,7 +50,8 @@ program
 	.command("init")
 	.description("Scaffold a new regtrace project")
 	.option("-d, --dir <path>", "Target directory (default: current dir)")
-	.action(async (options: { dir?: string }) => {
+	.option("--force", "Overwrite existing files")
+	.action(async (options: { dir?: string; force?: boolean }) => {
 		await initCommand(options);
 	});
 

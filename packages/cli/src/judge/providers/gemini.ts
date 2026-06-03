@@ -1,4 +1,3 @@
-import { getEnv } from "../../utils/env";
 import type {
 	JudgeConfig,
 	JudgeMessage,
@@ -12,7 +11,11 @@ export class GeminiProvider extends BaseProvider implements JudgeProvider {
 		messages: JudgeMessage[],
 		config: JudgeConfig,
 	): Promise<JudgeProviderResponse> {
-		const apiKey = config.apiKey ?? getEnv("GEMINI_API_KEY") ?? "";
+		const apiKey = this.requireApiKey(
+			config.apiKey,
+			"gemini",
+			"GEMINI_API_KEY",
+		);
 		const baseUrl =
 			config.localEndpoint?.replace(/\/$/, "") ??
 			"https://generativelanguage.googleapis.com";
@@ -45,13 +48,18 @@ export class GeminiProvider extends BaseProvider implements JudgeProvider {
 			},
 		};
 
-		const apiUrl = `${baseUrl}/v1/models/${config.model}:generateContent?key=${apiKey}`;
+		const apiUrl = `${baseUrl}/v1/models/${config.model}:generateContent`;
 
-		const response = await this.post(apiUrl, {}, body, config.timeoutMs);
+		const response = await this.post(
+			apiUrl,
+			{ "x-goog-api-key": apiKey },
+			body,
+			config.timeoutMs,
+		);
 
 		if (!response.ok) {
 			const text = await response.text();
-			throw new Error(`Gemini API error ${response.status}: ${text}`);
+			throw new Error(this.sanitizeError("Gemini", response.status, text));
 		}
 
 		const data = (await response.json()) as {

@@ -31,7 +31,7 @@ export class OllamaProvider extends BaseProvider implements JudgeProvider {
 
 		if (!response.ok) {
 			const text = await response.text();
-			throw new Error(`Ollama API error ${response.status}: ${text}`);
+			throw new Error(this.sanitizeError("Ollama", response.status, text));
 		}
 
 		const data = (await response.json()) as {

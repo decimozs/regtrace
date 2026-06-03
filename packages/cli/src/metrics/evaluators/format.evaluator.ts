@@ -128,6 +128,15 @@ function checkForbiddenContent(actual: string): number {
 }
 
 function checkRegexMatch(actual: string, expected: string): number {
+	// ReDoS guard: limit regex length and reject complex patterns
+	if (expected.length > 500) return 0;
+	if (
+		/(\(.*\)\{.*,\}|\(\?.*\{.*,\}|\[\^?.*\{.*,\}|\\[wWdDsS]\{.*,\})/.test(
+			expected,
+		)
+	) {
+		return 0;
+	}
 	try {
 		const regex = new RegExp(expected, "m");
 		return regex.test(actual) ? 1 : 0;
