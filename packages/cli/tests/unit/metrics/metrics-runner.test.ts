@@ -1,11 +1,4 @@
-import { describe, expect, it } from "bun:test";
-
-// Clear API keys so judge calls throw → evaluators use heuristic fallback
-process.env.ANTHROPIC_API_KEY = "";
-process.env.OPENAI_API_KEY = "";
-process.env.GROQ_API_KEY = "";
-process.env.GEMINI_API_KEY = "";
-
+import { afterAll, describe, expect, it } from "bun:test";
 import {
 	type EvaluateSuiteParams,
 	type EvaluateTestCaseParams,
@@ -13,6 +6,19 @@ import {
 	evaluateTestCase,
 } from "../../../src/metrics/runner";
 import type { Config } from "../../../src/schema/config.schema";
+
+// Clear API keys so judge calls throw → evaluators use heuristic fallback
+process.env.ANTHROPIC_API_KEY = "";
+process.env.OPENAI_API_KEY = "";
+process.env.GROQ_API_KEY = "";
+process.env.GEMINI_API_KEY = "";
+
+afterAll(() => {
+	delete process.env.ANTHROPIC_API_KEY;
+	delete process.env.OPENAI_API_KEY;
+	delete process.env.GROQ_API_KEY;
+	delete process.env.GEMINI_API_KEY;
+});
 
 const MINIMAL_CONFIG: Config = {
 	project: { name: "test", version: "1.0" },

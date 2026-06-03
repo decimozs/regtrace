@@ -11,7 +11,15 @@ import { resolve } from "node:path";
 
 const CLI_ENTRY = resolve(import.meta.dirname ?? ".", "../../src/index.ts");
 
+const TEMP_ROOT = resolve(import.meta.dirname ?? ".", "../../.test-tmp");
 const tempDirs: string[] = [];
+
+// Clean slate — remove stale test dirs from previous runs
+try {
+	rmSync(TEMP_ROOT, { recursive: true, force: true });
+} catch {
+	// ignore
+}
 
 afterAll(() => {
 	for (const dir of tempDirs) {
@@ -181,10 +189,10 @@ async function runCli(
 	const proc = Bun.spawn(["bun", "run", CLI_ENTRY, ...args], {
 		cwd,
 		env: {
-			...process.env,
 			NO_COLOR: "1",
-			ANTHROPIC_API_KEY: "",
-			OPENAI_API_KEY: "",
+			DOTENV_CONFIG_QUIET: "true",
+			PATH: process.env.PATH ?? "/usr/bin:/bin",
+			HOME: process.env.HOME ?? "/root",
 		},
 		stdio: ["inherit", "pipe", "pipe"],
 	});
@@ -356,13 +364,33 @@ describe("list + history", () => {
 		const dir = tmpDir();
 		const { configPath } = writeFiles(dir, BASE_CONFIG(), DEFAULT_GS);
 
-		await runCli(["run", "--config", configPath], dir);
-		expect(latestRecord(dir)).not.toBeNull();
+		const runResult = await runCli(["run", "--config", configPath], dir);
+		if (runResult.exitCode !== 0) {
+			console.error(
+				"run command failed:\nstdout:",
+				runResult.stdout,
+				"\nstderr:",
+				runResult.stderr,
+			);
+		}
+		expect(runResult.exitCode).toBe(0);
+
+		const record = latestRecord(dir);
+		if (!record) {
+			console.error(
+				"latestRecord returned null — no record file found in",
+				dir,
+			);
+		}
+		expect(record).not.toBeNull();
 
 		const { exitCode, combined } = await runCli(
 			["list", "--config", configPath],
 			dir,
 		);
+		if (exitCode !== 0) {
+			console.error("list command failed:\ncombined:", combined);
+		}
 
 		expect(exitCode).toBe(0);
 		expect(combined).toContain("integration-gs");
@@ -372,14 +400,38 @@ describe("list + history", () => {
 		const dir = tmpDir();
 		const { configPath } = writeFiles(dir, BASE_CONFIG(), DEFAULT_GS);
 
-		await runCli(["run", "--config", configPath], dir);
+		const runResult = await runCli(["run", "--config", configPath], dir);
+		if (runResult.exitCode !== 0) {
+			console.error(
+				"run command failed:\nstdout:",
+				runResult.stdout,
+				"\nstderr:",
+				runResult.stderr,
+			);
+		}
+		expect(runResult.exitCode).toBe(0);
+
 		const record = latestRecord(dir);
-		const runId = record?.run_id as string;
+		if (!record) {
+			console.error(
+				"latestRecord returned null — no record file found in",
+				dir,
+			);
+		}
+		expect(record).not.toBeNull();
+
+		const runId = record?.run_id as string | undefined;
+		expect(runId).toBeTruthy();
+
+		if (!runId) return;
 
 		const { exitCode, combined } = await runCli(
 			["history", "--config", configPath, "--run-id", runId],
 			dir,
 		);
+		if (exitCode !== 0) {
+			console.error("history command failed:\ncombined:", combined);
+		}
 
 		expect(exitCode).toBe(0);
 		expect(combined).toContain(runId);

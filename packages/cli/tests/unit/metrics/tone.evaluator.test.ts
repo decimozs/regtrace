@@ -1,4 +1,7 @@
-import { describe, expect, it } from "bun:test";
+import { afterAll, describe, expect, it } from "bun:test";
+import { toneEvaluator } from "../../../src/metrics/evaluators/tone.evaluator";
+import type { EvaluateInput } from "../../../src/metrics/types";
+import type { Config } from "../../../src/schema/config.schema";
 
 // Clear API keys so judge calls always throw → tests exercise heuristic path
 process.env.ANTHROPIC_API_KEY = "";
@@ -6,9 +9,12 @@ process.env.OPENAI_API_KEY = "";
 process.env.GROQ_API_KEY = "";
 process.env.GEMINI_API_KEY = "";
 
-import { toneEvaluator } from "../../../src/metrics/evaluators/tone.evaluator";
-import type { EvaluateInput } from "../../../src/metrics/types";
-import type { Config } from "../../../src/schema/config.schema";
+afterAll(() => {
+	delete process.env.ANTHROPIC_API_KEY;
+	delete process.env.OPENAI_API_KEY;
+	delete process.env.GROQ_API_KEY;
+	delete process.env.GEMINI_API_KEY;
+});
 
 function makeConfig(): Config {
 	return {

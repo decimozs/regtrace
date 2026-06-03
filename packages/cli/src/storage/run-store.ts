@@ -103,6 +103,12 @@ export async function loadRunRecord(
 			return result.data;
 		}
 
+		console.error(
+			`Run record schema validation failed for ${runId}:`,
+			result.error instanceof Error
+				? result.error.message
+				: JSON.stringify(result.error),
+		);
 		return null;
 	} catch {
 		return null;

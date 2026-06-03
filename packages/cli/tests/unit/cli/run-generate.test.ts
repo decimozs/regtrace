@@ -1,4 +1,11 @@
-import { afterAll, beforeEach, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import {
 	existsSync,
 	mkdirSync,
@@ -16,6 +23,11 @@ const tempDirs: string[] = [];
 beforeEach(() => {
 	process.env.OPENAI_API_KEY = "sk-test-openai";
 	process.env.GROQ_API_KEY = "gsk-test-groq";
+});
+
+afterEach(() => {
+	delete process.env.OPENAI_API_KEY;
+	delete process.env.GROQ_API_KEY;
 });
 
 afterAll(() => {
