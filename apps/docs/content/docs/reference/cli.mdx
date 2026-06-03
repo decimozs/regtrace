@@ -51,11 +51,14 @@ Run evaluation on all enabled golden sets.
 
 <TypeTable
   type={{
-    "--ci": { description: "CI mode: suppress color, exit 1 on failure", type: "boolean", default: "false" },
+    "--ci": { description: "CI mode: suppress color, exit 1 on quality gate failure", type: "boolean", default: "false" },
+    "--no-ci": { description: "Disable CI mode auto-detection", type: "boolean" },
     "--bail": { description: "Stop after first suite that fails quality gates", type: "boolean", default: "false" },
+    "--dry-run": { description: "Validate config, golden sets, and environment without evaluating", type: "boolean", default: "false" },
     "--format": { description: "Output format: `terminal`, `json`, `markdown`", type: "string", default: "terminal" },
     "--output": { description: "Write output to file (requires `--format`)", type: "string" },
     "--set": { description: "Run a specific golden set (matches config `path`)", type: "string" },
+    "--verbose": { description: "Show all test cases, including passing ones", type: "boolean", default: "false" },
   }}
 />
 
@@ -70,6 +73,23 @@ Steps:
    d. Check quality gates
 4. Print terminal report
 5. Persist run record
+
+#### Dry-run mode
+
+`regtrace run --dry-run` validates the config, golden sets, and schema
+without executing any evaluations or spending tokens. It completes in under
+two seconds and is the recommended way to verify setup before a full run.
+
+#### CI mode
+
+`--ci` suppresses color output and exits with code 1 when quality gates
+fail. CI auto-detection checks `CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, and
+`CIRCLECI` environment variables. Use `--no-ci` to override auto-detection.
+
+#### Verbose mode
+
+By default, `regtrace run` only shows failed test cases. Pass `--verbose`
+to list all test cases including passing ones.
 
 ### `list`
 
@@ -112,8 +132,7 @@ Watch golden set files for changes and re-run evaluation.
 
 <TypeTable
   type={{
-    "--ci": { description: "CI mode for watch runs", type: "boolean", default: "false" },
-    "--bail": { description: "Stop on first suite failure", type: "boolean", default: "false" },
+    "--config": { description: "Path to config file", type: "string" },
   }}
 />
 
@@ -131,6 +150,21 @@ Manage regression baselines.
 | `unpin` | — | Revert to `last_passing` strategy |
 | `show` | — | Display current baseline info |
 
+### `db`
+
+```bash
+regtrace db rebuild [options]
+```
+
+Manage the SQLite run record database.
+
+| Subcommand | Description |
+|---|---|
+| `rebuild` | Rebuild database from `.regtrace/runs/` JSON files |
+
+Rebuilding imports all existing JSON run records into the SQLite database.
+Existing records are replaced. Corrupt files are skipped.
+
 ## Quality gates
 
 Quality gates are checked after every run. They determine pass/fail.
@@ -141,12 +175,10 @@ options and defaults.
 ## Exit codes
 
 | Code | Meaning |
-|---|---|
+|------|---------|
 | 0 | All quality gates passed |
-| 1 | Quality gates failed, config error, or unhandled error |
+| 1 | One or more quality gates failed |
+| 2 | Config or schema error — evaluation did not run |
 
-<Callout type="warn">
-  Exit code 1 conflates quality failures with config errors. A config error
-  produces the same exit code as a failing evaluation. Check error messages
-  to distinguish the two.
-</Callout>
+Config and schema errors are distinguished from evaluation failures so that
+pipeline logic can react appropriately to each case.

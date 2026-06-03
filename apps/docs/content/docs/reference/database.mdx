@@ -1,0 +1,122 @@
+---
+title: Database Reference
+description: SQLite storage schema and configuration for run record persistence
+---
+
+Regtrace can store evaluation run records in a SQLite database alongside the
+default JSON file storage. The database enables fast filtering, aggregation,
+and time-series queries that power the future dashboard.
+
+## Configuration
+
+Enable the database in `regtrace.config.yaml`:
+
+```yaml
+storage:
+  db:
+    enabled: true
+    path: .regtrace/regtrace.db
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | boolean | `false` | Enable SQLite persistence |
+| `path` | string | `.regtrace/regtrace.db` | Database file path |
+
+### Per-suite opt-out
+
+Control which golden sets get stored in the database:
+
+```yaml
+golden_sets:
+  - path: golden-sets/qa.yaml
+    enabled: true
+    store_in_db: true              # default
+
+  - path: golden-sets/experimental.yaml
+    enabled: true
+    store_in_db: false             # skip this suite
+```
+
+The `store_in_db` flag defaults to `true`. Set to `false` to exclude a
+suite's runs from the database. This only affects runtime — the file-based
+JSON storage in `.regtrace/runs/` always persists every run.
+
+## Database schema
+
+```sql
+CREATE TABLE IF NOT EXISTS runs (
+    run_id              TEXT PRIMARY KEY,
+    timestamp           TEXT NOT NULL,
+    status              TEXT NOT NULL,
+    trigger             TEXT NOT NULL,
+    duration_ms         INTEGER NOT NULL,
+    suite_score         REAL NOT NULL,
+    golden_set_name     TEXT NOT NULL,
+    golden_set_version  TEXT NOT NULL,
+    judge_provider      TEXT NOT NULL,
+    judge_model         TEXT NOT NULL,
+    metric_summary      TEXT NOT NULL,   -- JSON
+    test_case_results   TEXT NOT NULL,   -- JSON
+    regression          TEXT NOT NULL,   -- JSON
+    config_hash         TEXT,
+    golden_set_file_hash TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_runs_timestamp ON runs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_runs_golden_set ON runs(golden_set_name);
+CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
+```
+
+### Core columns (SQL)
+
+These are stored as native SQL types for fast filtering and sorting:
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `run_id` | TEXT | Unique run identifier |
+| `timestamp` | TEXT | ISO 8601 timestamp |
+| `status` | TEXT | `passed`, `failed`, or `errored` |
+| `trigger` | TEXT | `cli`, `ci`, or `watch` |
+| `duration_ms` | INTEGER | Run duration in milliseconds |
+| `suite_score` | REAL | Aggregate suite score (0.0–1.0) |
+| `golden_set_name` | TEXT | Name of the evaluated golden set |
+| `golden_set_version` | TEXT | Version of the evaluated golden set |
+| `judge_provider` | TEXT | LLM provider name |
+| `judge_model` | TEXT | LLM model name |
+| `config_hash` | TEXT | SHA-256 of the config file |
+| `golden_set_file_hash` | TEXT | SHA-256 of the golden set file |
+
+### JSON columns
+
+Complex nested data is stored as JSON strings. Queries can deserialize them
+in application code:
+
+| Column | Contents |
+|--------|----------|
+| `metric_summary` | Per-metric scores and pass rates |
+| `test_case_results` | Array of individual test case results |
+| `regression` | Regression delta and status |
+
+## Architecture
+
+The database is a **derived cache**, not the source of truth:
+
+- **JSON files** (`regtrace run`) in `.regtrace/runs/` are always written
+- **SQLite insert** happens after the file write if enabled
+- DB insert failures are non-fatal — the run record is always safe in the
+  JSON file
+- The database can be rebuilt from the JSON files at any time
+
+## Rebuilding the database
+
+```bash
+regtrace db rebuild --config regtrace.config.yaml
+```
+
+This reads all JSON files from `.regtrace/runs/` and re-inserts them into
+the SQLite database. Existing records are replaced (INSERT OR REPLACE).
+Corrupt JSON files are skipped silently.
+
+The database file is created with WAL journaling mode for concurrent read
+performance.

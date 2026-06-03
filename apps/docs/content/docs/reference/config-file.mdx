@@ -21,6 +21,7 @@ golden_sets:
   - path: golden-sets/qa.yaml
     enabled: true
     weight: 1
+    store_in_db: true
 
 # Metric configuration
 metrics:
@@ -36,29 +37,22 @@ metrics:
   format:
     sub_checks:
       length: true
-      json_validity: true
-      json_schema: true
-      markdown_structure: true
+      json_validity: false
+      json_schema: false
+      markdown_structure: false
       required_fields: true
       forbidden_content: true
-      regex_match: true
-    length_tolerance: 0.2
+      regex_match: false
+    length_tolerance: 0.3
     strict_json: false
 
   tone:
-    tone_profile: null
     sub_dimensions:
       formality: true
       sentiment: true
       assertiveness: true
       persona_consistency: true
       verbosity: true
-    sub_dimension_weights:
-      formality: 1.0
-      sentiment: 1.0
-      assertiveness: 1.0
-      persona_consistency: 1.0
-      verbosity: 1.0
 
   regression:
     enabled: true
@@ -76,7 +70,6 @@ judge:
     max_tokens: 4096
     timeout_ms: 30000
     retry_attempts: 3
-
   fallback:
     provider: openai
     model: gpt-4o-mini
@@ -84,7 +77,6 @@ judge:
     max_tokens: 4096
     timeout_ms: 30000
     retry_attempts: 2
-
   cost_controls:
     max_tokens_per_run: 100000
     warn_at_tokens: 80000
@@ -102,36 +94,61 @@ quality_gates:
 
 # Output configuration
 output:
-  format: terminal
+  run_history_limit: 50
+  default_format: terminal
+  color: auto
   ci_mode_auto_detect: true
 
-# Storage configuration
+# Storage configuration (optional)
 storage:
-  base_path: .regtrace
-  runs_dir: runs
-  max_runs: 100
-
-# Scoring configuration
-scoring:
-  method: weighted_average
-  passing_threshold: 0.7
-  weight_by: test_case_weight
+  db:
+    enabled: false
+    path: .regtrace/regtrace.db
 ```
+
+## Golden set entry
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `path` | string | — | Path to golden set YAML file |
+| `enabled` | boolean | `true` | Include this set in evaluations |
+| `weight` | number | `1` | Contribution weight in multi-set runs |
+| `store_in_db` | boolean | `true` | Persist runs to SQLite database |
 
 ## Run configuration
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `concurrency` | integer | `1` | Number of test cases evaluated in parallel per batch. Higher values speed up suites with many LLM-judged metrics. A 20s rate-limit delay is applied between batches. Max: `20`. |
+| `concurrency` | integer | `1` | Number of test cases evaluated in parallel per batch. Higher values speed up suites with many LLM-judged metrics. Max: `20`. |
 
 ## Quality gates reference
 
 | Gate | Type | Default | Description |
 |---|---|---|---|
 | `suite_score_minimum` | number | `0.7` | Minimum suite aggregate score (0.0–1.0) |
+| `metric_score_minimums` | object | — | Per-metric minimum thresholds |
 | `max_failed_test_cases` | integer | `0` | Maximum allowed failed test cases |
-| `max_low_confidence_ratio` | number | `0.1` | Max fraction of results with confidence < 0.5 |
+| `max_low_confidence_ratio` | number | `0.1` | Max fraction of results with confidence < 0.6 |
 | `regression_gate` | boolean | `true` | Fail on critical regression |
+
+## Output configuration
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `run_history_limit` | integer | `50` | Number of run records to retain |
+| `default_format` | string | `terminal` | Output format: `terminal`, `json`, `markdown` |
+| `color` | string | `auto` | Color mode: `auto`, `always`, `never` |
+| `ci_mode_auto_detect` | boolean | `true` | Auto-detect CI environments from env vars |
+| `report_path` | string | — | Default report output path |
+
+## Storage configuration
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `db.enabled` | boolean | `false` | Enable SQLite run record persistence |
+| `db.path` | string | `.regtrace/regtrace.db` | Database file path |
+
+See the [database reference](/docs/reference/database) for the full schema.
 
 ## Weighting
 
@@ -163,6 +180,6 @@ Regtrace validates the config file at startup:
 - `golden_sets` must be an array
 - Each golden set entry must have `path` (string) and `enabled` (boolean)
 - `provider` must be one of: `anthropic`, `openai`, `gemini`, `groq`, `ollama`
-- `format` must be one of: `terminal`, `json`, `markdown`
+- `default_format` must be one of: `terminal`, `json`, `markdown`
 - Numbers outside expected ranges produce helpful error messages
 - Missing required blocks produce clear error messages naming the missing field

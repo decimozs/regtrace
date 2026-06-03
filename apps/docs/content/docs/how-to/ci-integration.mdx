@@ -57,11 +57,13 @@ fit for CI/CD pipelines.
     ### Check exit code
 
     | Code | Meaning |
-    |---|---|
+    |------|---------|
     | 0 | All quality gates passed |
-    | 1 | Quality gates failed or config error |
+    | 1 | One or more quality gates failed |
+    | 2 | Config or schema error — evaluation did not run |
 
-    Exit code 0 allows the pipeline to continue. Exit code 1 blocks it.
+    Exit code 1 allows the pipeline to reject the change. Exit code 2
+    indicates a setup problem that needs attention.
   </Step>
 </Steps>
 
@@ -97,8 +99,6 @@ jobs:
 The `--ci` flag:
 
 - Suppresses color output
-- Prints a CI-mode notice
-- Exits with code 0 if all quality gates pass
 - Exits with code 1 if any suite fails quality gates
 
 ```bash
@@ -107,12 +107,16 @@ regtrace run --ci
 
 ## Auto-detection
 
-Regtrace auto-detects CI environments when `CI=true` is present and
-`ci_mode_auto_detect` is enabled in config:
+Regtrace auto-detects CI environments. When `--ci` is not explicitly
+passed, it checks for `CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, or `CIRCLECI`
+environment variables and suppresses color automatically. Use `--no-ci` to
+override auto-detection in CI environments.
+
+## Disabling CI auto-detection
 
 ```yaml
 output:
-  ci_mode_auto_detect: true
+  ci_mode_auto_detect: false
 ```
 
 ## JSON output for pipelines
@@ -123,10 +127,10 @@ For programmatic consumption:
 regtrace run --format json
 ```
 
-Or write to a file:
+JSON output is written to stdout, enabling piping directly to `jq`:
 
 ```bash
-regtrace run --format json --output results.json
+regtrace run --format json | jq '.suite.suite_score'
 ```
 
 ## Fail-fast with `--bail`
@@ -168,6 +172,7 @@ with the report content.
 ## Exit code contract
 
 | Code | Meaning |
-|---|---|
+|------|---------|
 | 0 | All quality gates passed |
-| 1 | Quality gates failed or config error |
+| 1 | One or more quality gates failed |
+| 2 | Config or schema error — evaluation did not run |

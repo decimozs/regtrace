@@ -20,6 +20,7 @@
     "reference/config-file",
     "reference/golden-set",
     "reference/run-record",
+    "reference/database",
     "reference/metrics",
     "reference/judge-providers",
     "---Explanation---",

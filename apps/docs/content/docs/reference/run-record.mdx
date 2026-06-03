@@ -5,7 +5,9 @@ description: Structure of persisted run records
 
 ## Location
 
-Run records are stored as JSON files in `.regtrace/runs/`.
+Run records are stored as JSON files in `.regtrace/runs/`. When the
+[SQLite database](/docs/reference/database) is enabled, records are also
+persisted in the `runs` table.
 
 ## Filename convention
 
@@ -13,97 +15,32 @@ Run records are stored as JSON files in `.regtrace/runs/`.
 <run_id>.json
 ```
 
-`run_id` is formatted as `run_YYYYMMDD_<timestamp>` with a random suffix to
-avoid collisions.
+`run_id` is formatted as `run_YYYYMMDD_<random>` with a 6-character
+alphanumeric suffix to avoid collisions.
 
 ## Schema
 
 ```typescript
 interface RunRecord {
-  /** Unique identifier */
-  run_id: string;
-
-  /** Run timestamp (ISO 8601) */
-  timestamp: string;
-
-  /** Config snapshot at time of run */
-  config: {
-    project?: { name?: string; version?: string };
-    metrics: MetricsConfig;
-    judge: JudgeConfig;
-    quality_gates: QualityGates;
-    scoring: ScoringConfig;
-    output: OutputConfig;
-  };
-
-  /** Results per golden set */
-  suites: SuiteResult[];
-
-  /** Summary over all suites */
-  summary: {
-    total_suites: number;
-    total_test_cases: number;
-    total_passed: number;
-    total_failed: number;
-    overall_score: number;
-    overall_passed: boolean;
-  };
-
-  /** Judge provider and model used */
-  judge_used: {
-    provider: string;
-    model: string;
-  };
-
-  /** Token usage estimate (if available) */
-  token_usage?: {
-    input_tokens: number;
-    output_tokens: number;
-    total_cost_usd: number;
-  };
-}
-```
-
-## Suite result
-
-```typescript
-interface SuiteResult {
-  /** Golden set name */
-  suite_name: string;
-
-  /** Golden set version */
-  golden_set_version: string;
-
-  /** Suite aggregate score (0.0–1.0) */
-  suite_score: number;
-
-  /** Pass/fail */
-  passed: boolean;
-
-  /** Per-test-case results */
-  test_cases: TestCaseResult[];
-
-  /** Quality gate results for this suite */
-  quality_gates: {
-    passed: boolean;
-    gates: Record<string, GateResult>;
-  };
-
-  /** Regression analysis (if baseline exists) */
-  regression?: {
-    status: "clean" | "warning" | "critical" | "new";
-    suite_delta: number;
-    baseline_run_id: string | null;
-    per_metric_deltas: Record<string, number>;
-    test_case_deltas: Array<{
-      id: string;
-      status: "improved" | "regressed" | "unchanged" | "new" | "removed";
-      delta: number;
-    }>;
-  };
-
-  /** Duration in milliseconds */
-  duration_ms: number;
+  run_id: string;                           // Unique run identifier
+  timestamp: string;                        // ISO 8601 timestamp
+  status: "passed" | "failed" | "errored";  // Run outcome
+  trigger: "cli" | "ci" | "watch";          // What triggered the run
+  duration_ms: number;                      // Duration in milliseconds
+  regtrace_version: string;                 // Regtrace version used
+  judge_provider: string;                   // LLM provider name
+  judge_model: string;                      // LLM model name
+  config_hash: string;                      // SHA-256 of config at run time
+  golden_set_name: string;                  // Name of the evaluated set
+  golden_set_version: string;               // Version of the evaluated set
+  golden_set_file_hash: string;             // SHA-256 of golden set file
+  suite_score: number;                      // Aggregate score (0.0–1.0)
+  metric_summary: Record<string, {          // Per-metric aggregation
+    score: number;                          //   Average score across cases
+    pass_rate: number;                      //   Fraction of cases passed
+  }>;
+  test_case_results: TestCaseResult[];      // Per-test-case results
+  regression: RegressionBlock;              // Regression analysis
 }
 ```
 
@@ -111,20 +48,13 @@ interface SuiteResult {
 
 ```typescript
 interface TestCaseResult {
-  /** Test case ID */
-  id: string;
-
-  /** Pass/fail for this case */
-  passed: boolean;
-
-  /** Aggregated score across metrics (0.0–1.0) */
-  score: number;
-
-  /** Per-metric results */
-  metrics: Record<string, MetricResult>;
-
-  /** Duration in milliseconds */
-  duration_ms: number;
+  test_case_id: string;                     // ID from the golden set
+  input: string;                            // Input sent to the LLM
+  actual_output: string;                    // LLM response evaluated
+  overall_passed: boolean;                  // All metrics passed
+  severity: "pass" | "warn" | "fail";      // Severity of the outcome
+  metric_results: Record<string, MetricResult>;  // Per-metric results
+  regression_delta?: Record<string, number>;     // Per-metric deltas
 }
 ```
 
@@ -132,40 +62,28 @@ interface TestCaseResult {
 
 ```typescript
 interface MetricResult {
-  /** Metric score (0.0–1.0) */
-  score: number;
-
-  /** Pass/fail against threshold */
-  passed: boolean;
-
-  /** Confidence in score (0.0–1.0); 1.0 for deterministic */
-  confidence: number;
-
-  /** Human-readable explanation */
-  explanation: string | null;
-
-  /** Detailed sub-check results (deterministic metrics) */
-  details?: Record<string, SubCheckResult>;
-
-  /** Token usage for LLM-judged metrics */
-  token_usage?: {
-    input_tokens: number;
-    output_tokens: number;
-  };
+  metric_name: string;                      // e.g. "factuality", "format"
+  score: number;                            // 0.0–1.0
+  confidence: number;                       // 0.0–1.0 (1.0 for deterministic)
+  passed: boolean;                          // score >= threshold
+  threshold: number;                        // Threshold applied
+  explanation: string;                      // Human-readable reasoning
+  evaluation_type: "deterministic" | "llm_judged";  // How the score was computed
+  token_cost: number;                       // Estimated token cost (0 for deterministic)
 }
 ```
 
-## Sub-check result (format metric)
+## Regression block
 
 ```typescript
-interface SubCheckResult {
-  /** Sub-check score (0.0–1.0) */
-  score: number;
-
-  /** Pass/fail */
-  passed: boolean;
-
-  /** Explanation */
-  explanation: string | null;
+interface RegressionBlock {
+  baseline_run_id: string | null;           // Baseline run used for comparison
+  baseline_golden_set_version: string | null;  // Golden set version at baseline
+  current_golden_set_version: string;       // Golden set version at this run
+  version_change_detected: boolean;         // Version changed since baseline
+  suite_delta: number;                      // Negative = regression, positive = improvement
+  regression_status: "clean" | "warning" | "critical";  // Regression severity
+  test_cases_excluded: string[];            // IDs excluded due to version change
+  metric_deltas: Record<string, number>;    // Per-metric average delta
 }
 ```
