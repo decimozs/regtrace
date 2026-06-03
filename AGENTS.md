@@ -1,105 +1,110 @@
 # Regtrace — Agent Guide
 
-## Monorepo structure
+## What regtrace is
 
-Bun workspaces. Two packages + one app:
+Regtrace is a CLI tool that evaluates LLM outputs against golden-set expectations and reports whether quality is maintained or regressed. It scores outputs across Factuality, Format, Tone, and Regression using deterministic checks and an LLM judge. It is NOT a test runner, linter, or deployment tool — it evaluates text quality, not code.
 
-- `packages/cli/` — the regtrace CLI binary (`src/index.ts` entrypoint)
-- `apps/docs/` — documentation site (Next.js + Fumadocs)
-- `scripts/` — build script, download-stats script
+## Repo layout
 
-All source is TypeScript with `verbatimModuleSyntax`. Never use `z.infer` — write explicit types. Always handle array access with checks (`noUncheckedIndexedAccess: true`).
-
-## Commands
-
-```bash
-bun install                        # install all workspace deps
-bun run lint                       # biome check (entire repo)
-bun run build                      # compile CLI binary to ./regtrace
-bun run --cwd packages/cli test    # run all 159 tests
-bun run --cwd apps/docs dev        # docs dev server
-bun run --cwd apps/docs build      # docs production build
-bun run docs:typecheck             # docs typecheck
-bun run stats                      # fetch github release download counts
+```
+packages/cli/          CLI binary (src/index.ts entrypoint)
+  src/cli/             Commands: run, init, list, history, watch, baseline
+  src/schema/          Zod v5 schemas (config, golden-set, run-record)
+  src/metrics/         Evaluators: factuality, format, tone, regression
+  src/judge/           LLM providers (anthropic, openai, gemini, groq, ollama)
+  src/storage/         Config loading, golden-set loading, JSON/SQLite persistence
+  src/reports/         Terminal, JSON, markdown reporters + quality gates
+  tests/unit/          Unit tests mirrored to src/ structure
+  tests/integration/   cli.test.ts, baseline.test.ts (spawn child processes)
+  tests/fixtures/      Config, golden-set, run-record test fixtures
+apps/docs/             Next.js + Fumadocs documentation site
+examples/              17 example projects in 5 categories (A–E)
+scripts/               build.ts, download-stats.ts, update-sandbox.sh
+skills/regtrace/       SKILL.md — full CLI reference (consult for command details)
+sandbox/               Scratch directory for manual testing (gitignored)
 ```
 
-Pre-commit (lefthook) runs: `biome check --staged` then `typecheck` then `bun test`. CI runs: `lint` → `typecheck` → `test` → `build` → `docs-build` in parallel jobs.
-
-## Tests
-
-- 19 test files, **159 tests total** (all passing target)
-- Tests under `packages/cli/tests/` — unit tests and integration tests
-- **Unit tests** under `tests/unit/` mirror `src/` directory structure
-- **Integration tests** under `tests/integration/` — `cli.test.ts` and `baseline.test.ts`
-
-### Unit test pitfalls
-
-- `mock.module` in Bun **leaks across test files** because Bun runs test files as workers sharing module state. Never use `mock.module` for per-file mocking. Use env-var clearing or dependency injection instead.
-- Unit tests for metrics (`tone.evaluator.test.ts`, `metrics-runner.test.ts`) clear env vars at file-scope and use `afterAll` to restore. Follow this pattern for new metric tests.
-
-### Integration test pitfalls
-
-- Integration tests spawn child processes via `Bun.spawn(["bun", "run", ...args], {cwd, env})`. The `env` is minimal — only `NO_COLOR`, `DOTENV_CONFIG_QUIET`, `PATH`, `HOME`.
-- Each test creates its own temp directory under `.test-tmp/`. Temp directories are cleaned up in `afterAll`.
-- Two integration tests have **pre-existing flakiness under CI** (stream race condition in Bun.spawn):
-  - "evaluates and persists run record"
-  - "outputs JSON report with --format json"
-- CI workflow uses `bun test --retry 2` to auto-retry these. The test file itself has a `waitForFile` polling helper and a 50ms flush delay after `proc.exited`.
-
-### Running specific tests
+## How to run things
 
 ```bash
-bun test --cwd packages/cli run-generate.test     # single file
-bun test --cwd packages/cli -t "JSON report"      # by test name
+# Development
+bun install                                    # install workspace deps
+bun run lint                                   # biome check (entire repo)
+bun run build                                  # compile CLI → ./regtrace
+bun run --cwd packages/cli test                # run all tests (159)
+bun test --cwd packages/cli -t "test name"    # single test by name
+bun run --cwd apps/docs dev                   # docs dev server
+
+# Evaluation (requires API key in env or .env)
+regtrace run --dry-run                         # validate config, no tokens spent
+regtrace run                                   # evaluate all enabled golden sets
+regtrace run --set golden-sets/qa.yaml         # single golden set
+regtrace run --generate                        # auto-fill null actual_output, then evaluate
+ANTHROPIC_API_KEY=sk-ant-... regtrace run      # inline env var
+regtrace run --ci                              # CI mode: no color, exit 1 on gate failure
 ```
+
+Required env vars by provider: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`. Ollama needs none (local). Format-only evaluations need no API key.
+
+## Where not to touch
+
+- `.regtrace/` — run history and local DB; never commit or edit
+- `golden-sets/*.yaml` `actual_output` fields — use `--generate` to fill, don't hand-edit
+- `packages/cli/src/schema/*.ts` Zod schemas — single source of truth; config validation derives from these
+- `sandbox/` — gitignored scratch directory; not production code
+- `examples/` — pinned reference configs; don't modify without explicit instruction
+
+## Contribution conventions
+
+- **Golden set naming**: `kebab-case.yaml` in `golden-sets/` directory
+- **Test case IDs**: domain prefix + 3-digit number (e.g. `faq-001`, `rag-doc-003`)
+- **Golden set versioning**: patch = typo fixes; minor = new cases; major = restructuring
+- **Config changes**: always `regtrace run --dry-run` before committing — validates schema without spending tokens
+- **`actual_output`**: set to `null` for generate-mode cases; never hand-write to bypass `--generate`
 
 ## Code style
 
-- **No comments** in source code. Code must be self-documenting.
-- **Zod v5** schemas in `packages/cli/src/schema/`
-- **Biome** for lint + format. Config at root `biome.json`. Tabs for indentation, double quotes.
-- **Conventional commits**: `feat:`, `fix:`, `docs:`, `chore:`, etc.
-- Use `import type` for type-only imports (`verbatimModuleSyntax` enabled).
-- CLI source in `src/cli/` uses `printInfo`/`printError`/`printHeader` — NOT raw `console.log`/`console.error`.
+- **No comments** in source. Self-documenting code only.
+- **TypeScript** with `verbatimModuleSyntax`. Use `import type` for type-only imports.
+- **Zod v5** for schemas. Never use `z.infer` — write explicit types.
+- **`noUncheckedIndexedAccess: true`** — always guard array access.
+- **Biome** for lint/format: tabs, double quotes. Config at `biome.json`.
+- **CLI output**: use `printInfo`/`printError`/`printHeader` from `src/cli/print.ts`, never raw `console.log`.
+- **Conventional commits**: `feat:`, `fix:`, `docs:`, `chore:`.
 
-## Build
+## Tests
+
+159 tests across 19 files. `mock.module` in Bun leaks across test files (shared worker state) — use env-var clearing or dependency injection instead. Unit tests for metrics clear env vars at file scope with `afterAll` restore. Integration tests use `Bun.spawn` with minimal env (`NO_COLOR`, `DOTENV_CONFIG_QUIET`, `PATH`, `HOME`) and temp dirs under `.test-tmp/`.
+
+Two integration tests have pre-existing stream-race flakiness in Bun.spawn. CI uses `--retry 2`. Local reproduction:
 
 ```bash
-bun run build                       # compile + minify; outputs ./regtrace
-bun run build --outfile ./myname    # custom output path
+bun test --cwd packages/cli tests/integration/cli.test.ts  # if flaky, re-run
 ```
 
-Uses `bun build --compile --minify` from `src/index.ts`. The version string is injected via `--define __VERSION__`. No extra runtime deps needed.
+## CI behavior
 
-## Release
+Five parallel jobs: lint → typecheck → test → build → docs-build. Pre-commit hook runs `biome check --staged` → typecheck → `bun test`.
 
-1. Bump version in `packages/cli/package.json`
-2. `git tag v<version> && git push origin v<version>`
-3. CI builds binaries for linux-x64, darwin-arm64, windows-x64 + SHA256 checksums, uploads to GitHub Releases
+Exit codes: **0** = all quality gates passed; **1** = gate failure; **2** = config/schema error (evaluation didn't run).
 
-## Key files to know
+Reproduce CI locally:
 
-| Path | Purpose |
-|---|---|
-| `packages/cli/src/index.ts` | CLI entrypoint (Commander) |
-| `packages/cli/src/cli/run.command.ts` | Main run pipeline orchestration |
-| `packages/cli/src/cli/run-pipeline.ts` | Suite evaluation loop (load → generate → evaluate → persist) |
-| `packages/cli/src/schema/config.schema.ts` | Zod schema for config.yaml |
-| `packages/cli/src/schema/golden-set.schema.ts` | Zod schema for golden set YAML |
-| `packages/cli/src/schema/run-record.schema.ts` | Zod schema for persisted run records |
-| `packages/cli/src/metrics/runner.ts` | `evaluateSuite` — runs all metrics for a test case |
-| `packages/cli/src/judge/providers/` | LLM providers (anthropic, openai, gemini, groq, ollama) |
-| `packages/cli/src/storage/run-store.ts` | JSON file persistence for run records |
-| `packages/cli/src/storage/db-store.ts` | SQLite persistence (optional, disabled by default) |
-| `packages/cli/src/reports/reporter.ts` | Report generation (terminal, JSON, markdown) |
-| `apps/docs/content/docs/` | All documentation mdx files |
-| `skills/regtrace/SKILL.md` | Agent skill for regtrace CLI usage |
-| `scripts/download-stats.ts` | GitHub release download counter |
-| `.github/workflows/release.yml` | Multi-platform build + release workflow |
+```bash
+bun run lint && bunx tsc --noEmit --project packages/cli/tsconfig.json && bun run docs:typecheck && bun test --cwd packages/cli && bun run build
+```
 
-## Skills
+## Common agent mistakes to avoid
 
-Installed skills for agents working in this repo:
-- `github-actions-docs` — use when writing or debugging GitHub Actions workflows
-- `bun-test` — use when writing or debugging Bun test runner commands
-- `sync-docs` — keep `apps/docs/` in sync with code changes (run after code changes)
+- **Editing `actual_output` in golden set YAML** instead of using `--generate` — the generate pipeline is the intended workflow
+- **Changing `suite_score_minimum` or `metric_score_minimums`** without running `--dry-run` first — may silently break CI gates
+- **Committing `.regtrace/`** run history — it's gitignored for a reason
+- **Hardcoding API keys** — always read from env vars or `.env`
+- **Using `mock.module` in tests** — leaks across files in Bun; use env-var clearing
+- **Spreading `...process.env` in integration tests** — use minimal explicit env
+- **Using `z.infer`** — write explicit types instead
+- **Accessing array elements without checks** — `noUncheckedIndexedAccess: true` is enabled
+
+## Skill reference
+
+`skills/regtrace/SKILL.md` covers the full CLI workflow: all commands, flags, config schema, golden set format, quality gates, CI patterns, and troubleshooting. Consult it for anything not in this file.
