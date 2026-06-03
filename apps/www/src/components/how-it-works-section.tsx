@@ -36,14 +36,14 @@ export default function HowItWorksSection() {
 
       <div className="relative max-w-2xl mx-auto w-full">
         {/* Vertical connecting line */}
-        <div className="absolute left-3.5 top-3 bottom-3 w-px bg-border" />
+        <div className="absolute left-[11px] top-3 bottom-3 w-px bg-border" />
 
         <div className="flex flex-col gap-8">
           {steps.map((s) => (
-            <div key={s.title} className="relative flex items-start gap-5 pl-0">
+            <div key={s.title} className="relative flex items-start gap-4">
               {/* Timeline dot */}
-              <div className="relative z-10 flex-shrink-0 w-7 h-7 rounded-full border-2 border-accent bg-background flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-accent" />
+              <div className="relative z-10 flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 border-accent bg-background flex items-center justify-center mt-0.5">
+                <div className="w-[6px] h-[6px] rounded-full bg-accent" />
               </div>
 
               <div className="flex-1 min-w-0 space-y-2 pt-1">

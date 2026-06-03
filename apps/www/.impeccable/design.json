@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-03T00:00:00.000Z",
+  "title": "Design System: Regtrace",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Stoplight Red",
+        "canonical": "oklch(0.6 0.2 25)",
+        "tonalRamp": [
+          "oklch(0.15 0.2 25)",
+          "oklch(0.25 0.2 25)",
+          "oklch(0.35 0.2 25)",
+          "oklch(0.45 0.2 25)",
+          "oklch(0.55 0.2 25)",
+          "oklch(0.65 0.15 25)",
+          "oklch(0.75 0.1 25)",
+          "oklch(0.85 0.05 25)"
+        ]
+      },
+      "neutral-bg": {
+        "role": "background",
+        "displayName": "Deep Background",
+        "canonical": "oklch(0.06 0.008 20)",
+        "tonalRamp": [
+          "oklch(0.02 0.008 20)",
+          "oklch(0.04 0.008 20)",
+          "oklch(0.06 0.008 20)",
+          "oklch(0.08 0.008 20)",
+          "oklch(0.1 0.008 20)",
+          "oklch(0.12 0.008 20)",
+          "oklch(0.14 0.008 20)",
+          "oklch(0.16 0.008 20)"
+        ]
+      },
+      "neutral-surface": {
+        "role": "surface",
+        "displayName": "Surface",
+        "canonical": "oklch(0.1 0.01 20)",
+        "tonalRamp": [
+          "oklch(0.06 0.01 20)",
+          "oklch(0.08 0.01 20)",
+          "oklch(0.1 0.01 20)",
+          "oklch(0.12 0.01 20)",
+          "oklch(0.14 0.01 20)",
+          "oklch(0.16 0.01 20)",
+          "oklch(0.18 0.01 20)",
+          "oklch(0.2 0.01 20)"
+        ]
+      },
+      "neutral-code": {
+        "role": "surface",
+        "displayName": "Code Surface",
+        "canonical": "oklch(0.08 0.006 20)",
+        "tonalRamp": [
+          "oklch(0.04 0.006 20)",
+          "oklch(0.06 0.006 20)",
+          "oklch(0.08 0.006 20)",
+          "oklch(0.1 0.006 20)",
+          "oklch(0.12 0.006 20)",
+          "oklch(0.14 0.006 20)",
+          "oklch(0.16 0.006 20)",
+          "oklch(0.18 0.006 20)"
+        ]
+      },
+      "neutral-ink": {
+        "role": "text",
+        "displayName": "Ink",
+        "canonical": "oklch(0.98 0.002 20)",
+        "tonalRamp": [
+          "oklch(0.75 0.002 20)",
+          "oklch(0.8 0.002 20)",
+          "oklch(0.85 0.002 20)",
+          "oklch(0.88 0.002 20)",
+          "oklch(0.92 0.002 20)",
+          "oklch(0.95 0.002 20)",
+          "oklch(0.97 0.002 20)",
+          "oklch(0.98 0.002 20)"
+        ]
+      },
+      "neutral-muted": {
+        "role": "text-muted",
+        "displayName": "Muted",
+        "canonical": "oklch(0.6 0.015 20)",
+        "tonalRamp": [
+          "oklch(0.35 0.015 20)",
+          "oklch(0.4 0.015 20)",
+          "oklch(0.45 0.015 20)",
+          "oklch(0.5 0.015 20)",
+          "oklch(0.55 0.015 20)",
+          "oklch(0.6 0.015 20)",
+          "oklch(0.65 0.015 20)",
+          "oklch(0.7 0.015 20)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero heading only. One per page. text-wrap: balance."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraph text, max line length 60ch."
+      },
+      "label": {
+        "displayName": "Label/Mono",
+        "purpose": "Code blocks, terminal output, metadata, badges. Geist Mono."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-reveal",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Default easing for scroll-reveal animations. Exponential ease-out."
+      },
+      {
+        "name": "fade-blur",
+        "value": "filter blur(2px) to blur(0) over 0.7s",
+        "purpose": "Section entrance: starts readable (blurred), resolves to clarity."
+      },
+      {
+        "name": "stagger-delay",
+        "value": "0ms / 100ms / 200ms / 300ms / 400ms",
+        "purpose": "Staggered child entrance delays within a section."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Call-to-action. Stoplight Red pill button. Used for Get Started, Submit.",
+      "html": "<button class=\"ds-btn-primary\">Get Started</button>",
+      "css": ".ds-btn-primary { background: oklch(0.6 0.2 25); color: #fff; height: 48px; padding: 0 32px; border-radius: 9999px; border: none; font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: filter 0.15s, transform 0.15s; } .ds-btn-primary:hover { filter: brightness(1.1); } .ds-btn-primary:active { transform: scale(0.95); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined pill button. Used for GitHub link, secondary CTAs.",
+      "html": "<button class=\"ds-btn-secondary\">GitHub</button>",
+      "css": ".ds-btn-secondary { background: transparent; color: oklch(0.98 0.002 20); height: 48px; padding: 0 32px; border-radius: 9999px; border: 1px solid oklch(0.18 0.01 20); font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.15s; } .ds-btn-secondary:hover { background: oklch(0.1 0.01 20); } .ds-btn-secondary:active { transform: scale(0.95); }"
+    },
+    {
+      "name": "Feature Card",
+      "kind": "card",
+      "refersTo": "card-feature",
+      "description": "Pillar feature card with colored top bar accent, code snippet.",
+      "html": "<div class=\"ds-card-feature\"><div class=\"ds-card-bar\" style=\"background:oklch(0.6 0.2 25)\"></div><div class=\"ds-card-body\"><h3 class=\"ds-card-title\">Factuality</h3><p class=\"ds-card-text\">Are claims accurate and faithful to expected output?</p><div class=\"ds-card-code\"><pre>hallucination_rate: 0.03</pre></div></div></div>",
+      "css": ".ds-card-feature { background: oklch(0.1 0.01 20); border-radius: 12px; border: 1px solid oklch(0.18 0.01 20); overflow: hidden; } .ds-card-bar { height: 4px; } .ds-card-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; } .ds-card-title { font-family: Geist, system-ui, sans-serif; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.02em; color: oklch(0.98 0.002 20); margin: 0; } .ds-card-text { font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; line-height: 1.6; color: oklch(0.6 0.015 20); margin: 0; } .ds-card-code { background: oklch(0.08 0.006 20); border-radius: 8px; border: 1px solid oklch(0.18 0.01 20); padding: 12px; overflow-x: auto; } .ds-card-code pre { font-family: Geist Mono, monospace; font-size: 0.75rem; line-height: 1.6; color: oklch(0.6 0.015 20); margin: 0; white-space: pre-wrap; }"
+    },
+    {
+      "name": "Terminal Window",
+      "kind": "custom",
+      "refersTo": "code-block",
+      "description": "Terminal mockup with traffic-light dots, used for CLI demonstration.",
+      "html": "<div class=\"ds-terminal\"><div class=\"ds-terminal-bar\"><span class=\"ds-terminal-dot\" style=\"background:oklch(0.7 0.15 25)\"></span><span class=\"ds-terminal-dot\" style=\"background:oklch(0.7 0.15 85)\"></span><span class=\"ds-terminal-dot\" style=\"background:oklch(0.6 0.15 240)\"></span><span class=\"ds-terminal-label\">regtrace run</span></div><div class=\"ds-terminal-body\"><p><span style=\"color:oklch(0.6 0.2 25)\">i</span> Evaluating (5 test cases)</p><p><span style=\"color:#4ade80\">✓</span> cs-001: <span style=\"color:#4ade80\">100%</span></p><p><span style=\"color:oklch(0.6 0.2 25)\">Suite Score: 73.3%</span></p></div></div>",
+      "css": ".ds-terminal { background: oklch(0.08 0.006 20); border-radius: 8px; border: 1px solid oklch(0.18 0.01 20); overflow: hidden; font-family: Geist Mono, monospace; font-size: 0.75rem; } .ds-terminal-bar { display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: oklch(0.06 0.008 20); border-bottom: 1px solid oklch(0.18 0.01 20); } .ds-terminal-dot { width: 10px; height: 10px; border-radius: 50%; } .ds-terminal-label { margin-left: 8px; color: oklch(0.6 0.015 20); } .ds-terminal-body { padding: 12px 16px; } .ds-terminal-body p { margin: 4px 0; line-height: 1.6; color: oklch(0.6 0.015 20); }"
+    },
+    {
+      "name": "Email Input",
+      "kind": "input",
+      "refersTo": "input-email",
+      "description": "Newsletter / CTA text input. Matches button height for inline layout.",
+      "html": "<input class=\"ds-input-email\" type=\"email\" placeholder=\"your@email.com\" />",
+      "css": ".ds-input-email { background: oklch(0.1 0.01 20); color: oklch(0.98 0.002 20); height: 48px; padding: 0 16px; border-radius: 8px; border: 1px solid oklch(0.18 0.01 20); font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; outline: none; box-sizing: border-box; width: 100%; } .ds-input-email::placeholder { color: oklch(0.6 0.015 20); } .ds-input-email:focus { border-color: oklch(0.6 0.2 25); box-shadow: 0 0 0 1px oklch(0.6 0.2 25 / 0.3); }"
+    },
+    {
+      "name": "Nav Dot",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Fixed right-side section navigation dot. Active state uses accent + ring.",
+      "html": "<nav class=\"ds-nav-dots\" aria-label=\"Section navigation\"><button class=\"ds-nav-dot ds-nav-dot--inactive\" aria-label=\"Go to Hero\"></button><button class=\"ds-nav-dot ds-nav-dot--inactive\" aria-label=\"Go to Features\"></button><button class=\"ds-nav-dot ds-nav-dot--active\" aria-label=\"Go to How it works\"></button><button class=\"ds-nav-dot ds-nav-dot--inactive\" aria-label=\"Go to Get started\"></button><button class=\"ds-nav-dot ds-nav-dot--inactive\" aria-label=\"Go to Footer\"></button></nav>",
+      "css": ".ds-nav-dots { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 12px; } .ds-nav-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid oklch(0.18 0.01 20); cursor: pointer; transition: all 0.3s; padding: 0; } .ds-nav-dot--active { background: oklch(0.6 0.2 25); border-color: oklch(0.6 0.2 25); width: 12px; height: 12px; box-shadow: 0 0 0 4px oklch(0.6 0.2 25 / 0.3); } .ds-nav-dot--inactive { background: transparent; } .ds-nav-dot--inactive:hover { border-color: oklch(0.98 0.002 20 / 0.5); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Linter's Lens",
+    "overview": "Regtrace's visual language treats every pixel through the same lens of precision that the tool applies to LLM outputs. The page is a command-line interface made tangible: dark backdrop, monospaced annotations, stark red signal markers, and terminal mockups that demonstrate the tool instead of describing it. Nothing is decorative.",
+    "keyCharacteristics": [
+      "CLI-native aesthetic with terminal mockups and code blocks",
+      "Restrained color: one accent (Stoplight Red) on near-black neutral surfaces",
+      "Single font family (Geist) with weight contrast",
+      "Blur-enhance motion: content starts readable and resolves into clarity",
+      "Dark-first, light-theme-as-secondary-option"
+    ],
+    "rules": [
+      {
+        "name": "The Stoplight Rule",
+        "body": "Red is a signal, not a decoration. Never use the accent for decorative purposes (gradient text, glassmorphism, background fills). Red means pass/fail, alert, measurement threshold.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are inherently flat. Layering is communicated by lightness, not by shadow. No box-shadow on cards, panels, or containers.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the terminal mockup pattern to demonstrate real regtrace output.",
+      "Do apply the Stoplight Rule: red means status, never decoration.",
+      "Do use tonal layering for depth.",
+      "Do show failing test cases and suite scores in mockups.",
+      "Do respect prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't use side-stripe borders (border-left / border-right > 1px as colored accent).",
+      "Don't use gradient text or glassmorphism.",
+      "Don't build SaaS dashboard UI.",
+      "Don't use the red accent for decorative purposes.",
+      "Don't gate content behind animations.",
+      "Don't use numbered section markers except for real sequences.",
+      "Don't use tiny uppercase tracked eyebrows above every section.",
+      "Don't use box-shadow on cards, panels, or containers.",
+      "Don't add hero-metric templates."
+    ]
+  }
+}

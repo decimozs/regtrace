@@ -13,7 +13,7 @@ export default function NavDots({
 }: NavDotsProps) {
   return (
     <nav
-      className="fixed right-5 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3"
+      className="fixed right-3 sm:right-5 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3"
       aria-label="Section navigation"
     >
       {sections.map((section, i) => (
@@ -32,8 +32,8 @@ export default function NavDots({
             }`}
           />
           <span
-            className={`absolute right-full mr-3 px-2 py-0.5 rounded text-xs font-mono text-foreground bg-card-bg border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap ${
-              i === activeIndex ? "opacity-100" : "opacity-0"
+            className={`absolute right-full mr-2 px-2 py-0.5 rounded text-xs font-mono text-foreground bg-card-bg border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none hidden sm:block ${
+              i === activeIndex ? "opacity-100 sm:opacity-100" : "opacity-0"
             }`}
           >
             {section}

@@ -70,6 +70,13 @@ export default function Home() {
         activeIndex={activeIndex}
         onClick={handleDotClick}
       />
+      {/* Scroll hint — fades out after first section */}
+      {activeIndex === 0 && (
+        <div className="scroll-hint">
+          <span className="scroll-hint-arrow text-muted">→</span>
+          <span className="scroll-hint-text">Scroll</span>
+        </div>
+      )}
       <div className="scroll-container" ref={scrollRef}>
         <section
           className="scroll-section"

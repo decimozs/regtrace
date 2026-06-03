@@ -48,7 +48,7 @@ export default function FeaturesSection() {
           {pillars.slice(0, 2).map((pillar) => (
             <div
               key={pillar.title}
-              className="rounded-lg border border-border bg-card-bg overflow-hidden transition-all hover:border-foreground/30"
+              className="feature-card rounded-lg border border-border bg-card-bg overflow-hidden transition-all hover:border-foreground/30"
             >
               <div className={`h-1 ${pillar.accent}`} />
               <div className="p-6 space-y-4">
@@ -73,7 +73,7 @@ export default function FeaturesSection() {
           {pillars.slice(2, 4).map((pillar) => (
             <div
               key={pillar.title}
-              className="rounded-lg border border-border bg-card-bg overflow-hidden transition-all hover:border-foreground/30 flex flex-col"
+              className="feature-card rounded-lg border border-border bg-card-bg overflow-hidden transition-all hover:border-foreground/30 flex flex-col"
             >
               <div className={`h-1 ${pillar.accent}`} />
               <div className="p-5 flex-1 flex flex-col justify-between gap-3">
