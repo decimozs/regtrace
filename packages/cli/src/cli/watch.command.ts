@@ -3,10 +3,21 @@ import { resolve } from "node:path";
 import { loadConfigFromFile } from "../storage/config-loader";
 import { printError, printHeader, printInfo } from "./print";
 
+/** Options for the `regtrace watch` command. */
 interface WatchOptions {
 	config?: string;
 }
 
+/**
+ * Watches enabled golden set files for changes and re-runs evaluation on each
+ * modification. Debounces rapid changes by 500 ms and performs a graceful
+ * shutdown on SIGINT/SIGTERM.
+ *
+ * @param options.config - Path to the config file.
+ * @throws Exits with code 2 if config validation fails or no golden sets are enabled.
+ * @example
+ * await watchCommand({ config: "./regtrace.config.yaml" });
+ */
 export async function watchCommand(options: WatchOptions): Promise<void> {
 	const configResult = await loadConfigFromFile(options.config);
 
@@ -88,6 +99,7 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
 	await new Promise(() => {});
 }
 
+/** Lazily imports and runs `runCommand` to avoid circular imports at module load time. */
 async function runEvaluation(configPath: string): Promise<void> {
 	const { runCommand } = await import("./run.command");
 	await runCommand({

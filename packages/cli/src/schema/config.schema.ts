@@ -11,6 +11,7 @@ import {
 	type z,
 } from "zod";
 
+/** Union of supported LLM provider identifiers. */
 const providerSchema = union([
 	literal("openai"),
 	literal("anthropic"),
@@ -19,6 +20,7 @@ const providerSchema = union([
 	literal("ollama"),
 ]);
 
+/** Schema for a single judge provider configuration. */
 const judgeConfigSchema = object({
 	provider: providerSchema,
 	model: string(),
@@ -29,6 +31,7 @@ const judgeConfigSchema = object({
 	local_endpoint: nullable(string()).optional(),
 });
 
+/** Schema for format sub-check toggles. */
 const subChecksSchema = object({
 	length: boolean().default(true),
 	json_validity: boolean().default(true),
@@ -39,6 +42,7 @@ const subChecksSchema = object({
 	regex_match: boolean().default(true),
 });
 
+/** Schema for tone sub-dimension toggles. */
 const subDimensionsSchema = object({
 	formality: boolean().default(true),
 	sentiment: boolean().default(true),
@@ -47,6 +51,7 @@ const subDimensionsSchema = object({
 	verbosity: boolean().default(true),
 });
 
+/** Schema for factuality metric configuration. */
 const factualityConfigSchema = object({
 	mode: union([literal("strict"), literal("lenient")]).default("strict"),
 	claim_extraction_depth: union([literal("shallow"), literal("deep")]).default(
@@ -55,18 +60,21 @@ const factualityConfigSchema = object({
 	rag_faithfulness_only: boolean().default(false),
 });
 
+/** Schema for format metric configuration. */
 const formatConfigSchema = object({
 	sub_checks: subChecksSchema,
 	length_tolerance: number().min(0).max(1).default(0.2),
 	strict_json: boolean().default(false),
 });
 
+/** Schema for tone metric configuration. */
 const toneConfigSchema = object({
 	tone_profile: nullable(string()).optional(),
 	sub_dimensions: subDimensionsSchema,
 	sub_dimension_weights: record(string(), number()).optional(),
 });
 
+/** Schema for regression metric configuration. */
 const regressionConfigSchema = object({
 	enabled: boolean().default(true),
 	baseline_strategy: union([
@@ -79,6 +87,7 @@ const regressionConfigSchema = object({
 	exclude_new_test_cases: boolean().default(true),
 });
 
+/** Schema for top-level metrics configuration. */
 const metricsConfigSchema = object({
 	enabled: array(string()).default([
 		"factuality",
@@ -94,6 +103,7 @@ const metricsConfigSchema = object({
 	regression: regressionConfigSchema,
 });
 
+/** Schema for a golden-set entry within the config file. */
 const goldenSetEntrySchema = object({
 	path: string().min(1),
 	alias: nullable(string()).optional(),
@@ -102,6 +112,7 @@ const goldenSetEntrySchema = object({
 	store_in_db: boolean().default(true),
 });
 
+/** Schema for quality gate configuration that determines pass/fail outcomes. */
 const qualityGatesSchema = object({
 	suite_score_minimum: number().min(0).max(1).default(0.7),
 	metric_score_minimums: record(string(), number()).optional(),
@@ -110,10 +121,12 @@ const qualityGatesSchema = object({
 	regression_gate: boolean().default(true),
 });
 
+/** Schema for run execution configuration. */
 const runConfigSchema = object({
 	concurrency: number().int().min(1).max(20).default(1),
 });
 
+/** Schema for output and reporting configuration. */
 const outputConfigSchema = object({
 	run_history_limit: number().int().positive().default(50),
 	default_format: union([
@@ -129,15 +142,21 @@ const outputConfigSchema = object({
 	ci_mode_auto_detect: boolean().default(true),
 });
 
+/** Schema for SQLite database configuration. */
 const dbConfigSchema = object({
 	enabled: boolean().default(false),
 	path: string().default(".regtrace/regtrace.db"),
 });
 
+/** Schema for storage configuration. */
 const storageConfigSchema = object({
 	db: dbConfigSchema,
 });
 
+/**
+ * Root Zod schema for the regtrace configuration file.
+ * Validates structure, defaults, and constraints for every config field.
+ */
 export const configSchema = object({
 	project: object({
 		name: string().min(1),
@@ -157,8 +176,10 @@ export const configSchema = object({
 	storage: storageConfigSchema.optional(),
 });
 
+/** Inferred TypeScript type from configSchema. */
 export type Config = z.infer<typeof configSchema>;
 
+/** Union type of the supported judge provider names. */
 export type JudgeProvider =
 	| "openai"
 	| "anthropic"

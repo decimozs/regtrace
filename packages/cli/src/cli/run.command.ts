@@ -18,9 +18,12 @@ import {
 } from "./print";
 import { runPipeline } from "./run-pipeline";
 
+/** Supported output formats for evaluation results. */
 const VALID_FORMATS = ["terminal", "json", "markdown"] as const;
+/** Supported trigger types that identify how the run was initiated. */
 const VALID_TRIGGERS = ["cli", "ci", "watch"] as const;
 
+/** Options for the `regtrace run` command. */
 interface RunOptions {
 	config?: string;
 	setName?: string;
@@ -36,6 +39,10 @@ interface RunOptions {
 	quiet?: boolean;
 }
 
+/**
+ * Validates a CLI option value against a set of allowed values.
+ * Exits with code 2 on invalid input.
+ */
 function validateOption<T>(
 	value: string | undefined,
 	valid: readonly T[],
@@ -49,6 +56,11 @@ function validateOption<T>(
 	process.exit(2);
 }
 
+/**
+ * Entry point for `regtrace run`.
+ * Loads config, optionally filters to a single golden set, runs the evaluation
+ * pipeline, and outputs results in the requested format.
+ */
 export async function runCommand(options: RunOptions): Promise<void> {
 	const startTime = Date.now();
 	const trigger = validateOption(
@@ -185,6 +197,10 @@ export async function runCommand(options: RunOptions): Promise<void> {
 	if (ciMode && failCount > 0) process.exit(1);
 }
 
+/**
+ * Validates config and golden sets without running evaluations.
+ * Reports schema errors, null outputs, and missing API keys.
+ */
 async function runDryRun(options: RunOptions): Promise<void> {
 	const dryStart = Date.now();
 	printHeader("regtrace dry-run");

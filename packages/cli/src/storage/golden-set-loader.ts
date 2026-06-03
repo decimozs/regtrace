@@ -6,8 +6,14 @@ import {
 	validateGoldenSet,
 } from "../schema/validators/golden-set.validator";
 
+/** Result of loading a single golden-set YAML file. */
 export type LoadResult = ValidationResult;
 
+/**
+ * Read, parse, and validate a golden-set YAML file.
+ * @param filePath - Absolute or relative path to the golden-set YAML file.
+ * @returns A `LoadResult` — on success includes the parsed golden-set data; on failure includes field-level validation errors.
+ */
 export async function loadGoldenSetFromFile(
 	filePath: string,
 ): Promise<LoadResult> {

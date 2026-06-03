@@ -19,11 +19,18 @@ import {
 	RESET,
 } from "./print";
 
+/** Resolves the base directory from the config path option or falls back to cwd. */
 function getBasePath(options: { config?: string }): string {
 	if (options.config) return resolve(options.config, "..");
 	return process.cwd();
 }
 
+/**
+ * Lists all run records in summary (terminal) or JSON format.
+ *
+ * @param options.config - Path to the config file.
+ * @param options.format - Output format: `"json"` for machine-readable, otherwise terminal.
+ */
 export async function listCommand(options: {
 	config?: string;
 	format?: string;
@@ -50,6 +57,21 @@ export async function listCommand(options: {
 	printInfo(`${records.length} run(s) total`);
 }
 
+/**
+ * Shows run history: the latest run by default, a specific run with `--run-id`,
+ * or a diff between two runs with `--diff`.
+ *
+ * @param options.config - Path to the config file.
+ * @param options.runId - Specific run ID to inspect.
+ * @param options.diff - Run ID(s) to diff. If only one ID is given, diffs it against
+ *   its immediate predecessor in the run history.
+ * @throws Exits with code 2 if the requested run is not found.
+ * @example
+ * // Show latest run
+ * await historyCommand({ config: "./regtrace.config.yaml" });
+ * // Diff two specific runs
+ * await historyCommand({ config: "./regtrace.config.yaml", diff: "run-a", runId: "run-b" });
+ */
 export async function historyCommand(options: {
 	config?: string;
 	runId?: string;
@@ -100,6 +122,14 @@ export async function historyCommand(options: {
 	}
 }
 
+/**
+ * Prints a colored diff between two run records showing suite score delta,
+ * per-metric changes, and per-test-case status transitions.
+ *
+ * @param basePath - Directory containing `.regtrace/runs/`.
+ * @param runIdA - The newer run ID (required).
+ * @param runIdB - The older run ID. If omitted, uses the immediate predecessor of `runIdA`.
+ */
 async function printDiff(
 	basePath: string,
 	runIdA?: string,

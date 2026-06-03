@@ -4,15 +4,26 @@ import {
 	type TestCase,
 } from "../golden-set.schema";
 
+/** A single field-level validation error. */
 export interface ValidationError {
+	/** Dot-path to the invalid field (e.g. "test_cases[2].context"). */
 	field: string;
+	/** Human-readable description of the constraint that was violated. */
 	message: string;
 }
 
+/** Discriminated union: either a successfully parsed GoldenSet or a list of validation errors. */
 export type ValidationResult =
 	| { success: true; data: GoldenSet }
 	| { success: false; errors: ValidationError[] };
 
+/**
+ * Detects duplicate test case IDs and reports each duplicate once.
+ * Only the first occurrence is used as the field reference; subsequent
+ * duplicates are listed in the error message for traceability.
+ * @param testCases - The test cases to scan for duplicates.
+ * @returns Validation errors for any duplicate IDs found.
+ */
 function findDuplicateIds(testCases: TestCase[]): ValidationError[] {
 	const seen = new Map<string, number[]>();
 	const errors: ValidationError[] = [];
@@ -24,6 +35,7 @@ function findDuplicateIds(testCases: TestCase[]): ValidationError[] {
 		const existing = seen.get(id);
 		if (existing) {
 			existing.push(i);
+			// Report on the second occurrence to avoid double-counting single-pair duplicates
 			if (existing.length === 2) {
 				const firstIdx = existing[0];
 				errors.push({
@@ -39,6 +51,16 @@ function findDuplicateIds(testCases: TestCase[]): ValidationError[] {
 	return errors;
 }
 
+/**
+ * Validates a raw golden-set object against the schema and cross-field business rules.
+ *
+ * Beyond structural validation, enforces:
+ * - Test case IDs must be unique within a golden set
+ * - RAG golden sets must have a context block on every test case
+ *
+ * @param data - The raw golden-set object (typically parsed from YAML).
+ * @returns A ValidationResult discriminated by the `success` field.
+ */
 export function validateGoldenSet(data: unknown): ValidationResult {
 	const parsed = goldenSetSchema.safeParse(data);
 

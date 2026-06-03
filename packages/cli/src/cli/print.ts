@@ -5,20 +5,33 @@ import type {
 	TestCaseResult,
 } from "../schema/run-record.schema";
 
+/** ANSI reset sequence. */
 export const RESET = "\x1b[0m";
+/** ANSI bold sequence. */
 export const BOLD = "\x1b[1m";
+/** ANSI green sequence. */
 export const GREEN = "\x1b[32m";
 const YELLOW = "\x1b[33m";
+/** ANSI red sequence. */
 export const RED = "\x1b[31m";
 const CYAN = "\x1b[36m";
+/** ANSI gray sequence. */
 export const GRAY = "\x1b[90m";
 
+/** Check mark symbol for passing results. */
 export const CHECK = "\u2713";
+/** Cross mark symbol for failing results. */
 export const CROSS = "\u2717";
+/** Warning symbol for marginal results. */
 export const WARN = "\u26A0";
 
+/** Whether color output is currently enabled. Toggled by {@link configureColor}. */
 let useColor = true;
 
+/**
+ * Detects whether the process is running inside a known CI environment.
+ * @returns `true` if `CI`, `GITHUB ACTIONS`, `GITLAB_CI`, or `CIRCLECI` is set.
+ */
 export function isCiEnvironment(): boolean {
 	return !!(
 		process.env.CI ||
@@ -28,10 +41,22 @@ export function isCiEnvironment(): boolean {
 	);
 }
 
+/**
+ * Checks whether `NO_COLOR` is set (per https://no-color.org).
+ * @returns `true` when `NO_COLOR` is present and non-empty.
+ */
 export function isNoColor(): boolean {
 	return process.env.NO_COLOR !== undefined && process.env.NO_COLOR !== "";
 }
 
+/**
+ * Configures color output for all print helpers.
+ * - `"never"`: Disables color unconditionally.
+ * - `"always"`: Forces color on even without a TTY.
+ * - `"auto"`: Enables color only when stdout is a TTY and no `NO_COLOR`/CI override is active.
+ *
+ * @param colorSetting - One of `"auto"`, `"always"`, or `"never"`.
+ */
 export function configureColor(
 	colorSetting: "auto" | "always" | "never",
 ): void {
@@ -44,41 +69,53 @@ export function configureColor(
 	}
 }
 
+/** Wraps `text` in an ANSI color if color output is enabled. */
 function maybeColor(color: string, text: string): string {
 	return useColor ? `${color}${text}${RESET}` : text;
 }
 
+/** Returns an ANSI opener sequence if color is enabled, otherwise empty string. */
 function c(open: string): string {
 	return useColor ? open : "";
 }
 
+/** Returns an ANSI closer sequence if color is enabled, otherwise empty string. */
 function _c(close: string): string {
 	return useColor ? close : "";
 }
 
+/** Returns the symbol unchanged; placeholder for future no-symbol mode. */
 function icon(symbol: string): string {
 	return symbol;
 }
 
+/** Writes to stderr (all CLI output goes to stderr; stdout is reserved for JSON). */
 function stderr(...args: unknown[]): void {
 	console.error(...args);
 }
 
+/**
+ * Writes a JSON blob to stdout (for machine-readable output mode).
+ * @param data - Any serializable value.
+ */
 export function writeJson(data: unknown): void {
 	console.log(JSON.stringify(data, null, 2));
 }
 
+/** Formats a numeric score as a color-coded percentage (green >= 70%, yellow >= 40%, red below). */
 function formatScore(score: number): string {
 	const color = score >= 0.7 ? GREEN : score >= 0.4 ? YELLOW : RED;
 	return maybeColor(color, `${(score * 100).toFixed(1)}%`);
 }
 
+/** Formats a numeric delta as a signed, color-coded percentage. */
 function formatDelta(delta: number): string {
 	const color = delta >= 0 ? GREEN : RED;
 	const sign = delta >= 0 ? "+" : "";
 	return maybeColor(color, `${sign}${(delta * 100).toFixed(1)}%`);
 }
 
+/** Maps a severity level to an ANSI color sequence. */
 function severityColor(severity: string): string {
 	if (!useColor) return "";
 	switch (severity) {
@@ -93,10 +130,19 @@ function severityColor(severity: string): string {
 	}
 }
 
+/**
+ * Prints a section header with cyan bold formatting.
+ * @param text - Header label.
+ */
 export function printHeader(text: string): void {
 	stderr(`\n${c(BOLD)}${c(CYAN)}=== ${text} ===${_c(RESET)}\n`);
 }
 
+/**
+ * Prints the top-level suite summary: name, version, status, score, run ID,
+ * timestamp, duration, and trigger.
+ * @param record - The run record to summarize.
+ */
 export function printSuiteSummary(record: RunRecord): void {
 	const statusIcon =
 		record.status === "passed"
@@ -118,6 +164,10 @@ export function printSuiteSummary(record: RunRecord): void {
 	stderr();
 }
 
+/**
+ * Prints per-metric score and pass-rate lines for a run record.
+ * @param record - The run record whose `metric_summary` to display.
+ */
 export function printMetricSummary(record: RunRecord): void {
 	stderr(`${c(BOLD)}Metric Summary:${_c(RESET)}`);
 	for (const [name, summary] of Object.entries(record.metric_summary)) {
@@ -130,6 +180,13 @@ export function printMetricSummary(record: RunRecord): void {
 	stderr();
 }
 
+/**
+ * Prints test case results. By default shows only failing cases;
+ * pass `{ verbose: true }` to show all.
+ *
+ * @param results - Array of test case results to display.
+ * @param options.verbose - When `true`, includes passing test cases.
+ */
 export function printTestCaseResults(
 	results: TestCaseResult[],
 	options?: { verbose?: boolean },
@@ -155,6 +212,11 @@ export function printTestCaseResults(
 	stderr();
 }
 
+/**
+ * Prints the regression status section: suite delta, baseline reference,
+ * and any excluded test case IDs.
+ * @param record - The run record whose regression data to display.
+ */
 export function printRegressionStatus(record: RunRecord): void {
 	const reg = record.regression;
 	const color =
@@ -175,6 +237,11 @@ export function printRegressionStatus(record: RunRecord): void {
 	stderr();
 }
 
+/**
+ * Prints the quality gates section showing pass/fail for each gate
+ * (suite score, metric scores, max failed cases, low-confidence ratio, regression).
+ * @param gates - The quality gate result object.
+ */
 export function printQualityGates(gates: QualityGateResult): void {
 	stderr(`${c(BOLD)}Quality Gates:${_c(RESET)}`);
 	const overallIcon = icon(gates.passed ? CHECK : CROSS);
@@ -217,6 +284,11 @@ export function printQualityGates(gates: QualityGateResult): void {
 	stderr();
 }
 
+/**
+ * Prints a single-line run record summary for list output:
+ * `run_id  date time  status  score  golden_set  judge`.
+ * @param record - The run record to display.
+ */
 export function printRunRecordRow(record: RunRecord): void {
 	const date = record.timestamp.slice(0, 10);
 	const time = record.timestamp.slice(11, 19);
@@ -233,18 +305,28 @@ export function printRunRecordRow(record: RunRecord): void {
 	);
 }
 
+/** Prints an error message to stderr with a red cross prefix. */
 export function printError(message: string): void {
 	stderr(`${maybeColor(RED, icon(CROSS))} ${message}`);
 }
 
+/** Prints a success message to stderr with a green check prefix. */
 export function printSuccess(message: string): void {
 	stderr(`${maybeColor(GREEN, icon(CHECK))} ${message}`);
 }
 
+/** Prints an informational message to stderr with a cyan "i" prefix. */
 export function printInfo(message: string): void {
 	stderr(`${c(CYAN)}i${_c(RESET)} ${message}`);
 }
 
+/**
+ * Prints a single metric result line with score, threshold, and confidence.
+ * Includes the judge's explanation if available.
+ *
+ * @param metricName - Display name of the metric.
+ * @param result - The metric result to display.
+ */
 export function printMetricResult(
 	metricName: string,
 	result: MetricResult,

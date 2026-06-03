@@ -22,6 +22,13 @@ const EVALUATOR_MAP: Record<string, MetricEvaluator> = {
 	regression: regressionEvaluator,
 };
 
+/**
+ * Resolves the numeric threshold for a metric, preferring per-test-case overrides over the config default.
+ * @param testCase - The test case whose thresholds may override the default
+ * @param config - The run configuration providing the default threshold
+ * @param metricName - The metric to look up a threshold for
+ * @returns The effective threshold value for the metric
+ */
 function getThresholdForMetric(
 	testCase: EvaluateInput["testCase"],
 	config: Config,
@@ -36,6 +43,12 @@ function getThresholdForMetric(
 	return config.metrics.default_threshold;
 }
 
+/**
+ * Classifies a test case result severity based on whether all metrics passed and how badly any failures scored.
+ * @param overallPassed - Whether every metric in the test case passed its threshold
+ * @param metricResults - Per-metric evaluation results
+ * @returns `"pass"` when all metrics pass, `"fail"` when any metric scores below 0.3, otherwise `"warn"`
+ */
 function determineSeverity(
 	overallPassed: boolean,
 	metricResults: Record<string, MetricResult>,
@@ -49,6 +62,12 @@ function determineSeverity(
 	return "warn";
 }
 
+/**
+ * Delegates evaluation to a metric evaluator's `evaluate` method.
+ * @param evaluator - The metric evaluator to invoke
+ * @param input - The evaluation input payload
+ * @returns The metric result produced by the evaluator
+ */
 async function evaluateMetric(
 	evaluator: MetricEvaluator,
 	input: EvaluateInput,
@@ -56,6 +75,7 @@ async function evaluateMetric(
 	return evaluator.evaluate(input);
 }
 
+/** Parameters for evaluating a single test case across all its configured metrics. */
 export interface EvaluateTestCaseParams {
 	testCase: EvaluateInput["testCase"];
 	actualOutput: string;
@@ -65,11 +85,27 @@ export interface EvaluateTestCaseParams {
 	currentGoldenSetVersion: string;
 }
 
+/** The result of evaluating a single test case, including the aggregate score. */
 export interface EvaluateTestCaseResult {
 	testCaseResult: TestCaseResult;
 	aggregateScore: number;
 }
 
+/**
+ * Evaluates a single test case by running each of its configured metrics and aggregating results.
+ *
+ * Unknown metric names produce a failing result with a score of 0 and an explanatory message.
+ * When no metrics are configured, the aggregate score defaults to 0 (the divisor is clamped to 1 to avoid division by zero).
+ *
+ * @param params - The test case parameters including config, baseline, and golden-set version
+ * @returns The per-test-case result and the average score across all metrics
+ * @example
+ * ```ts
+ * const { testCaseResult, aggregateScore } = await evaluateTestCase({
+ *   testCase, actualOutput, expectedOutput, config, baselineRecord: null, currentGoldenSetVersion: "1.0.0"
+ * });
+ * ```
+ */
 export async function evaluateTestCase(
 	params: EvaluateTestCaseParams,
 ): Promise<EvaluateTestCaseResult> {
@@ -141,6 +177,7 @@ export async function evaluateTestCase(
 		aggregateScore += result.score;
 	}
 
+	// Avoid division by zero when no metrics were configured
 	if (metricCount === 0) {
 		metricCount = 1;
 	}
@@ -161,11 +198,13 @@ export async function evaluateTestCase(
 	return { testCaseResult, aggregateScore: avgScore };
 }
 
+/** Parameters for evaluating an entire golden-set suite. */
 export interface EvaluateSuiteParams {
 	config: Config;
 	testCases: EvaluateTestCaseParams[];
 }
 
+/** The aggregated result of evaluating all test cases in a suite, including per-metric summaries and regression data. */
 export interface EvaluateSuiteResult {
 	suiteScore: number;
 	metricSummary: Record<string, { score: number; pass_rate: number }>;
@@ -173,6 +212,20 @@ export interface EvaluateSuiteResult {
 	regression: RegressionBlock;
 }
 
+/**
+ * Evaluates a full suite of test cases with configurable concurrency, then aggregates scores and builds a regression block.
+ *
+ * Test cases are processed in batches sized by `config.run.concurrency`. The suite score is a weighted average
+ * using each test case's `weight` field (defaulting to 1). The final score is clamped to [0, 1].
+ *
+ * @param params - The suite configuration and test case parameters
+ * @returns The weighted suite score, per-metric summary, individual results, and regression block
+ * @example
+ * ```ts
+ * const result = await evaluateSuite({ config, testCases });
+ * console.log(result.suiteScore, result.regression.regression_status);
+ * ```
+ */
 export async function evaluateSuite(
 	params: EvaluateSuiteParams,
 ): Promise<EvaluateSuiteResult> {
@@ -209,6 +262,7 @@ export async function evaluateSuite(
 		}
 	}
 	const weightedScore = totalWeight > 0 ? weightedSum / totalWeight : 0;
+	// Clamp to [0, 1] to guard against floating-point drift
 	const suiteScore = Math.max(0, Math.min(1, weightedScore));
 
 	const allMetricNames = new Set<string>();

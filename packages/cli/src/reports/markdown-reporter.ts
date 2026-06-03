@@ -1,13 +1,31 @@
 import type { ReportData, ReportGenerator } from "./types";
 
+/**
+ * Formats a pass/fail label with an emoji indicator.
+ * @param passed - Whether the gate or test case passed
+ * @param label - The text to display beside the emoji
+ * @returns A string like `"✅ PASSED"` or `"❌ FAILED"`
+ */
 function statusBadge(passed: boolean, label: string): string {
 	return passed ? `✅ ${label}` : `❌ ${label}`;
 }
 
+/**
+ * Formats a decimal score as a percentage string with one decimal place.
+ * @param value - A score between 0 and 1
+ * @returns A percentage string like `"85.0%"`
+ */
 function pct(value: number): string {
 	return `${(value * 100).toFixed(1)}%`;
 }
 
+/**
+ * Generates a human-readable Markdown report from run data, including summary tables,
+ * per-metric scores, regression deltas, quality gate results, and per-test-case breakdowns.
+ *
+ * @param data - The run record and quality gate results to report on
+ * @returns A complete Markdown document as a single string
+ */
 export const markdownReporter: ReportGenerator = {
 	generate(data: ReportData): string {
 		const r = data.run;
@@ -136,6 +154,12 @@ export const markdownReporter: ReportGenerator = {
 	},
 };
 
+/**
+ * Truncates text to `maxLen` characters and escapes newlines for inline display.
+ * @param text - The text to truncate
+ * @param maxLen - Maximum character length before truncation
+ * @returns The truncated, newline-escaped string
+ */
 function truncate(text: string, maxLen: number): string {
 	if (text.length <= maxLen) return text.replace(/\n/g, "\\n");
 	return `${text.slice(0, maxLen).replace(/\n/g, "\\n")}...`;

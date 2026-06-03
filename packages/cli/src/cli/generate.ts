@@ -6,6 +6,7 @@ import type {
 } from "../judge/types";
 import type { EnvVars } from "../utils/env";
 
+/** Maps provider names to their required environment variable names. Ollama is absent because it needs no key. */
 const PROVIDER_ENV_MAP: Record<string, keyof EnvVars> = {
 	openai: "OPENAI_API_KEY",
 	anthropic: "ANTHROPIC_API_KEY",
@@ -13,6 +14,16 @@ const PROVIDER_ENV_MAP: Record<string, keyof EnvVars> = {
 	groq: "GROQ_API_KEY",
 };
 
+/**
+ * Resolves an API key for an LLM provider during output generation.
+ * Checks the config-supplied key first, then the environment variable.
+ * Throws for cloud providers (OpenAI, Anthropic, Gemini, Groq) when no key is found.
+ *
+ * @param providerName - Provider identifier (e.g. "anthropic", "openai", "ollama").
+ * @param configApiKey - Key supplied via the generator config, if any.
+ * @returns The resolved API key, or `undefined` for keyless providers like Ollama.
+ * @throws When a cloud provider has no key in config or environment.
+ */
 function requireGenerateApiKey(
 	providerName: string,
 	configApiKey?: string,
@@ -31,6 +42,21 @@ function requireGenerateApiKey(
 	return undefined;
 }
 
+/**
+ * Generates an LLM output string for a test case by calling the configured provider.
+ * Used by `--generate` to fill `actual_output` fields before evaluation.
+ *
+ * @param input - The user prompt (test case `input` field).
+ * @param systemPrompt - Optional system prompt, or `null` to omit.
+ * @param config - Provider and model configuration for the generation call.
+ * @returns The generated text content from the LLM response.
+ * @throws When the provider is unknown or the API key is missing.
+ * @example
+ * const output = await generateOutput("What is the capital of France?", null, {
+ *   provider: "anthropic", model: "claude-haiku-4-5-20251001",
+ *   temperature: 0.1, max_tokens: 4096, timeout_ms: 30000, retry_attempts: 3,
+ * });
+ */
 export async function generateOutput(
 	input: string,
 	systemPrompt: string | null,
