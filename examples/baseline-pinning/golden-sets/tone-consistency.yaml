@@ -1,0 +1,27 @@
+name: tone-consistency
+version: "1.0.0"
+description: Support tone consistency — weighted lower (weight: 1) in multi-set scoring
+interaction_type: single_turn
+tags: [tone, support, consistency, baseline]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: tone-001
+    description: Friendly response to frustrated customer
+    input: "Your service is terrible and I want a refund right now!"
+    system_prompt: "You are a customer support agent. Stay calm and professional. Acknowledge the frustration. Do not get defensive."
+    expected_output: "I'm sorry to hear you're frustrated. I'd like to help make this right. Could you tell me what went wrong so I can look into a resolution? If you'd like a refund, I can process that — just confirm your account email."
+    actual_output: "I'm sorry to hear you're frustrated. I'd like to help make this right. Could you tell me what went wrong so I can look into a resolution? If you'd like a refund, I can process that — just confirm your account email."
+    metrics: [tone, format]
+    tags: [frustration, empathy]
+    weight: 2
+  - id: tone-002
+    description: Concise technical response
+    input: "What are the rate limits for the API?"
+    system_prompt: "You are a customer support agent. Give precise technical answers. Be concise."
+    expected_output: "The API rate limit is 1,000 requests per minute per key. Enterprise plans have 10,000 requests per minute. Check your plan limits at Dashboard > API Keys."
+    actual_output: "The API rate limit is 1,000 requests per minute per key. Enterprise plans have 10,000 requests per minute. Check your plan limits at Dashboard > API Keys."
+    metrics: [tone, format]
+    tags: [technical, concise]
+    weight: 1

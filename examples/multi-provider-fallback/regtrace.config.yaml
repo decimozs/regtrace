@@ -1,0 +1,80 @@
+# Regtrace config — Multi-Provider Fallback
+# Primary Anthropic judge with OpenAI as fallback. Both API keys required.
+# Deep factuality + tone evaluation for accuracy-critical use cases.
+# Both ANTHROPIC_API_KEY and OPENAI_API_KEY must be set.
+project:
+  name: multi-provider-fallback
+  version: "1.0"
+  description: Resilience against LLM provider outages with primary + fallback judges
+
+golden_sets:
+  - path: golden-sets/qa.yaml
+    enabled: true
+    weight: 1
+
+metrics:
+  enabled: [format, factuality, tone, regression]
+  default_threshold: 0.7
+  format:
+    sub_checks:
+      length: true
+      json_validity: true
+      json_schema: false
+      markdown_structure: false
+      required_fields: true
+      forbidden_content: true
+      regex_match: false
+    length_tolerance: 0.3
+  factuality:
+    mode: strict
+    claim_extraction_depth: deep
+    rag_faithfulness_only: false
+  tone:
+    tone_profile: "empathetic, precise, responsible — handle sensitive information with care"
+    sub_dimensions:
+      formality: true
+      sentiment: true
+      assertiveness: true
+      persona_consistency: true
+      verbosity: true
+  regression:
+    enabled: true
+    baseline_strategy: last_passing
+    tolerance: 0.05
+    critical_threshold: 0.15
+    exclude_new_test_cases: true
+
+judge:
+  primary:
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    temperature: 0.0
+    max_tokens: 4096
+    timeout_ms: 30000
+    retry_attempts: 3
+  fallback:
+    provider: openai
+    model: gpt-4.1-mini
+    temperature: 0.0
+    max_tokens: 4096
+    timeout_ms: 45000
+    retry_attempts: 2
+
+run:
+  concurrency: 1
+
+quality_gates:
+  suite_score_minimum: 0.8
+  max_failed_test_cases: 0
+  max_low_confidence_ratio: 0.05
+  regression_gate: true
+  metric_score_minimums:
+    factuality: 0.9
+    format: 0.8
+    tone: 0.75
+
+output:
+  run_history_limit: 50
+  default_format: terminal
+  color: auto
+  ci_mode_auto_detect: true

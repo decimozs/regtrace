@@ -1,0 +1,45 @@
+name: Nightly LLM Evaluation
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache regtrace runs
+        uses: actions/cache@v4
+        with:
+          path: .regtrace
+          key: regtrace-nightly-${{ hashFiles('golden-sets/**', 'regtrace.config.yaml') }}
+
+      - name: Download Regtrace binary
+        run: |
+          curl -L -o /usr/local/bin/regtrace \
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+          chmod +x /usr/local/bin/regtrace
+
+      - name: Dry-run pre-check
+        run: regtrace run --dry-run
+        working-directory: examples/nightly-generate-and-evaluate
+
+      - name: Generate and evaluate
+        run: regtrace run --generate --ci --format json --output report.json
+        working-directory: examples/nightly-generate-and-evaluate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Upload JSON report
+        uses: actions/upload-artifact@v4
+        with:
+          name: regtrace-nightly-report
+          path: examples/nightly-generate-and-evaluate/report.json
+
+      - name: Upload run history
+        uses: actions/upload-artifact@v4
+        with:
+          name: regtrace-run-history
+          path: examples/nightly-generate-and-evaluate/.regtrace/

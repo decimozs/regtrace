@@ -1,0 +1,28 @@
+name: LLM Quality Gate
+
+on:
+  pull_request:
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache regtrace runs
+        uses: actions/cache@v4
+        with:
+          path: .regtrace
+          key: regtrace-${{ hashFiles('golden-sets/**', 'regtrace.config.yaml') }}
+
+      - name: Download Regtrace binary
+        run: |
+          curl -L -o /usr/local/bin/regtrace \
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+          chmod +x /usr/local/bin/regtrace
+
+      - name: Run evaluation
+        run: regtrace run --ci --bail --set golden-sets/qa.yaml
+        working-directory: examples/pr-regression-gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

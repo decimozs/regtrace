@@ -1,0 +1,47 @@
+name: marketing-copy-eval
+version: "1.0.0"
+description: Marketing copy tone and format evaluation — for PR comment reports
+interaction_type: single_turn
+tags: [marketing, copywriting, tone, pr-comment]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: copy-001
+    description: Hero section headline and subheading
+    input: "Write a hero section for a project management tool aimed at remote teams. The product is called SyncFlow. Key features: real-time collaboration, task management, time tracking, integration with Slack and GitHub."
+    system_prompt: "You are a brand copywriter for SyncFlow, a project management SaaS. Write in a confident, professional tone. Be specific about features. Avoid hype words like 'revolutionary' or 'game-changer'."
+    expected_output: "**SyncFlow** brings your remote team together in real time.\n\nPlan tasks, track time, and ship work without switching tools. Syncs with Slack and GitHub so your workflow stays in one place.\n\nStart your free trial — no credit card required."
+    actual_output: "**SyncFlow** brings your remote team together in real time.\n\nPlan tasks, track time, and ship work without switching tools. Syncs with Slack and GitHub so your workflow stays in one place.\n\nStart your free trial — no credit card required."
+    metrics: [format, tone, factuality]
+    tags: [hero, headline]
+    weight: 2
+    thresholds:
+      tone: 0.8
+  - id: copy-002
+    description: Feature description with exaggerated claims
+    input: "Write a feature description for SyncFlow's time tracking capability. Target: freelancers and small agencies who bill by the hour."
+    system_prompt: "You are a brand copywriter for SyncFlow, a project management SaaS. Write in a confident, professional tone. Be specific and accurate about features."
+    expected_output: "**Track time effortlessly.**\n\nSyncFlow's built-in timer runs in the background while you work. Log hours against specific tasks and projects. When it's time to invoice, export a detailed report with one click.\n\nEvery time entry syncs across devices — start a timer on desktop, stop it on mobile."
+    actual_output: "**The most advanced time tracking ever built.**\n\nSyncFlow's revolutionary AI-powered timer knows exactly what you're working on and logs it automatically with 99.9% accuracy. No other tool comes close. Thousands of freelancers call it a game-changer."
+    metrics: [format, tone, factuality]
+    tags: [exaggerated, tone-fail]
+    weight: 2
+  - id: copy-003
+    description: CTA button copy with social proof
+    input: "Write a call-to-action section for SyncFlow's pricing page. Target: small business owners evaluating the tool. Mention the free trial and the fact that 10,000+ teams already use SyncFlow."
+    system_prompt: "You are a brand copywriter for SyncFlow. Write a persuasive CTA. Use social proof naturally. Keep it concise (3-4 sentences)."
+    expected_output: "**Join 10,000+ teams already shipping with SyncFlow.**\n\nStart your 14-day free trial. No credit card required. Cancel anytime.\n\nSee why teams from 2 to 200 rely on SyncFlow to keep work on track."
+    actual_output: "Over 10,000 teams use SyncFlow.\n\nStart free trial. No credit card needed.\n\nSee why teams love us."
+    metrics: [format, tone]
+    tags: [cta, concise]
+    weight: 1
+  - id: copy-004
+    description: Product announcement with format violations
+    input: "Write a short product announcement for SyncFlow's new AI-powered task prioritization feature. The feature analyzes deadlines, dependencies, and past completion rates to suggest what to work on next."
+    system_prompt: "You are a brand copywriter for SyncFlow. Write a product announcement. Use markdown formatting: bold for emphasis, bullet points for features. Include a clear headline."
+    expected_output: "**Introducing Smart Prioritization**\n\nSyncFlow now suggests what to work on next based on:\n- Upcoming deadlines\n- Task dependencies\n- Your past completion patterns\n\nSpend less time deciding, more time shipping. Available on all plans starting today."
+    actual_output: "Introducing Smart Prioritization\n\nSyncFlow now suggests what to work on next. It analyzes deadlines, dependencies, and your past work patterns. Spend less time deciding and more time shipping. Available on all plans starting today."
+    metrics: [format, tone]
+    tags: [no-markdown, format-fail]
+    weight: 1

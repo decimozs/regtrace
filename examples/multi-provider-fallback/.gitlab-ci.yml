@@ -1,0 +1,23 @@
+stages:
+  - evaluate
+
+variables:
+  REGTRACE_DOWNLOAD_URL: "https://github.com/decimozs/regtrace/releases/latest/download/regtrace"
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq curl 2>/dev/null
+  - curl -L -o /usr/local/bin/regtrace "$REGTRACE_DOWNLOAD_URL"
+  - chmod +x /usr/local/bin/regtrace
+
+cache:
+  key: regtrace-fallback-$CI_COMMIT_REF_SLUG
+  paths:
+    - examples/multi-provider-fallback/.regtrace/
+
+evaluate:
+  stage: evaluate
+  script:
+    - regtrace run --ci --bail
+  only:
+    - merge_requests
+    - main

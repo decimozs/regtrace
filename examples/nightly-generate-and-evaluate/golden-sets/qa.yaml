@@ -1,0 +1,45 @@
+name: nightly-gen-eval
+version: "1.0.0"
+description: Product description and FAQ generation — fresh outputs evaluated nightly
+interaction_type: single_turn
+tags: [product-descriptions, generate, nightly]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: gen-001
+    description: Product description for a wireless keyboard
+    input: "Write a product description for a premium wireless mechanical keyboard with the following specs: hot-swappable switches, aluminum frame, RGB backlighting, 72-key layout, 40-hour battery life, USB-C charging."
+    system_prompt: "You are an e-commerce copywriter. Write concise product descriptions that highlight key features and benefits. Use professional tone. Include a brief specifications section at the end."
+    expected_output: "Experience precision typing with our 72-key wireless mechanical keyboard. The aluminum frame provides premium durability while the hot-swappable switches let you customize every keystroke. Vibrant RGB backlighting illuminates late-night work sessions, and the 40-hour battery means weeks of use between charges.\n\n**Specifications:**\n- Layout: 72-key compact\n- Connectivity: Bluetooth 5.0 / USB-C\n- Battery: 40 hours per charge\n- Frame: Aluminum alloy\n- Switches: Hot-swappable (compatible with Cherry MX, Gateron, Kailh)\n- Backlighting: Per-key RGB\n- Charging: USB-C, full charge in 2 hours"
+    actual_output: null
+    metrics: [format]
+    tags: [product-description]
+    weight: 1
+  - id: gen-002
+    description: FAQ about shipping times
+    input: "Answer a customer question: What are the shipping times and costs for international orders? Our warehouse is in Berlin and we ship worldwide via DHL."
+    system_prompt: "You are a customer support agent. Answer shipping questions clearly and accurately. Include estimated delivery windows and any applicable free shipping thresholds."
+    expected_output: "We ship worldwide from our Berlin warehouse via DHL. Estimated delivery times:\n\n- **Europe:** 3–5 business days (€8 flat rate, free over €75)\n- **North America:** 5–10 business days (€15 flat rate, free over €150)\n- **Asia:** 7–14 business days (€18 flat rate, free over €150)\n- **Rest of world:** 10–20 business days (€20 flat rate, free over €200)\n\nAll shipments include tracking. Customs duties are not included in shipping costs and vary by destination country."
+    actual_output: null
+    metrics: [format, factuality]
+    tags: [shipping, faq]
+    weight: 1
+  - id: gen-003
+    description: Comparison explanation between two subscription tiers
+    input: "Compare our Starter ($19/mo) and Professional ($49/mo) plans. Starter has basic analytics, 5 projects, 10GB storage, community support. Professional adds advanced analytics, unlimited projects, 100GB storage, priority support, and API access."
+    system_prompt: "You are a product marketer. Write a clear comparison of two subscription tiers. Use a neutral tone and organize information so customers can easily decide."
+    expected_output: "**Starter ($19/month)** is designed for individuals and small projects. It includes basic analytics to track key metrics, supports up to 5 concurrent projects, provides 10GB of storage, and offers community-based support via forums.\n\n**Professional ($49/month)** unlocks the full platform. You get advanced analytics with custom dashboards and reports, unlimited projects, 100GB of storage, priority support with 4-hour response time, and full API access for integrations.\n\nIf you need API access, advanced reporting, or work across more than 5 projects, Professional is the right choice. For single-project users who don't need integrations, Starter covers the essentials."
+    actual_output: null
+    metrics: [format, tone]
+    tags: [comparison, pricing]
+    weight: 1
+  - id: gen-004
+    description: Error message troubleshooting guide
+    input: "A user sees error ERR_AUTH_EXPIRED when trying to upload files via the API. What should they do? The token expiration is 1 hour. They need to refresh using the /auth/refresh endpoint with their refresh token."
+    system_prompt: "You are a technical support agent. Write a clear troubleshooting response. Include the exact steps to resolve the error. Be precise about endpoint URLs and token refresh mechanics."
+    expected_output: "Error ERR_AUTH_EXPIRED indicates your access token has expired. API tokens are valid for 1 hour.\n\n**To resolve:**\n1. Generate a new access token by calling `POST /auth/refresh` with your refresh token in the request body:\n   ```json\n   {\"refresh_token\": \"your-refresh-token\"}\n   ```\n2. The endpoint returns a new access token valid for 1 hour plus a new refresh token\n3. Update your API client configuration with the new tokens\n4. Retry the upload request\n\n**Prevention:** Implement automatic token refresh before the 1-hour expiry. We recommend refreshing after 45 minutes of activity."
+    actual_output: null
+    metrics: [format, factuality]
+    tags: [troubleshooting, api]
+    weight: 2

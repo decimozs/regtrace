@@ -1,0 +1,70 @@
+# Regtrace config — PR Comment Report
+# Runs evaluation on every PR and posts a Markdown report as a PR comment.
+# Uses --format markdown and same strict gates as the PR gate example.
+project:
+  name: pr-comment-report
+  version: "1.0"
+  description: Marketing copy evaluation posted as PR comments
+
+golden_sets:
+  - path: golden-sets/qa.yaml
+    enabled: true
+    weight: 1
+
+metrics:
+  enabled: [format, tone, factuality, regression]
+  default_threshold: 0.7
+  format:
+    sub_checks:
+      length: true
+      json_validity: false
+      json_schema: false
+      markdown_structure: true
+      required_fields: true
+      forbidden_content: true
+      regex_match: false
+    length_tolerance: 0.3
+  factuality:
+    mode: strict
+    claim_extraction_depth: deep
+  tone:
+    tone_profile: "confident, persuasive, brand-consistent marketing voice"
+    sub_dimensions:
+      formality: true
+      sentiment: true
+      assertiveness: true
+      persona_consistency: true
+      verbosity: true
+    sub_dimension_weights:
+      persona_consistency: 2.0
+      verbosity: 0.5
+  regression:
+    enabled: true
+    baseline_strategy: last_passing
+    tolerance: 0.05
+    critical_threshold: 0.15
+    exclude_new_test_cases: true
+
+judge:
+  primary:
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    temperature: 0.1
+    max_tokens: 4096
+    timeout_ms: 30000
+    retry_attempts: 3
+
+run:
+  concurrency: 1
+
+quality_gates:
+  suite_score_minimum: 0.75
+  max_failed_test_cases: 1
+  max_low_confidence_ratio: 0.1
+  regression_gate: true
+
+output:
+  run_history_limit: 50
+  default_format: terminal
+  color: auto
+  ci_mode_auto_detect: true

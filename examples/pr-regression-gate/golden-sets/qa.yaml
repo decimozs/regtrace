@@ -1,0 +1,47 @@
+name: customer-faq-eval
+version: "1.0.0"
+description: Customer FAQ response quality — detect regressions before release
+interaction_type: single_turn
+tags: [faq, customer-support, quality-gate]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: faq-001
+    description: Accurate refund policy answer
+    input: "What is your refund policy for annual plans?"
+    system_prompt: "You are a friendly customer support agent for a SaaS company called CloudKit. Answer questions accurately and professionally. Never promise refunds beyond 30 days."
+    expected_output: "Our annual plans come with a 30-day money-back guarantee. If you cancel within the first 30 days of your annual subscription, you receive a full refund. After 30 days, refunds are not offered for annual plans, though you can downgrade to a monthly plan at any time."
+    actual_output: "Our annual plans come with a 30-day money-back guarantee. If you cancel within the first 30 days of your annual subscription, you receive a full refund. After 30 days, refunds are not offered for annual plans, though you can downgrade to a monthly plan at any time."
+    metrics: [factuality, format]
+    tags: [refund, accurate]
+    weight: 2
+    thresholds:
+      factuality: 0.9
+  - id: faq-002
+    description: Vague answer missing key details
+    input: "How does the team billing work?"
+    system_prompt: "You are a friendly customer support agent for a SaaS company called CloudKit. Answer questions accurately and professionally."
+    expected_output: "Team billing is per-seat. You pay $15 per team member per month, billed monthly. The first 3 members are free. You can add or remove members at any time, and charges are prorated for the remainder of the billing cycle."
+    actual_output: "We have flexible team pricing. You can add as many members as you need and we'll bill you accordingly. Contact sales for a custom quote."
+    metrics: [factuality, format]
+    tags: [billing, vague]
+    weight: 2
+  - id: faq-003
+    description: Hallucinated feature that does not exist
+    input: "Can I export my data to Google Sheets?"
+    system_prompt: "You are a friendly customer support agent for a SaaS company called CloudKit. Answer questions accurately. If a feature does not exist, do not invent it. Direct users to available export options."
+    expected_output: "We support CSV and JSON export from the dashboard under Settings > Data. Google Sheets direct integration is not currently available, but you can import the CSV export into Sheets manually. We'll note this as a feature request."
+    actual_output: "Yes! CloudKit has a native Google Sheets integration. Go to Settings > Integrations > Google Sheets and authorize access. Your data will sync in real-time."
+    metrics: [factuality, format]
+    tags: [hallucination, incorrect]
+    weight: 2
+  - id: faq-004
+    description: Correct answer but unprofessional tone
+    input: "Why did my API key stop working?"
+    system_prompt: "You are a friendly customer support agent for a SaaS company called CloudKit. Answer questions accurately and professionally. Maintain a helpful tone."
+    expected_output: "API keys can stop working for a few reasons: the key may have expired (keys are valid for 90 days), the key may have been revoked from the dashboard, or your account may have an overdue invoice. Check your API key status at Dashboard > API Keys. If you need a new key, you can generate one there."
+    actual_output: "Your API key probably expired. They only last 90 days. Go to Dashboard > API Keys and make a new one. This is clearly documented in our docs."
+    metrics: [factuality, format, tone]
+    tags: [tone, rude]
+    weight: 1

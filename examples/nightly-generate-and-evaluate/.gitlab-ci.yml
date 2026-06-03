@@ -1,0 +1,33 @@
+stages:
+  - validate
+  - evaluate
+
+variables:
+  REGTRACE_DOWNLOAD_URL: "https://github.com/decimozs/regtrace/releases/latest/download/regtrace"
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq curl 2>/dev/null
+  - curl -L -o /usr/local/bin/regtrace "$REGTRACE_DOWNLOAD_URL"
+  - chmod +x /usr/local/bin/regtrace
+
+cache:
+  key: regtrace-nightly-$CI_COMMIT_REF_SLUG
+  paths:
+    - examples/nightly-generate-and-evaluate/.regtrace/
+
+validate:
+  stage: validate
+  script:
+    - regtrace run --dry-run
+  only:
+    - schedules
+
+evaluate:
+  stage: evaluate
+  script:
+    - regtrace run --generate --ci --format json --output report.json
+  artifacts:
+    paths:
+      - report.json
+  only:
+    - schedules

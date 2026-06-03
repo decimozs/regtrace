@@ -25,6 +25,7 @@ regtrace run --generate
 | **B: Generate Mode** | Yes (Anthropic) | `regtrace run --generate` | customer-support, email-drafting, translation, summarization |
 | **C: LLM Judge Eval** | Yes (Anthropic) | `regtrace run` | content-generation, rag-documentation |
 | **D: Advanced Config** | Yes (Anthropic) | `regtrace run --generate` or `regtrace run` | rag-legal, rag-product |
+| **E: CI/CD Pipelines** | Yes (Anthropic or multi) | Various `--ci` flags | pr-regression-gate, nightly-generate-and-evaluate, pr-comment-report, baseline-pinning, multi-provider-fallback |
 
 ### A: Zero-Setup
 
@@ -70,6 +71,20 @@ quality gates, RAG + generate mode.
 |---|---|---|
 | [rag-legal](./rag-legal/README.md) | Strict factuality + per-metric gates | `factuality.mode: strict`, `metric_score_minimums` |
 | [rag-product](./rag-product/README.md) | Generate mode + RAG context | `interaction_type: rag` + `generator` block |
+
+### E: CI/CD Pipelines
+
+Ready-to-use CI pipeline configurations with workflow files for GitHub Actions
+(and GitLab CI where noted). Each example includes a pipeline YAML, config, and
+golden set — copy the directory into your project and push.
+
+| Example | Key features | Pipeline file(s) |
+|---|---|---|
+| [pr-regression-gate](./pr-regression-gate/README.md) | `--ci --bail`, strict gates, cache `.regtrace/` | `.github/workflows/regtrace.yml` |
+| [nightly-generate-and-evaluate](./nightly-generate-and-evaluate/README.md) | `--generate`, cron schedule, artifact upload, GitLab CI | `.github/workflows/regtrace.yml`, `.gitlab-ci.yml` |
+| [pr-comment-report](./pr-comment-report/README.md) | `--format markdown`, PR comment via `github-script` | `.github/workflows/regtrace.yml` |
+| [baseline-pinning](./baseline-pinning/README.md) | Two golden sets, `workflow_dispatch` baseline pin, auto-PR | `.github/workflows/evaluate.yml`, `pin-baseline.yml` |
+| [multi-provider-fallback](./multi-provider-fallback/README.md) | Primary + fallback judge, medical/legal QA, GitLab CI | `.github/workflows/regtrace.yml`, `.gitlab-ci.yml` |
 
 ---
 

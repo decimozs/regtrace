@@ -1,0 +1,39 @@
+name: Pin Baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run ID to pin as baseline"
+        required: true
+
+jobs:
+  pin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Regtrace binary
+        run: |
+          curl -L -o /usr/local/bin/regtrace \
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+          chmod +x /usr/local/bin/regtrace
+
+      - name: Pin baseline
+        run: regtrace baseline pin ${{ github.event.inputs.run_id }}
+        working-directory: examples/baseline-pinning
+
+      - name: Create PR with baseline change
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: pin baseline to ${{ github.event.inputs.run_id }}"
+          branch: baseline-pin
+          delete-branch: true
+          title: "Pin baseline to ${{ github.event.inputs.run_id }}"
+          body: |
+            Automated baseline pin triggered from CI.
+
+            Run ID: ${{ github.event.inputs.run_id }}
+            Config updated: examples/baseline-pinning/regtrace.config.yaml
+
+            Review and merge to lock regression comparison to this run.

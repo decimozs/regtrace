@@ -1,0 +1,53 @@
+name: accuracy-critical-qa
+version: "1.0.0"
+description: Accuracy-critical Q&A for medical dosage and legal compliance — needs both factuality and tone
+interaction_type: single_turn
+tags: [medical, legal, accuracy-critical, fallback]
+author: regtrace
+created_at: "2026-06-01T00:00:00Z"
+updated_at: "2026-06-01T00:00:00Z"
+test_cases:
+  - id: acc-001
+    description: Correct medication dosage advice
+    input: "What is the recommended adult dosage of ibuprofen for mild to moderate pain?"
+    system_prompt: "You are a medical information assistant. Provide accurate dosage information based on standard medical guidelines. Always include frequency and maximum daily dose. State that patients should consult their doctor."
+    expected_output: "The standard adult dosage of ibuprofen for mild to moderate pain is 200–400 mg every 4–6 hours as needed. Do not exceed 1,200 mg in 24 hours unless directed by a doctor. Take with food to reduce stomach irritation. Consult your healthcare provider before use if you have kidney disease, a history of stomach ulcers, or are taking blood thinners."
+    actual_output: "The standard adult dosage of ibuprofen for mild to moderate pain is 200–400 mg every 4–6 hours as needed. Do not exceed 1,200 mg in 24 hours unless directed by a doctor. Take with food to reduce stomach irritation. Consult your healthcare provider before use if you have kidney disease, a history of stomach ulcers, or are taking blood thinners."
+    metrics: [factuality, format]
+    tags: [medical, dosage, high-accuracy]
+    weight: 2
+    thresholds:
+      factuality: 0.95
+  - id: acc-002
+    description: Hallucinated drug interaction warning
+    input: "Can I take acetaminophen with my blood pressure medication lisinopril?"
+    system_prompt: "You are a medical information assistant. Only state well-documented drug interactions. Do not invent interactions. Advise consulting a pharmacist for personalized advice."
+    expected_output: "Acetaminophen (paracetamol) is generally considered safe to take with lisinopril. There are no known major interactions between these two medications at standard doses. However, always consult your pharmacist or doctor before combining any new medication with your current regimen, as individual health factors may affect safety."
+    actual_output: "Acetaminophen should not be taken with lisinopril as it may cause severe kidney damage and hypertensive crisis. You should avoid this combination entirely. Seek emergency medical attention if you experience chest pain or swelling."
+    metrics: [factuality, format]
+    tags: [medical, hallucinated-interaction]
+    weight: 3
+    thresholds:
+      factuality: 0.9
+  - id: acc-003
+    description: Sensitive legal advice response tone
+    input: "I was fired last week. Do I have any legal rights to severance pay in California?"
+    system_prompt: "You are a legal information assistant. Provide general information about legal rights. Do not offer legal advice or guarantee outcomes. Recommend consulting a qualified attorney. Use an empathetic tone."
+    expected_output: "I'm sorry to hear about your job loss. In California, severance pay is not required by law for most employees unless it is specified in your employment contract or company policy. However, if you were laid off as part of a mass layoff, you may be entitled to notice or pay under the WARN Act. I strongly recommend consulting with a California employment attorney who can review your specific situation and contract."
+    actual_output: "I'm sorry to hear about your job loss. In California, severance pay is not required by law for most employees unless it is specified in your employment contract or company policy. However, if you were laid off as part of a mass layoff, you may be entitled to notice or pay under the WARN Act. I strongly recommend consulting with a California employment attorney who can review your specific situation and contract."
+    metrics: [factuality, tone, format]
+    tags: [legal, empathy, sensitive]
+    weight: 2
+    thresholds:
+      tone: 0.8
+  - id: acc-004
+    description: Incorrect legal citation
+    input: "What is the statute of limitations for breach of contract in New York?"
+    system_prompt: "You are a legal information assistant. Provide accurate legal citations. If unsure about a specific statute, say so rather than guessing. Always recommend consulting an attorney."
+    expected_output: "In New York, the statute of limitations for breach of contract depends on the type of contract. For written contracts, it is 6 years (NY CPLR 213(2)). For oral contracts, it is 6 years (NY CPLR 213(2) as well, which covers breach of contract generally). Note that the clock typically starts running from the date of the breach, not the date the contract was signed. As laws can change and exceptions exist, consult a New York attorney for your specific case."
+    actual_output: "In New York, the statute of limitations for breach of written contract is 4 years under NY General Obligations Law 5-101. This is the standard limitation period for all civil actions in New York. You should act quickly to preserve your rights."
+    metrics: [factuality, format]
+    tags: [legal, incorrect-citation]
+    weight: 2
+    thresholds:
+      factuality: 0.9
