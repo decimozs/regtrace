@@ -83,4 +83,15 @@ describe("goldenSet validator", () => {
 			expect(contextError).toBeDefined();
 		}
 	});
+
+	it("passes when all actual_output are null", () => {
+		const data = loadFixture("with-null-output.yaml");
+		const result = validateGoldenSet(data);
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.test_cases).toHaveLength(1);
+			expect(result.data.test_cases[0]?.actual_output).toBeNull();
+		}
+	});
 });

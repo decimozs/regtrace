@@ -73,17 +73,5 @@ export function validateGoldenSet(data: unknown): ValidationResult {
 		return { success: false, errors: extraErrors };
 	}
 
-	const allNullOutput = goldenSet.test_cases.every(
-		(tc) => tc.actual_output === null,
-	);
-	if (allNullOutput) {
-		extraErrors.push({
-			field: "test_cases",
-			message:
-				'All test cases have null actual_output. Set actual_output to evaluate, or run with an LLM provider to generate outputs. Example: actual_output: "expected answer here"',
-		});
-		return { success: false, errors: extraErrors };
-	}
-
 	return { success: true, data: goldenSet };
 }

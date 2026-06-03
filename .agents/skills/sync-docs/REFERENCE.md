@@ -7,6 +7,7 @@
 | `packages/cli/src/index.ts` | `reference/cli.mdx` |
 | `packages/cli/src/cli/init.command.ts` | `reference/cli.mdx`, `tutorials/getting-started.mdx` |
 | `packages/cli/src/cli/run.command.ts` | `reference/cli.mdx`, `tutorials/getting-started.mdx`, `tutorials/setup-regression.mdx`, `how-to/ci-integration.mdx` |
+| `packages/cli/src/cli/generate.ts` | `reference/cli.mdx`, `reference/judge-providers.mdx` |
 | `packages/cli/src/cli/list.command.ts` | `reference/cli.mdx`, `how-to/debug-failures.mdx` |
 | `packages/cli/src/cli/watch.command.ts` | `reference/cli.mdx`, `tutorials/watch-mode.mdx` |
 | `packages/cli/src/cli/baseline.command.ts` | `reference/cli.mdx`, `how-to/pin-baseline.mdx`, `tutorials/setup-regression.mdx` |

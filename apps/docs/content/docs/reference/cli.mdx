@@ -55,6 +55,7 @@ Run evaluation on all enabled golden sets.
     "--no-ci": { description: "Disable CI mode auto-detection", type: "boolean" },
     "--bail": { description: "Stop after first suite that fails quality gates", type: "boolean", default: "false" },
     "--dry-run": { description: "Validate config, golden sets, and environment without evaluating", type: "boolean", default: "false" },
+    "--generate": { description: "Generate `actual_output` from LLM for test cases with null output, then evaluate", type: "boolean", default: "false" },
     "--format": { description: "Output format: `terminal`, `json`, `markdown`", type: "string", default: "terminal" },
     "--output": { description: "Write output to file (requires `--format`)", type: "string" },
     "--set": { description: "Run a specific golden set (matches config `path`)", type: "string" },
@@ -96,6 +97,16 @@ fail. CI auto-detection checks `CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, and
 
 By default, `regtrace run` only shows failed test cases. Pass `--verbose`
 to list all test cases including passing ones.
+
+#### Generate mode
+
+`regtrace run --generate` calls an LLM provider to produce `actual_output`
+for test cases where it is `null` in the golden set, then evaluates normally.
+
+The generator defaults to the `judge.primary` provider. Override with an
+optional `generator` block in the config file (see
+[config file reference](/docs/reference/config-file)). Generated output is
+stored in the run record only; the golden set YAML is never modified.
 
 ### `list`
 

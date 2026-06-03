@@ -156,6 +156,7 @@ export const configSchema = object({
 		fallback: nullable(judgeConfigSchema).optional(),
 		cost_controls: costControlsSchema,
 	}),
+	generator: judgeConfigSchema.optional(),
 	run: runConfigSchema,
 	quality_gates: qualityGatesSchema,
 	output: outputConfigSchema,

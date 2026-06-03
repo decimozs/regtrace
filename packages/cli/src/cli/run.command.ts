@@ -23,6 +23,7 @@ import {
 	ensureRegtraceDir,
 	findBaselineRun,
 } from "../storage/run-store";
+import { generateOutput } from "./generate";
 import {
 	configureColor,
 	isCiEnvironment,
@@ -48,6 +49,7 @@ interface RunOptions {
 	verbose?: boolean;
 	dryRun?: boolean;
 	bail?: boolean;
+	generate?: boolean;
 }
 
 interface PreparedGoldenSet {
@@ -250,6 +252,15 @@ export async function runCommand(options: RunOptions): Promise<void> {
 		let aggregateScoreSum = 0;
 
 		for (const tc of prep.parsed.test_cases) {
+			if (options.generate && tc.actual_output == null) {
+				const genCfg = config.generator ?? config.judge.primary;
+				printInfo(
+					`  Generating output for "${tc.id}" via ${genCfg.provider}/${genCfg.model}`,
+				);
+				const generated = await generateOutput(tc.input, null, genCfg);
+				tc.actual_output = generated;
+			}
+
 			const params = buildTestCaseParams(prep, tc, baseline);
 			const result = await evaluateTestCase(params);
 			testCaseResults.push(result.testCaseResult);

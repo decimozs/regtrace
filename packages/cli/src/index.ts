@@ -69,6 +69,7 @@ program
 		"Validate config, golden sets, and env without evaluating",
 	)
 	.option("--bail", "Stop after first suite that fails quality gates")
+	.option("--generate", "Generate actual_output from LLM for null test cases")
 	.addHelpText(
 		"after",
 		`
@@ -77,7 +78,8 @@ Examples:
   regtrace run --format json        # JSON output to stdout
   regtrace run --format json -o report.json
   regtrace run --set my-set --ci --bail
-  regtrace run --dry-run            # Validate setup`,
+  regtrace run --dry-run            # Validate setup
+  regtrace run --generate           # Generate actual_output from LLM for null test cases`,
 	)
 	.action(
 		async (options: {
@@ -91,6 +93,7 @@ Examples:
 			verbose?: boolean;
 			dryRun?: boolean;
 			bail?: boolean;
+			generate?: boolean;
 		}) => {
 			await runCommand({
 				config: options.config,
@@ -103,6 +106,7 @@ Examples:
 				verbose: options.verbose,
 				dryRun: options.dryRun,
 				bail: options.bail,
+				generate: options.generate,
 			});
 		},
 	);

@@ -292,6 +292,41 @@ describe("run", () => {
 	});
 });
 
+const NULL_OUTPUT_GS = `name: gen-test-gs
+version: "1.0"
+description: Generate test
+interaction_type: single_turn
+tags: [test]
+author: test
+created_at: "2026-01-01"
+updated_at: "2026-01-01"
+test_cases:
+  - id: gen-001
+    description: Capital of France
+    input: "What is the capital of France?"
+    system_prompt: null
+    expected_output: "The capital of France is Paris."
+    actual_output: null
+    metrics: [format]
+    tags: []
+    weight: 1
+`;
+
+describe("run --generate", () => {
+	it("accepts --generate flag", async () => {
+		const dir = tmpDir();
+		const { configPath } = writeFiles(dir, BASE_CONFIG(), NULL_OUTPUT_GS);
+
+		const { exitCode, stdout } = await runCli(
+			["run", "--config", configPath, "--generate", "--dry-run"],
+			dir,
+		);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("Dry-run");
+	});
+});
+
 describe("list + history", () => {
 	it("shows runs after evaluation", async () => {
 		const dir = tmpDir();
