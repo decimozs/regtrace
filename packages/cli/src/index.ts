@@ -227,6 +227,10 @@ program
 
 program.parse();
 
+/**
+ * Read the CLI version from `package.json`.
+ * @returns The version string from the nearest `package.json`, or `"0.0.0"` if unreadable.
+ */
 function getVersion(): string {
 	try {
 		const pkgPath = resolve(import.meta.dirname ?? ".", "..", "package.json");

@@ -2,6 +2,11 @@ import { buildJudgeConfig, judgeFactuality } from "../../judge/judge";
 import type { MetricResult } from "../../schema/run-record.schema";
 import type { EvaluateInput, MetricEvaluator } from "../types";
 
+/**
+ * Splits text into lowercase alphanumeric tokens, stripping punctuation.
+ * @param text - The raw text to tokenize
+ * @returns An array of non-empty lowercase word tokens
+ */
 function tokenize(text: string): string[] {
 	return text
 		.toLowerCase()
@@ -10,6 +15,13 @@ function tokenize(text: string): string[] {
 		.filter((t) => t.length > 0);
 }
 
+/**
+ * Condenses a raw error message from an LLM judge into a short, human-readable string.
+ * Extracts structured `code` / `message` pairs from JSON API responses and falls back to
+ * well-known error tokens or a truncated raw string.
+ * @param rawMessage - The raw error string from the judge call
+ * @returns A truncated error description safe for inclusion in evaluation explanations
+ */
 function truncateJudgeError(rawMessage: string): string {
 	const cleaned = rawMessage.trim();
 	// Extract error code from JSON API responses (order-agnostic)
@@ -30,6 +42,12 @@ function truncateJudgeError(rawMessage: string): string {
 	return cleaned;
 }
 
+/**
+ * Computes the Jaccard-like word overlap ratio between two texts.
+ * @param actual - The output produced by the system under test
+ * @param expected - The reference output to compare against
+ * @returns A value in [0, 1] where 1 means every actual token appeared in expected and vice versa
+ */
 function wordOverlapScore(actual: string, expected: string): number {
 	const actualTokens = tokenize(actual);
 	const expectedTokens = tokenize(expected);
@@ -49,6 +67,14 @@ function wordOverlapScore(actual: string, expected: string): number {
 	return overlap / total;
 }
 
+/**
+ * Computes the n-gram overlap ratio between two texts.
+ * Falls back to unigram word overlap when the expected text is shorter than `n` tokens.
+ * @param actual - The output produced by the system under test
+ * @param expected - The reference output to compare against
+ * @param n - The n-gram size
+ * @returns A Jaccard-like overlap score in [0, 1]
+ */
 function ngramOverlap(actual: string, expected: string, n: number): number {
 	const actualTokens = tokenize(actual);
 	const expectedTokens = tokenize(expected);
@@ -77,6 +103,13 @@ function ngramOverlap(actual: string, expected: string, n: number): number {
 	return total > 0 ? overlap / total : 0;
 }
 
+/**
+ * Blends unigram and bigram overlap scores into a single claim-overlap metric.
+ * Weights bigrams at 0.6 and unigrams at 0.4 to prioritize phrase-level accuracy.
+ * @param actual - The output produced by the system under test
+ * @param expected - The reference output to compare against
+ * @returns A weighted overlap score in [0, 1]
+ */
 function checkClaimOverlap(actual: string, expected: string): number {
 	const unigramScore = ngramOverlap(actual, expected, 1);
 	const bigramScore = ngramOverlap(actual, expected, 2);
@@ -84,6 +117,16 @@ function checkClaimOverlap(actual: string, expected: string): number {
 	return unigramScore * 0.4 + bigramScore * 0.6;
 }
 
+/**
+ * Runs the deterministic (shallow) factuality check using n-gram overlap heuristics.
+ *
+ * When `rag_faithfulness_only` is enabled and no context is provided, the check is skipped with a
+ * perfect score. In `strict` mode, scores between 0.3 and 1.0 are penalized by 0.1 to tighten
+ * the pass/fail boundary around borderline matches.
+ *
+ * @param input - The evaluation input
+ * @returns A score and human-readable explanation
+ */
 async function evaluateShallow(
 	input: EvaluateInput,
 ): Promise<{ score: number; explanation: string }> {
@@ -100,6 +143,7 @@ async function evaluateShallow(
 
 	let score = checkClaimOverlap(input.actualOutput, input.expectedOutput);
 
+	// Strict mode penalises borderline scores that are above 0.3 but not a perfect match
 	if (mode === "strict" && score > 0.3 && score < 1) {
 		score = Math.max(0, score - 0.1);
 	}
@@ -114,6 +158,11 @@ async function evaluateShallow(
 	return { score, explanation };
 }
 
+/**
+ * Delegates factuality evaluation to an LLM judge for deep claim extraction and comparison.
+ * @param input - The evaluation input
+ * @returns The judge's score, confidence, explanation, and token cost
+ */
 async function evaluateDeep(input: EvaluateInput): Promise<{
 	score: number;
 	confidence: number;
@@ -144,6 +193,17 @@ async function evaluateDeep(input: EvaluateInput): Promise<{
 	};
 }
 
+/**
+ * Evaluates factual accuracy of an output against expectations.
+ *
+ * In `deep` mode, an LLM judge performs claim-by-claim comparison. If the judge call fails,
+ * the evaluator gracefully degrades to the deterministic shallow path with reduced confidence (0.5)
+ * and an explanation that includes the truncated error. In `shallow` mode, n-gram overlap heuristics
+ * are used directly with full confidence (1.0).
+ *
+ * @param input - The evaluation input
+ * @returns A {@link MetricResult} with `evaluation_type` of `"llm_judged"` or `"deterministic"`
+ */
 export const factualityEvaluator: MetricEvaluator = {
 	metricName: "factuality",
 
@@ -166,6 +226,7 @@ export const factualityEvaluator: MetricEvaluator = {
 				};
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err);
+				// Graceful degradation: fall back to deterministic overlap check
 				const fallback = await evaluateShallow(input);
 				return {
 					metric_name: "factuality",

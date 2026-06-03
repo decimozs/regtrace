@@ -11,24 +11,28 @@ import {
 	type z,
 } from "zod";
 
+/** Schema for the overall status of a completed evaluation run. */
 export const runStatusSchema = union([
 	literal("passed"),
 	literal("failed"),
 	literal("errored"),
 ]);
 
+/** Schema for the trigger that initiated a run. */
 export const runTriggerSchema = union([
 	literal("cli"),
 	literal("ci"),
 	literal("watch"),
 ]);
 
+/** Schema for the severity level of a regression comparison. */
 export const regressionStatusSchema = union([
 	literal("clean"),
 	literal("warning"),
 	literal("critical"),
 ]);
 
+/** Schema for a single metric's evaluation result within a test case. */
 const metricResultSchema = object({
 	metric_name: string(),
 	score: number().min(0).max(1),
@@ -40,6 +44,7 @@ const metricResultSchema = object({
 	token_cost: number().int().min(0),
 });
 
+/** Schema for a test case result including per-metric scores and regression delta. */
 export const testCaseResultSchema = object({
 	test_case_id: string(),
 	input: string(),
@@ -50,6 +55,7 @@ export const testCaseResultSchema = object({
 	regression_delta: record(string(), number()).optional(),
 });
 
+/** Schema for the regression comparison block within a run record. */
 export const regressionBlockSchema = object({
 	baseline_run_id: nullable(string()),
 	baseline_golden_set_version: nullable(string()),
@@ -61,6 +67,10 @@ export const regressionBlockSchema = object({
 	metric_deltas: record(string(), number()),
 });
 
+/**
+ * Root Zod schema for a persisted run record.
+ * Captures all evaluation results, regression data, and metadata for a single `regtrace run`.
+ */
 export const runRecordSchema = object({
 	run_id: string(),
 	timestamp: string(),
@@ -86,10 +96,23 @@ export const runRecordSchema = object({
 	regression: regressionBlockSchema,
 });
 
+/** Inferred TypeScript type from runRecordSchema. */
 export type RunRecord = z.infer<typeof runRecordSchema>;
+
+/** Inferred TypeScript type from runStatusSchema. */
 export type RunStatus = z.infer<typeof runStatusSchema>;
+
+/** Inferred TypeScript type from runTriggerSchema. */
 export type RunTrigger = z.infer<typeof runTriggerSchema>;
+
+/** Inferred TypeScript type from regressionStatusSchema. */
 export type RegressionStatus = z.infer<typeof regressionStatusSchema>;
+
+/** Inferred TypeScript type from testCaseResultSchema. */
 export type TestCaseResult = z.infer<typeof testCaseResultSchema>;
+
+/** Inferred TypeScript type from metricResultSchema. */
 export type MetricResult = z.infer<typeof metricResultSchema>;
+
+/** Inferred TypeScript type from regressionBlockSchema. */
 export type RegressionBlock = z.infer<typeof regressionBlockSchema>;

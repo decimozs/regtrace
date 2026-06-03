@@ -108,11 +108,22 @@ test_cases:
     weight: 1
 `;
 
+/** Options for the `regtrace init` command. */
 interface InitOptions {
 	dir?: string;
 	force?: boolean;
 }
 
+/**
+ * Initializes a new regtrace project by creating default config, golden set,
+ * `.env.example`, and `.gitignore` files, plus the `.regtrace/runs` directory.
+ *
+ * @param options.dir - Target directory (defaults to cwd).
+ * @param options.force - Overwrite existing files when `true`.
+ * @throws Exits with code 2 if files exist and `--force` is not set.
+ * @example
+ * await initCommand({ dir: "./my-project", force: false });
+ */
 export async function initCommand(options: InitOptions): Promise<void> {
 	const targetDir = options.dir ? resolve(options.dir) : process.cwd();
 	const configPath = resolve(targetDir, "regtrace.config.yaml");

@@ -5,11 +5,22 @@ import { loadConfigFromFile } from "../storage/config-loader";
 import { loadRunRecord } from "../storage/run-store";
 import { printError, printHeader, printInfo, printSuccess } from "./print";
 
+/** Resolves the config file path, defaulting to `regtrace.config.yaml` in cwd. */
 function getConfigPath(config?: string): string {
 	if (config) return resolve(config);
 	return resolve(process.cwd(), "regtrace.config.yaml");
 }
 
+/**
+ * Pins a specific run as the regression baseline by updating the config's
+ * `baseline_strategy` to `"pinned"` and setting `pinned_run_id`.
+ *
+ * @param options.config - Path to the config file (defaults to cwd/regtrace.config.yaml).
+ * @param options.runId - The run ID to pin as the baseline.
+ * @throws Exits with code 2 if the config file or run record is not found.
+ * @example
+ * await baselinePinCommand({ runId: "run-2026-01-01-abcd", config: "./regtrace.config.yaml" });
+ */
 export async function baselinePinCommand(options: {
 	config?: string;
 	runId: string;
@@ -56,6 +67,13 @@ export async function baselinePinCommand(options: {
 	printInfo(`Updated: ${configPath}`);
 }
 
+/**
+ * Reverts the baseline strategy from `"pinned"` back to `"last_passing"`
+ * and removes the `pinned_run_id` from the config.
+ *
+ * @param options.config - Path to the config file (defaults to cwd/regtrace.config.yaml).
+ * @throws Exits with code 2 if the config file is not found.
+ */
 export async function baselineUnpinCommand(options: {
 	config?: string;
 }): Promise<void> {
@@ -89,6 +107,13 @@ export async function baselineUnpinCommand(options: {
 	printInfo(`Updated: ${configPath}`);
 }
 
+/**
+ * Displays the current baseline strategy. If pinned, shows the run ID, golden
+ * set name/version, and suite score; otherwise reports the `"last_passing"` strategy.
+ *
+ * @param options.config - Path to the config file (defaults to cwd/regtrace.config.yaml).
+ * @throws Exits with code 2 if the config file is not found.
+ */
 export async function baselineShowCommand(options: {
 	config?: string;
 }): Promise<void> {

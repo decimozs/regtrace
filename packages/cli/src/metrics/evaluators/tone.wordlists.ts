@@ -1,3 +1,4 @@
+/** Formal English words used by the tone evaluator's formality heuristic. */
 export const FORMAL_WORDS = new Set([
 	"therefore",
 	"thus",
@@ -31,6 +32,7 @@ export const FORMAL_WORDS = new Set([
 	"therein",
 ]);
 
+/** Informal English words penalised by the tone evaluator's formality heuristic. */
 export const INFORMAL_WORDS = new Set([
 	"yeah",
 	"nah",
@@ -64,6 +66,7 @@ export const INFORMAL_WORDS = new Set([
 	"amazing",
 ]);
 
+/** Positive sentiment words used by the tone evaluator's sentiment heuristic. */
 export const POSITIVE_WORDS = new Set([
 	"good",
 	"great",
@@ -87,6 +90,7 @@ export const POSITIVE_WORDS = new Set([
 	"happy",
 ]);
 
+/** Negative sentiment words used by the tone evaluator's sentiment heuristic. */
 export const NEGATIVE_WORDS = new Set([
 	"bad",
 	"poor",

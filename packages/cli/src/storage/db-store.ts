@@ -52,6 +52,12 @@ ORDER BY timestamp DESC
 LIMIT ?2
 `;
 
+/**
+ * Open (or create) the SQLite database and ensure the schema is up to date.
+ * Enables WAL journal mode for safe concurrent reads during watch mode.
+ * @param dbPath - Path to the SQLite database file.
+ * @returns The opened `Database` instance with the `runs` table and indexes ready.
+ */
 export function openDb(dbPath: string): Database {
 	const db = new Database(dbPath);
 	db.exec("PRAGMA journal_mode = WAL");
@@ -62,10 +68,20 @@ export function openDb(dbPath: string): Database {
 let _db: Database | null = null;
 let _dbPath: string | null = null;
 
+/**
+ * Get the currently cached database instance, if one has been initialised.
+ * @returns The cached `Database`, or `null` if `initDb` has not been called.
+ */
 export function getDb(): Database | null {
 	return _db;
 }
 
+/**
+ * Initialise the singleton database connection, reusing the existing one if the path matches.
+ * If the path has changed, the previous connection is closed before opening a new one.
+ * @param dbPath - Path to the SQLite database file.
+ * @returns The active `Database` instance.
+ */
 export function initDb(dbPath: string): Database {
 	if (_db && _dbPath === dbPath) return _db;
 	if (_db) {
@@ -76,6 +92,10 @@ export function initDb(dbPath: string): Database {
 	return _db;
 }
 
+/**
+ * Close the singleton database connection and clear the cached instance.
+ * Safe to call even if no connection is open.
+ */
 export function closeDb(): void {
 	if (_db) {
 		_db.close();
@@ -84,6 +104,11 @@ export function closeDb(): void {
 	}
 }
 
+/**
+ * Persist a run record to the database. Uses `INSERT OR REPLACE` so re-inserting the same `run_id` updates the row.
+ * @param db - An open `Database` instance.
+ * @param record - The run record to store. Complex fields (`metric_summary`, `test_case_results`, `regression`) are JSON-serialised.
+ */
 export function saveRunRecord(db: Database, record: RunRecord): void {
 	const stmt = db.prepare(INSERT_SQL);
 	stmt.run(
@@ -106,6 +131,13 @@ export function saveRunRecord(db: Database, record: RunRecord): void {
 	);
 }
 
+/**
+ * Query run records from the database, optionally filtered by golden-set name.
+ * @param db - An open `Database` instance.
+ * @param goldenSetName - When provided, only return runs for this golden set. Omit to return all runs.
+ * @param limit - Maximum number of records to return. Defaults to 1000.
+ * @returns An array of `RunRecord` objects sorted by timestamp descending.
+ */
 export function listRunRecords(
 	db: Database,
 	goldenSetName?: string,
@@ -120,6 +152,11 @@ export function listRunRecords(
 	return rows.map(mapRowToRecord);
 }
 
+/**
+ * Deserialise a database row into a `RunRecord`.
+ * JSON columns (`metric_summary`, `test_case_results`, `regression`) are parsed back into objects.
+ * Nullable columns fall back to empty strings.
+ */
 function mapRowToRecord(row: Record<string, unknown>): RunRecord {
 	return {
 		run_id: row.run_id as string,
@@ -141,6 +178,13 @@ function mapRowToRecord(row: Record<string, unknown>): RunRecord {
 	};
 }
 
+/**
+ * Rebuild the SQLite database from the JSON run files stored under `.regtrace/runs/`.
+ * Reads each JSON file, validates it minimally, and inserts it into the database.
+ * @param basePath - Root directory of the project (where `.regtrace/` lives).
+ * @param dbPath - Path to the SQLite database file to (re)create.
+ * @returns The number of run records successfully imported.
+ */
 export function rebuildDb(basePath: string, dbPath: string): number {
 	const runsDir = resolve(basePath, ".regtrace", "runs");
 
@@ -148,7 +192,7 @@ export function rebuildDb(basePath: string, dbPath: string): number {
 
 	const files = readdirSync(runsDir)
 		.filter((f) => f.endsWith(".json"))
-		.sort();
+		.sort(); // deterministic ordering for rebuild
 
 	const db = openDb(dbPath);
 	const insertStmt = db.prepare(INSERT_SQL);

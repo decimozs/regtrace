@@ -2,6 +2,17 @@ import type { Config } from "../schema/config.schema";
 import type { RunRecord } from "../schema/run-record.schema";
 import type { QualityGateResult } from "./types";
 
+/**
+ * Evaluates all configured quality gates against a completed run record.
+ *
+ * Checks suite score minimum, per-metric score minimums, max failed test cases,
+ * max low-confidence ratio, and optional regression gate. A gate must be
+ * explicitly configured to appear in the results; absent configuration is skipped.
+ *
+ * @param record - The completed run record to evaluate
+ * @param config - The run configuration defining gate thresholds
+ * @returns A {@link QualityGateResult} with an overall pass/fail and per-gate details
+ */
 export function checkQualityGates(
 	record: RunRecord,
 	config: Config,
@@ -44,6 +55,7 @@ export function checkQualityGates(
 	};
 	if (!failedPassed) allPassed = false;
 
+	// Low-confidence means any metric result with confidence below 0.5
 	const maxLowConf = config.quality_gates.max_low_confidence_ratio;
 	const lowConfCount = record.test_case_results.filter((tc) => {
 		return Object.values(tc.metric_results).some((mr) => mr.confidence < 0.5);

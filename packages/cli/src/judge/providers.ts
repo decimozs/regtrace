@@ -13,8 +13,10 @@ import { GroqProvider } from "./providers/groq";
 import { OllamaProvider } from "./providers/ollama";
 import { OpenAiProvider } from "./providers/openai";
 
+/** Constructor signature for a judge provider class. */
 export type ProviderConstructor = new () => InstanceType<typeof OpenAiProvider>;
 
+/** Registry mapping provider name strings to their constructor classes. */
 export const PROVIDER_MAP: Record<string, ProviderConstructor> = {
 	openai: OpenAiProvider,
 	anthropic: AnthropicProvider,

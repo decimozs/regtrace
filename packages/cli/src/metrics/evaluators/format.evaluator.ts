@@ -1,6 +1,7 @@
 import type { MetricResult } from "../../schema/run-record.schema";
 import type { EvaluateInput, MetricEvaluator } from "../types";
 
+/** Supported format sub-checks, each mapped to a scoring function in `SUB_CHECK_MAP`. */
 type SubCheck =
 	| "length"
 	| "json_validity"
@@ -10,6 +11,11 @@ type SubCheck =
 	| "forbidden_content"
 	| "regex_match";
 
+/**
+ * Returns whether the string is valid JSON.
+ * @param actual - The string to validate
+ * @returns `true` if `actual` parses as JSON without error
+ */
 function checkJsonValidity(actual: string): boolean {
 	try {
 		JSON.parse(actual);
@@ -19,6 +25,13 @@ function checkJsonValidity(actual: string): boolean {
 	}
 }
 
+/**
+ * Computes a structural similarity score between two JSON strings by recursively comparing
+ * key presence, array lengths, and value equality. Returns 0 if either string is invalid JSON.
+ * @param actual - The JSON string produced by the system under test
+ * @param expected - The reference JSON string
+ * @returns A similarity score in [0, 1]
+ */
 function compareJsonStructure(actual: string, expected: string): number {
 	let actualParsed: unknown;
 	let expectedParsed: unknown;
@@ -32,6 +45,14 @@ function compareJsonStructure(actual: string, expected: string): number {
 	return compareJsonValues(actualParsed, expectedParsed);
 }
 
+/**
+ * Recursively scores structural similarity between two parsed JSON values.
+ * Object keys are compared by presence in `expected`; missing keys score 0, extra keys are ignored.
+ * Arrays are compared element-wise, with the score scaled by the longer array's length.
+ * @param actual - A parsed JSON value from the system output
+ * @param expected - A parsed JSON value from the reference
+ * @returns A similarity score in [0, 1]
+ */
 function compareJsonValues(actual: unknown, expected: unknown): number {
 	if (typeof actual !== typeof expected) return 0;
 	if (actual === null && expected === null) return 1;
@@ -74,6 +95,11 @@ function compareJsonValues(actual: unknown, expected: unknown): number {
 	return actual === expected ? 1 : 0;
 }
 
+/**
+ * Scores markdown structural richness by checking for headings, lists, code blocks, tables, and paragraphs.
+ * @param actual - The markdown text to evaluate
+ * @returns A score in [0, 1] representing the fraction of structural elements present
+ */
 function checkMarkdownStructure(actual: string): number {
 	const hasHeadings = /^#{1,6}\s/m.test(actual);
 	const hasLists = /^[\s]*[-*+]\s/m.test(actual) || /^\d+\.\s/m.test(actual);
@@ -92,6 +118,12 @@ function checkMarkdownStructure(actual: string): number {
 	return passed / checks.length;
 }
 
+/**
+ * Checks whether significant words from `expected` appear in `actual`, filtering to words longer than 3 characters.
+ * @param actual - The output text to search within
+ * @param expected - The reference text whose significant words must appear
+ * @returns The fraction of unique significant words from `expected` found in `actual`
+ */
 function checkRequiredFields(actual: string, expected: string): number {
 	const words = expected
 		.toLowerCase()
@@ -108,6 +140,7 @@ function checkRequiredFields(actual: string, expected: string): number {
 	return found / uniqueWords.length;
 }
 
+/** Patterns that indicate AI-generated hedging or refusal language. Each match deducts 0.2 from the score. */
 const FORBIDDEN_PATTERNS = [
 	/\bI'm sorry\b/i,
 	/\bI cannot\b/i,
@@ -121,12 +154,24 @@ const FORBIDDEN_PATTERNS = [
 	/\bI don't know\b/i,
 ];
 
+/**
+ * Penalises output containing AI refusal or hedging patterns.
+ * @param actual - The output text to check
+ * @returns 1 when no forbidden patterns match, decreasing by 0.2 per match (clamped to 0)
+ */
 function checkForbiddenContent(actual: string): number {
 	const matches = FORBIDDEN_PATTERNS.filter((p) => p.test(actual)).length;
 	if (matches === 0) return 1;
 	return Math.max(0, 1 - matches * 0.2);
 }
 
+/**
+ * Tests `actual` against `expected` treated as a regex pattern, with ReDoS protection.
+ * Patterns longer than 500 characters or containing quantified groups/character classes are rejected.
+ * @param actual - The text to test
+ * @param expected - The regex pattern string to compile
+ * @returns 1 if the pattern matches, 0 otherwise (including when the pattern is unsafe or invalid)
+ */
 function checkRegexMatch(actual: string, expected: string): number {
 	// ReDoS guard: limit regex length and reject complex patterns
 	if (expected.length > 500) return 0;
@@ -145,6 +190,17 @@ function checkRegexMatch(actual: string, expected: string): number {
 	}
 }
 
+/**
+ * Scores how closely `actual`'s length matches `expected`'s length within a tolerance band.
+ *
+ * Inside `[1 - tolerance, 1 + tolerance]` the score is 1. Below the band it scales linearly;
+ * above the band it decreases linearly, reaching 0 at `2 × upperBound`.
+ *
+ * @param actual - The output text
+ * @param expected - The reference text whose length defines the target
+ * @param tolerance - The fractional tolerance around 1.0 (e.g. 0.2 allows ±20% length deviation)
+ * @returns A length-compliance score in [0, 1]
+ */
 function checkLength(
 	actual: string,
 	expected: string,
@@ -159,6 +215,7 @@ function checkLength(
 	return Math.max(0, (upper * 2 - ratio) / upper);
 }
 
+/** Maps format sub-check names to their scoring functions. Each returns a score and a detail string. */
 const SUB_CHECK_MAP: Record<
 	SubCheck,
 	(input: EvaluateInput) => { score: number; detail: string }
@@ -219,6 +276,16 @@ const SUB_CHECK_MAP: Record<
 	},
 };
 
+/**
+ * Evaluates output format compliance across enabled sub-checks.
+ *
+ * Sub-checks are configured via `metricConfig.sub_checks` as a map of check name to enabled boolean.
+ * When no sub-checks are enabled, the evaluator returns a perfect score with a note.
+ * Otherwise, the average score across all enabled checks is compared against the threshold.
+ *
+ * @param input - The evaluation input including metric config with `sub_checks` and per-check settings
+ * @returns A deterministic {@link MetricResult} with an explanation listing each sub-check's result
+ */
 export const formatEvaluator: MetricEvaluator = {
 	metricName: "format",
 

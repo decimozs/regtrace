@@ -18,12 +18,14 @@ import { printError, printInfo } from "./print";
 
 declare const __VERSION__: string | undefined;
 
+/** Pipeline options passed to `runPipeline`. */
 interface PipelineOptions {
 	generate?: boolean;
 	trigger?: "cli" | "ci" | "watch";
 	quiet?: boolean;
 }
 
+/** A single test case extracted from a golden set, prepared for evaluation. */
 interface PreparedTestCase {
 	id: string;
 	description: string;
@@ -34,6 +36,7 @@ interface PreparedTestCase {
 	weight: number;
 }
 
+/** Result of loading and parsing a golden set file. */
 interface PrepareGoldenSetResult {
 	name: string;
 	version: string;
@@ -42,11 +45,19 @@ interface PrepareGoldenSetResult {
 	goldenSetContent: string;
 }
 
+/**
+ * Resolves a golden set path relative to the config directory.
+ * Absolute paths are returned as-is.
+ */
 function resolveGoldenSetPath(configDir: string, relativePath: string): string {
 	if (relativePath.startsWith("/")) return relativePath;
 	return resolve(configDir, relativePath);
 }
 
+/**
+ * Loads a golden set file, validates it, and extracts test cases
+ * into prepared form for the evaluation pipeline.
+ */
 async function prepareGoldenSet(
 	configDir: string,
 	path: string,
@@ -78,6 +89,9 @@ async function prepareGoldenSet(
 	};
 }
 
+/**
+ * Builds evaluation parameters from a prepared test case and baseline data.
+ */
 function buildTestCaseParams(
 	config: Config,
 	tc: PreparedTestCase,
@@ -113,11 +127,18 @@ function buildTestCaseParams(
 	};
 }
 
+/** Result of evaluating a single golden set suite. */
 export interface PipelineResult {
 	run: RunRecord;
 	qualityGates: ReturnType<typeof checkQualityGates>;
 }
 
+/**
+ * Main evaluation loop.
+ * For each enabled golden set: loads it, generates missing outputs if requested,
+ * evaluates all metrics, creates a run record, checks quality gates, and persists
+ * results to disk and optionally SQLite.
+ */
 export async function runPipeline(
 	config: Config,
 	configDir: string,

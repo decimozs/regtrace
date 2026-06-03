@@ -1,5 +1,13 @@
 import type { JudgeMessage } from "./types";
 
+/**
+ * Builds the system and user messages for a factuality evaluation prompt.
+ * @param input - The original user prompt or query.
+ * @param expectedOutput - The reference output to compare against.
+ * @param actualOutput - The LLM-generated output being evaluated.
+ * @param claimDepth - "shallow" compares main claims; "deep" exhaustively extracts every factual claim.
+ * @returns A two-element message array (system + user) for the judge model.
+ */
 export function buildFactualityPrompt(
 	input: string,
 	expectedOutput: string,
@@ -54,6 +62,14 @@ Evaluate the factuality of the actual output compared to the expected output. Re
 	];
 }
 
+/**
+ * Builds the system and user messages for a tone evaluation prompt.
+ * @param input - The original user prompt or query.
+ * @param expectedOutput - The reference output whose tone to match.
+ * @param actualOutput - The LLM-generated output being evaluated.
+ * @param toneProfile - Optional natural-language tone description overriding the expected output as reference.
+ * @returns A two-element message array (system + user) for the judge model.
+ */
 export function buildTonePrompt(
 	input: string,
 	expectedOutput: string,

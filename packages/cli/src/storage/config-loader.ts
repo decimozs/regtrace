@@ -9,8 +9,14 @@ import {
 
 const CONFIG_FILENAMES = ["regtrace.config.yaml", "regtrace.config.yml"];
 
+/** Result of loading a regtrace config, including the resolved file path on success. */
 export type LoadConfigResult = ValidationResult & { configPath?: string };
 
+/**
+ * Walk upward from `startDir` looking for a regtrace config file.
+ * @param startDir - Directory to start searching from. Defaults to `process.cwd()`.
+ * @returns The absolute path to the first matching config file, or `null` if none is found.
+ */
 export function findConfigFile(
 	startDir: string = process.cwd(),
 ): string | null {
@@ -25,13 +31,18 @@ export function findConfigFile(
 		}
 
 		const parent = dirname(current);
-		if (parent === current) break;
+		if (parent === current) break; // filesystem root reached
 		current = parent;
 	}
 
 	return null;
 }
 
+/**
+ * Read, parse, and validate a regtrace YAML config file.
+ * @param filePath - Explicit path to the config file. If omitted, the nearest config is located via `findConfigFile`.
+ * @returns A `LoadConfigResult` — on success includes the parsed config data and resolved `configPath`; on failure includes a list of field-level errors.
+ */
 export async function loadConfigFromFile(
 	filePath?: string,
 ): Promise<LoadConfigResult> {

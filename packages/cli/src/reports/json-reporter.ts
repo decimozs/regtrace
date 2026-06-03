@@ -1,5 +1,12 @@
 import type { ReportData, ReportGenerator } from "./types";
 
+/**
+ * Generates a structured JSON report from run data, including suite metadata, per-metric summaries,
+ * quality gate results, regression status, judge info, and detailed test case results.
+ *
+ * @param data - The run record and quality gate results to report on
+ * @returns A pretty-printed JSON string
+ */
 export const jsonReporter: ReportGenerator = {
 	generate(data: ReportData): string {
 		const payload = {

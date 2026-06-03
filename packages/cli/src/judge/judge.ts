@@ -10,6 +10,7 @@ import type {
 	JudgeResult,
 } from "./types";
 
+/** Maps provider names to the environment variable that holds their API key. */
 const PROVIDER_ENV_MAP: Record<string, string> = {
 	openai: "OPENAI_API_KEY",
 	anthropic: "ANTHROPIC_API_KEY",
@@ -17,6 +18,12 @@ const PROVIDER_ENV_MAP: Record<string, string> = {
 	groq: "GROQ_API_KEY",
 };
 
+/**
+ * Validates that an API key is available for the given provider.
+ * @param providerName - The LLM provider identifier (e.g. "openai", "anthropic").
+ * @param configApiKey - An explicit API key from judge config; skips env lookup if provided.
+ * @throws If no config key is provided and the required env var is unset.
+ */
 function requireProviderApiKey(
 	providerName: string,
 	configApiKey?: string,
@@ -31,6 +38,12 @@ function requireProviderApiKey(
 	}
 }
 
+/**
+ * Instantiates a judge provider by name.
+ * @param providerName - The provider identifier to look up in PROVIDER_MAP.
+ * @returns A new provider instance.
+ * @throws If the provider name is not registered in PROVIDER_MAP.
+ */
 function createProvider(providerName: string) {
 	const ProviderClass = PROVIDER_MAP[providerName];
 	if (!ProviderClass) {
@@ -41,6 +54,15 @@ function createProvider(providerName: string) {
 	return new ProviderClass();
 }
 
+/**
+ * Estimates the USD cost of a judge call based on per-model pricing rates.
+ * Rates are in USD per 1M tokens. Returns 0 for unrecognised models.
+ * @param provider - The provider name (e.g. "openai").
+ * @param model - The model identifier (e.g. "gpt-4o").
+ * @param inputTokens - Number of prompt tokens consumed.
+ * @param outputTokens - Number of completion tokens produced.
+ * @returns Estimated cost in USD cents, rounded to 2 decimal places.
+ */
 function estimateTokenCost(
 	provider: string,
 	model: string,
@@ -69,6 +91,7 @@ function estimateTokenCost(
 	const rate = rates[modelKey];
 	if (!rate) return 0;
 
+	// Pricing rates are per 1M tokens; convert to cents for integer-friendly storage
 	const inputCost = (inputTokens / 1_000_000) * rate.input;
 	const outputCost = (outputTokens / 1_000_000) * rate.output;
 
@@ -76,6 +99,16 @@ function estimateTokenCost(
 	return Math.round(costCents * 100) / 100;
 }
 
+/**
+ * Calls a judge provider with exponential backoff and jitter.
+ * Delay formula: min(1000 × 2^attempt + random jitter, 30s).
+ * @param provider - The provider instance to call.
+ * @param messages - The prompt messages to send.
+ * @param config - Judge configuration including retry settings.
+ * @param retriesLeft - Number of remaining retry attempts.
+ * @returns The provider's evaluation response.
+ * @throws If all retries are exhausted or a non-retryable error occurs.
+ */
 async function callWithRetry(
 	provider: ReturnType<typeof createProvider>,
 	messages: Parameters<ReturnType<typeof createProvider>["evaluate"]>[0],
@@ -96,6 +129,13 @@ async function callWithRetry(
 	}
 }
 
+/**
+ * Extracts score, confidence, and explanation from a judge's JSON response.
+ * Falls back to regex extraction when the response is not valid JSON;
+ * in that case confidence defaults to 0.5 and explanation is truncated to 200 chars.
+ * @param response - Raw text output from the LLM judge.
+ * @returns Parsed score, confidence, and explanation.
+ */
 function parseJsonScore(response: string): {
 	score: number;
 	confidence: number;
@@ -108,6 +148,7 @@ function parseJsonScore(response: string): {
 
 	try {
 		const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+		// "overall" is the tone metric's top-level key; normalise to "score"
 		const score = Math.max(
 			0,
 			Math.min(1, Number(parsed.score ?? parsed.overall ?? 0)),
@@ -131,6 +172,14 @@ function parseJsonScore(response: string): {
 	}
 }
 
+/**
+ * Sends a prompt to the judge provider and returns the scored result, falling back to a secondary provider on failure.
+ * @param promptBuilder - Lazy builder that produces the message array to send.
+ * @param judgeConfig - Primary judge configuration.
+ * @param fallbackConfig - Optional fallback provider config used when the primary call fails.
+ * @returns The judge's evaluation result with cost metadata.
+ * @throws If both primary and fallback providers fail.
+ */
 async function judgeMetric(
 	promptBuilder: () => JudgeMessage[],
 	judgeConfig: JudgeConfig,
@@ -164,7 +213,6 @@ async function judgeMetric(
 			outputTokens: response.outputTokens,
 		};
 	} catch (err) {
-		// Try fallback provider if primary fails
 		if (fallbackConfig) {
 			logger.warn(
 				`Primary judge ${judgeConfig.provider}/${judgeConfig.model} failed, trying fallback ${fallbackConfig.provider}/${fallbackConfig.model}: ${err instanceof Error ? err.message : String(err)}`,
@@ -175,6 +223,27 @@ async function judgeMetric(
 	}
 }
 
+/**
+ * Evaluates the factual accuracy of an LLM output against expected output.
+ * @param input - The original user prompt or query.
+ * @param expectedOutput - The reference output to compare against.
+ * @param actualOutput - The LLM-generated output being evaluated.
+ * @param judgeConfig - Primary judge provider configuration.
+ * @param claimDepth - "shallow" for main claims only, "deep" for exhaustive claim extraction.
+ * @param fallbackConfig - Optional fallback judge config used on primary failure.
+ * @returns Scored factuality result with token cost.
+ * @throws If both primary and fallback judge calls fail.
+ * @example
+ * ```ts
+ * const result = await judgeFactuality(
+ *   "What is the capital of France?",
+ *   "Paris",
+ *   "Paris is the capital of France.",
+ *   { provider: "openai", model: "gpt-4o", ... },
+ *   "shallow",
+ * );
+ * ```
+ */
 export async function judgeFactuality(
 	input: string,
 	expectedOutput: string,
@@ -191,6 +260,27 @@ export async function judgeFactuality(
 	);
 }
 
+/**
+ * Evaluates how well the tone of an LLM output matches expectations.
+ * @param input - The original user prompt or query.
+ * @param expectedOutput - The reference output whose tone to match.
+ * @param actualOutput - The LLM-generated output being evaluated.
+ * @param judgeConfig - Primary judge provider configuration.
+ * @param toneProfile - Optional natural-language tone description (e.g. "professional and concise").
+ * @param fallbackConfig - Optional fallback judge config used on primary failure.
+ * @returns Scored tone result with dimensional breakdown and token cost.
+ * @throws If both primary and fallback judge calls fail.
+ * @example
+ * ```ts
+ * const result = await judgeTone(
+ *   "Explain quantum computing",
+ *   "A brief professional explanation...",
+ *   "So basically quantum computers...",
+ *   { provider: "anthropic", model: "claude-sonnet-4-20250514", ... },
+ *   "professional and concise",
+ * );
+ * ```
+ */
 export async function judgeTone(
 	input: string,
 	expectedOutput: string,
@@ -206,6 +296,22 @@ export async function judgeTone(
 	);
 }
 
+/**
+ * Converts snake_case config properties to camelCase judge config fields.
+ * @param config - The raw judge config from the regtrace config file.
+ * @returns A JudgeConfig object ready for provider consumption.
+ * @example
+ * ```ts
+ * const cfg = buildJudgeConfig({
+ *   provider: "openai",
+ *   model: "gpt-4o",
+ *   temperature: 0.1,
+ *   max_tokens: 4096,
+ *   timeout_ms: 30000,
+ *   retry_attempts: 3,
+ * });
+ * ```
+ */
 export function buildJudgeConfig(config: {
 	provider: string;
 	model: string;
@@ -226,6 +332,14 @@ export function buildJudgeConfig(config: {
 	};
 }
 
+/**
+ * Converts a judge result into a persisted metric result, applying the pass/fail threshold.
+ * @param metricName - The metric identifier (e.g. "factuality", "tone").
+ * @param judgeResult - The raw judge evaluation result.
+ * @param threshold - Minimum score required to pass (0–1).
+ * @param _fallbackScore - Reserved for future use; currently ignored.
+ * @returns A MetricResult suitable for storage and report generation.
+ */
 export function metricResultFromJudge(
 	metricName: string,
 	judgeResult: JudgeResult,

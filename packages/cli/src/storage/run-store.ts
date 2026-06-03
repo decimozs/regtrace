@@ -21,16 +21,25 @@ function getRegtraceDir(basePath: string): string {
 	return resolve(basePath, REGTRACE_DIR);
 }
 
+/**
+ * Generate a unique run ID with a date prefix and random suffix.
+ * @returns A string in the format `run_YYYYMMDD_<nanoid>`, e.g. `run_20260603_a1b2c3`.
+ */
 export function generateRunId(): string {
 	const dateStr = format(new Date(), "yyyyMMdd");
 	const suffix = nanoid(6);
 	return `run_${dateStr}_${suffix}`;
 }
 
+/**
+ * Generate an ISO 8601 timestamp for the current moment.
+ * @returns An ISO timestamp string, e.g. `2026-06-03T12:00:00.000Z`.
+ */
 export function generateTimestamp(): string {
 	return new Date().toISOString();
 }
 
+/** Parameters required to create and persist a new run record. */
 export interface CreateRunRecordParams {
 	status: RunRecord["status"];
 	trigger: RunTrigger;
@@ -48,6 +57,12 @@ export interface CreateRunRecordParams {
 	regression: RunRecord["regression"];
 }
 
+/**
+ * Persist a new run record to the filesystem under `.regtrace/runs/`.
+ * @param basePath - Root directory of the project (where `.regtrace/` lives).
+ * @param params - The run metadata and evaluation results to record.
+ * @returns The fully hydrated `RunRecord`, including its generated ID, timestamp, and content hashes.
+ */
 export async function createRunRecord(
 	basePath: string,
 	params: CreateRunRecordParams,
@@ -83,6 +98,12 @@ export async function createRunRecord(
 	return record;
 }
 
+/**
+ * Load a single run record by ID from the filesystem.
+ * @param basePath - Root directory of the project.
+ * @param runId - The run ID (e.g. `run_20260603_a1b2c3`) to load.
+ * @returns The `RunRecord` if found and valid, or `null` if the file is missing or fails schema validation.
+ */
 export async function loadRunRecord(
 	basePath: string,
 	runId: string,
@@ -115,6 +136,11 @@ export async function loadRunRecord(
 	}
 }
 
+/**
+ * List all run records from the filesystem, sorted newest-first.
+ * @param basePath - Root directory of the project.
+ * @returns An array of `RunRecord` objects sorted by timestamp descending. Corrupt or unparseable files are silently skipped.
+ */
 export async function listRunRecords(basePath: string): Promise<RunRecord[]> {
 	const runsDir = getRunDir(basePath);
 
@@ -146,6 +172,13 @@ export async function listRunRecords(basePath: string): Promise<RunRecord[]> {
 	return records;
 }
 
+/**
+ * Locate a baseline run record for regression comparison.
+ * @param basePath - Root directory of the project.
+ * @param strategy - `"last_passing"` uses the most recent passing run; `"pinned"` loads a specific run by ID.
+ * @param pinnedRunId - Required when `strategy` is `"pinned"`. Ignored otherwise.
+ * @returns The baseline `RunRecord`, or `null` if no matching run exists.
+ */
 export async function findBaselineRun(
 	basePath: string,
 	strategy: "last_passing" | "pinned",
@@ -161,6 +194,10 @@ export async function findBaselineRun(
 	return passingRecords.length > 0 ? (passingRecords[0] ?? null) : null;
 }
 
+/**
+ * Ensure the `.regtrace/` directory exists, creating it if necessary.
+ * @param basePath - Root directory of the project.
+ */
 export async function ensureRegtraceDir(basePath: string): Promise<void> {
 	const dir = getRegtraceDir(basePath);
 	await mkdir(dir, { recursive: true });
