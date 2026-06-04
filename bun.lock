@@ -15,7 +15,7 @@
     },
     "apps/docs": {
       "name": "@regtrace/docs",
-      "version": "1.0.0",
+      "version": "0.9.0",
       "dependencies": {
         "@vercel/analytics": "^2.0.1",
         "fumadocs-core": "16.9.3",
@@ -43,7 +43,7 @@
     },
     "packages/cli": {
       "name": "@regtrace/cli",
-      "version": "1.0.0",
+      "version": "0.9.0",
       "dependencies": {
         "commander": "13",
         "date-fns": "^4.4.0",
