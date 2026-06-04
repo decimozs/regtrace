@@ -1,6 +1,6 @@
 {
   "name": "@regtrace/docs",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "Regtrace documentation — LLM output evaluation toolkit",
   "license": "MIT",
   "repository": {
