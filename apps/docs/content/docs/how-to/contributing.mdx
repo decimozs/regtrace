@@ -1,0 +1,65 @@
+---
+title: Contributing
+description: How to report bugs, request features, and submit pull requests to regtrace
+---
+
+## Reporting bugs
+
+Open a [bug report](https://github.com/decimozs/regtrace/issues/new?template=bug_report.md)
+with:
+
+- regtrace version (`regtrace --version`)
+- OS and install method (binary download, build from source)
+- Config file (or a minimal reproducer)
+- Golden set YAML (what you evaluated)
+- Run record from `.regtrace/runs/` (if available)
+- Complete terminal output
+
+## Requesting features
+
+Open a [feature request](https://github.com/decimozs/regtrace/issues/new?template=feature_request.md)
+describing the problem you want solved, your proposed solution, and any
+alternatives you considered.
+
+## Development setup
+
+See [CONTRIBUTING.md](https://github.com/decimozs/regtrace/blob/main/CONTRIBUTING.md)
+on GitHub for prerequisites (Bun, Node), install steps, available commands
+(test, typecheck, lint, build, docs), and code style rules.
+
+## Branch naming
+
+Use conventional prefixes separated by `/`:
+
+| Prefix | Example | Use case |
+|--------|---------|----------|
+| `feat/` | `feat/gemini-provider` | New feature |
+| `fix/` | `fix/rate-limit-error` | Bug fix |
+| `docs/` | `docs/contributing-guide` | Documentation |
+| `chore/` | `chore/upgrade-deps` | Maintenance |
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```text
+<type>[optional scope]: <description>
+
+[optional body]
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
+
+## Opening a pull request
+
+Before opening:
+
+- All CI checks pass: lint, typecheck, test, build
+- No `z.infer` — write explicit types
+- Array access guarded (`noUncheckedIndexedAccess`)
+- No comments in source — self-documenting code only
+- Formatted with Biome (tabs, double quotes)
+
+Reviewers check for correctness, test coverage, and alignment with existing
+patterns. Keep PRs focused — one logical change per PR.
+
+A [pull request template](https://github.com/decimozs/regtrace/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
+is available when you open a PR on GitHub.
