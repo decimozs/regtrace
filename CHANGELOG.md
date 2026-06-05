@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.3 (2026-06-05)
+
+### Bug Fixes
+
+- **upgrade/uninstall**: Check parent directory write permission instead of binary
+  file permission. `accessSync(W_OK)` on the binary can pass even when the parent
+  directory is root-owned — `copyFileSync` / `unlinkSync` require directory write
+  permission, not file write permission. Now check `accessSync(dirname(path), W_OK)`.
+- **upgrade**: Wrap `performSwap` `copyFileSync` in try-catch — unhandled EACCES
+  now shows a helpful message with `sudo` hint instead of a raw exception.
+- **upgrade**: Clean stale temp files before download — previous failed attempts
+  could leave files that block fresh downloads.
+
 ## 0.9.2 (2026-06-05)
 
 ### Bug Fixes
