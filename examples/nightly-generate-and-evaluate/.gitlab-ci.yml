@@ -3,7 +3,7 @@ stages:
   - evaluate
 
 variables:
-  REGTRACE_DOWNLOAD_URL: "https://github.com/decimozs/regtrace/releases/latest/download/regtrace"
+  REGTRACE_DOWNLOAD_URL: "https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64"
 
 before_script:
   - apt-get update -qq && apt-get install -y -qq curl 2>/dev/null
