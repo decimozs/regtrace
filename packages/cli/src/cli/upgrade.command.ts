@@ -1,5 +1,6 @@
 import { accessSync, constants } from "node:fs";
 import { readFile, rm, unlink } from "node:fs/promises";
+import { dirname } from "node:path";
 import { createInterface } from "node:readline";
 import { downloadRelease } from "../upgrade/download";
 import { type ApiError, getLatestRelease } from "../upgrade/github-api";
@@ -90,7 +91,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
 
 	// --- 9. Check write permission ---
 	try {
-		accessSync(process.execPath, constants.W_OK);
+		accessSync(dirname(process.execPath), constants.W_OK);
 	} catch {
 		printError(
 			`No write permission for ${process.execPath}. Try: sudo regtrace upgrade`,

@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,7 +8,8 @@ export interface DownloadedFiles {
 }
 
 /**
- * Download the release binary and its `.sha256` checksum file to a temp directory.
+ * Remove stale temp files from a previous failed download, then download the
+ * release binary and its `.sha256` checksum file to a temp directory.
  * @param binaryUrl - URL of the release binary.
  * @param sha256Url - URL of the `.sha256` checksum file.
  * @param assetName - Name of the asset (used for the temp filename).
@@ -22,6 +23,9 @@ export async function downloadRelease(
 	const tmpDir = tmpdir();
 	const binaryPath = join(tmpDir, assetName);
 	const sha256Path = join(tmpDir, `${assetName}.sha256`);
+
+	await rm(binaryPath, { force: true });
+	await rm(sha256Path, { force: true });
 
 	const [binaryRes, sha256Res] = await Promise.all([
 		fetch(binaryUrl),

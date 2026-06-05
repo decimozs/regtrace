@@ -17,7 +17,14 @@ export function performSwap(
 ): never {
 	const backupPath = `${currentBinaryPath}.backup`;
 
-	copyFileSync(currentBinaryPath, backupPath);
+	try {
+		copyFileSync(currentBinaryPath, backupPath);
+	} catch (err) {
+		console.error(
+			`Failed to create backup: ${(err as Error).message}\n  Try: sudo regtrace upgrade`,
+		);
+		process.exit(1);
+	}
 
 	const child = spawn(
 		newBinaryPath,
