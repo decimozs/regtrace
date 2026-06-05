@@ -190,10 +190,10 @@ export async function runPipeline(
 					);
 				}
 				tc.actual_output = await generateOutput(
-				tc.input,
-				tc.system_prompt,
-				genCfg,
-			);
+					tc.input,
+					tc.system_prompt,
+					genCfg,
+				);
 			}
 		}
 

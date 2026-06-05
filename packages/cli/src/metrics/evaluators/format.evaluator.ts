@@ -282,7 +282,10 @@ const SUB_CHECK_MAP: Record<
  * before JSON-related checks so valid JSON inside fences isn't penalized.
  */
 function stripCodeFences(text: string): string {
-	return text.replace(/^```[a-zA-Z]*\n?/, "").replace(/```$/, "").trim();
+	return text
+		.replace(/^```[a-zA-Z]*\n?/, "")
+		.replace(/```$/, "")
+		.trim();
 }
 
 /**
