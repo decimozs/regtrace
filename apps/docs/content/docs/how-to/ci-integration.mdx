@@ -152,7 +152,7 @@ jobs:
           chmod +x /usr/local/bin/regtrace
 
       - name: Run evaluation
-        run: regtrace run --ci --bail
+        run: regtrace run --ci --bail --generate
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
@@ -228,22 +228,17 @@ jobs:
             https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
           chmod +x /usr/local/bin/regtrace
 
-      - name: Run evaluation
-        run: regtrace run --ci --format markdown --output report.md
+      - name: Evaluate and generate report
+        run: regtrace run --ci --generate --format markdown --output report.md
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Read report
-        id: report
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: report.md
 
       - name: Post PR comment
         uses: actions/github-script@v7
         with:
           script: |
-            const report = `${{ steps.report.outputs.content }}`;
+            const fs = require('fs');
+            const report = fs.readFileSync('report.md', 'utf8');
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

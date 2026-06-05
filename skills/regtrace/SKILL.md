@@ -355,9 +355,11 @@ Sub-Check Scores → (weighted avg) → Metric Score → (metric weight) → Tes
 
 ### Minimal GitHub Actions
 
+Add `--generate` when golden sets have `null actual_output`:
+
 ```yaml
 - name: Run LLM quality gates
-  run: regtrace run --ci
+  run: regtrace run --ci --generate
   env:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
@@ -365,21 +367,26 @@ Sub-Check Scores → (weighted avg) → Metric Score → (metric weight) → Tes
 ### PR comment with Markdown report
 
 ```yaml
-- run: regtrace run --ci --format markdown --output report.md
-- uses: juliangruber/read-file-action@v1
-  id: report
-  with:
-    path: report.md
-- uses: actions/github-script@v7
+- uses: actions/checkout@v4
+- name: Evaluate and generate report
+  run: regtrace run --ci --generate --format markdown --output report.md
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+- name: Post PR comment
+  uses: actions/github-script@v7
   with:
     script: |
+      const fs = require('fs');
+      const report = fs.readFileSync('report.md', 'utf8');
       github.rest.issues.createComment({
         issue_number: context.issue.number,
         owner: context.repo.owner, repo: context.repo.repo,
-        body: `## Regtrace Evaluation\n\n${{ steps.report.outputs.content }}`
+        body: `## Regtrace Evaluation\n\n${report}`
       });
 ```
-Requires `permissions: pull-requests: write`.
+Requires `permissions: pull-requests: write` at job level.
+
+Do NOT split generate and evaluate into separate steps — the second step will see `null actual_output` and produce 7% scores.
 
 ### Nightly generate + evaluate
 
@@ -431,3 +438,5 @@ steps:
 | Generate mode times out | Too many null outputs | Increase `generator.timeout_ms`, reduce `run.concurrency` |
 | Dry-run passes, real run fails | Network/API key issue | Check connectivity and keys |
 | Cache restores old baseline | Stale `.regtrace/` | Include `hashFiles` in cache key |
+| CI generate passes, evaluate fails | Split generate + evaluate steps | Merge into single `regtrace run --ci --generate` |
+| PR comment not posted | Missing `pull-requests: write` permission | Add `permissions: pull-requests: write` at job level |
