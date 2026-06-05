@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.2 (2026-06-05)
+
+### Bug Fixes
+
+- **generate**: Pass `system_prompt` from golden set to LLM during `--generate`
+  (was sending `null` instead, so system prompts had no effect on generation)
+- **format evaluator**: Strip markdown code fences before JSON validity,
+  schema, length, and required-fields checks. LLMs often wrap JSON in
+  ` ```json ``` ` blocks — now handled correctly.
+
 ## 0.9.1 (2026-06-05)
 
 ### Features
