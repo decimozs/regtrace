@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { accessSync, constants, unlinkSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { createInterface } from "node:readline";
 import { printError, printInfo, printSuccess } from "./print";
 
@@ -24,13 +25,15 @@ export async function uninstallCommand(
 
 	// 1. Check existence & permission
 	try {
-		accessSync(target, constants.W_OK);
-	} catch (err) {
-		const code = (err as NodeJS.ErrnoException).code;
-		if (code === "ENOENT") {
-			printInfo(`Binary not found at ${target}. Nothing to uninstall.`);
-			return;
-		}
+		accessSync(target, constants.F_OK);
+	} catch {
+		printInfo(`Binary not found at ${target}. Nothing to uninstall.`);
+		return;
+	}
+
+	try {
+		accessSync(dirname(target), constants.W_OK);
+	} catch {
 		const hint =
 			process.platform === "win32"
 				? "Run as Administrator"

@@ -6,7 +6,7 @@ import {
 	expect,
 	it,
 } from "bun:test";
-import { mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
 	confirmPrompt,
@@ -60,10 +60,13 @@ async function runCommand(
 }
 
 describe("uninstallCommand", () => {
-	it("exits when binary lacks write permission", async () => {
+	it("exits when parent directory lacks write permission", async () => {
 		mkdirSync(tmpBase, { recursive: true });
-		const target = tmpPath("readonly-binary");
-		writeFileSync(target, "dummy", { mode: 0o444 });
+		const dir = tmpPath("readonly-dir");
+		mkdirSync(dir);
+		const target = `${dir}/binary`;
+		writeFileSync(target, "dummy");
+		chmodSync(dir, 0o555);
 
 		const result = await runCommand({ yes: true }, target);
 		// Root can bypass permission checks
