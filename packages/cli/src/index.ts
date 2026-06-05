@@ -13,6 +13,7 @@ import { initCommand } from "./cli/init.command";
 import { historyCommand, listCommand } from "./cli/list.command";
 import { configureColor, isCiEnvironment, printError } from "./cli/print";
 import { runCommand } from "./cli/run.command";
+import { uninstallCommand } from "./cli/uninstall.command";
 import { upgradeCommand } from "./cli/upgrade.command";
 import { watchCommand } from "./cli/watch.command";
 import { rebuildDb } from "./storage/db-store";
@@ -70,7 +71,8 @@ Examples:
   regtrace watch                 Watch files and re-run on change
   regtrace baseline pin <run-id> Pin a run as baseline
   regtrace baseline show         Show current baseline
-  regtrace upgrade               Upgrade regtrace to the latest version`,
+   regtrace uninstall             Remove the regtrace binary
+   regtrace upgrade               Upgrade regtrace to the latest version`,
 	);
 
 program
@@ -277,6 +279,21 @@ Examples:
 			});
 		},
 	);
+
+program
+	.command("uninstall")
+	.description("Remove the regtrace binary from your system")
+	.option("-y, --yes", "Skip confirmation prompt")
+	.addHelpText(
+		"after",
+		`
+Examples:
+  regtrace uninstall           Interactive uninstall
+  regtrace uninstall -y        Uninstall without confirmation`,
+	)
+	.action(async (options: { yes?: boolean }) => {
+		await uninstallCommand({ yes: options.yes });
+	});
 
 program.parse();
 

@@ -157,6 +157,22 @@ platform binary, verifies SHA256, spawns the new binary to complete the swap
 in-place, and exits 0. Backs up the old binary to `.backup`; restores it if
 the new binary fails `--version` verification.
 
+### `uninstall`
+
+Remove the regtrace binary from your system.
+
+```bash
+regtrace uninstall [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-y, --yes` | Skip confirmation prompt |
+
+On Linux and macOS the binary is removed immediately. On Windows a background
+batch script deletes it after the process exits. Project files (configs, golden
+sets, run history) are left in place.
+
 ## Config file reference
 
 Minimal `regtrace.config.yaml`:

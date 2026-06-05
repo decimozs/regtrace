@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.1 (2026-06-05)
+
+### Features
+
+- `regtrace uninstall` command: remove the binary cross-platform
+  - Unix: immediate unlink, Windows: background .cmd script
+  - Permission checks, missing-binary handling, `-y` flag for unattended use
+  - Project files left in place
+
 ## 0.9.0 (2026-06-04)
 
 ### Features

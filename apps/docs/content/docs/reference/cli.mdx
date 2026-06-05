@@ -229,6 +229,24 @@ checksum, and replaces the running binary in-place.
   was installed with `sudo`, run `sudo regtrace upgrade`.
 </Callout>
 
+### `uninstall`
+
+```bash
+regtrace uninstall [options]
+```
+
+Remove the `regtrace` binary from your system. Only the binary is deleted —
+project files (configs, golden sets, run history) are left untouched.
+
+On Linux and macOS the binary is removed immediately. On Windows a background
+script deletes it after the process exits.
+
+<TypeTable
+  type={{
+    "-y, --yes": { description: "Skip confirmation prompt", type: "boolean", default: "false" },
+  }}
+/>
+
 ## Quality gates
 
 Quality gates are checked after every run. They determine pass/fail.
