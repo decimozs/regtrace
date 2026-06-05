@@ -18,7 +18,7 @@ jobs:
       - name: Download Regtrace binary
         run: |
           curl -L -o /usr/local/bin/regtrace \
-            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
           chmod +x /usr/local/bin/regtrace
 
       - name: Run evaluation

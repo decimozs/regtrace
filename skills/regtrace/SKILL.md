@@ -22,7 +22,7 @@ Regtrace evaluates LLM outputs across four dimensions — **Factuality**, **Form
 Download the binary from GitHub Releases:
 
 ```bash
-curl -L -o /usr/local/bin/regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+curl -L -o /usr/local/bin/regtrace https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
 chmod +x /usr/local/bin/regtrace
 regtrace --version
 ```
