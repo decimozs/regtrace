@@ -62,7 +62,7 @@ alert when a moving average crosses a threshold. Run each merge to main.
 
     Release URLs mirror the pattern:
     ```
-    https://github.com/decimozs/regtrace/releases/latest/download/regtrace-{platform}
+    https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64-{platform}
     ```
 
     <Tabs items={['GitHub Actions', 'GitLab CI', 'CircleCI']}>
@@ -71,7 +71,7 @@ alert when a moving average crosses a threshold. Run each merge to main.
         - name: Download Regtrace
           run: |
             curl -L -o /usr/local/bin/regtrace \
-              https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+              https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
             chmod +x /usr/local/bin/regtrace
         ```
       </Tab>
@@ -79,7 +79,7 @@ alert when a moving average crosses a threshold. Run each merge to main.
         ```yaml
         before_script:
           - curl -L -o /usr/local/bin/regtrace \
-              https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+              https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
           - chmod +x /usr/local/bin/regtrace
         ```
       </Tab>
@@ -89,7 +89,7 @@ alert when a moving average crosses a threshold. Run each merge to main.
             name: Download Regtrace
             command: |
               curl -L -o /usr/local/bin/regtrace \
-                https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+                https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
               chmod +x /usr/local/bin/regtrace
         ```
       </Tab>
@@ -148,7 +148,7 @@ jobs:
       - name: Download Regtrace
         run: |
           curl -L -o /usr/local/bin/regtrace \
-            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
           chmod +x /usr/local/bin/regtrace
 
       - name: Run evaluation
@@ -186,7 +186,7 @@ jobs:
       - name: Download Regtrace
         run: |
           curl -L -o /usr/local/bin/regtrace \
-            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
           chmod +x /usr/local/bin/regtrace
 
       - name: Generate and evaluate
@@ -225,7 +225,7 @@ jobs:
       - name: Download Regtrace
         run: |
           curl -L -o /usr/local/bin/regtrace \
-            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
           chmod +x /usr/local/bin/regtrace
 
       - name: Run evaluation
@@ -276,7 +276,7 @@ evaluate:
   before_script:
     - apt-get update && apt-get install -y curl
     - curl -L -o /usr/local/bin/regtrace
-      "https://github.com/decimozs/regtrace/releases/$REGTRACE_VERSION/download/regtrace"
+      "https://github.com/decimozs/regtrace/releases/$REGTRACE_VERSION/download/regtrace-linux-x64"
     - chmod +x /usr/local/bin/regtrace
   script:
     - regtrace run --ci
@@ -308,7 +308,7 @@ jobs:
           name: Download Regtrace
           command: |
             curl -L -o /usr/local/bin/regtrace \
-              https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+              https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
             chmod +x /usr/local/bin/regtrace
       - run:
           name: Run evaluation
@@ -422,7 +422,7 @@ jobs:
       - name: Download Regtrace
         run: |
           curl -L -o /usr/local/bin/regtrace \
-            https://github.com/decimozs/regtrace/releases/latest/download/regtrace
+            https://github.com/decimozs/regtrace/releases/latest/download/regtrace-linux-x64
           chmod +x /usr/local/bin/regtrace
 
       - name: Pin baseline

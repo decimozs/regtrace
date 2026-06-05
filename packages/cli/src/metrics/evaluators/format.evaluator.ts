@@ -18,7 +18,7 @@ type SubCheck =
  */
 function checkJsonValidity(actual: string): boolean {
 	try {
-		JSON.parse(actual);
+		JSON.parse(stripCodeFences(actual));
 		return true;
 	} catch {
 		return false;
@@ -36,7 +36,7 @@ function compareJsonStructure(actual: string, expected: string): number {
 	let actualParsed: unknown;
 	let expectedParsed: unknown;
 	try {
-		actualParsed = JSON.parse(actual);
+		actualParsed = JSON.parse(stripCodeFences(actual));
 		expectedParsed = JSON.parse(expected);
 	} catch {
 		return 0;
@@ -222,14 +222,11 @@ const SUB_CHECK_MAP: Record<
 > = {
 	length: (input) => {
 		const tolerance = (input.metricConfig.length_tolerance as number) ?? 0.2;
-		const score = checkLength(
-			input.actualOutput,
-			input.expectedOutput,
-			tolerance,
-		);
+		const cleaned = stripCodeFences(input.actualOutput);
+		const score = checkLength(cleaned, input.expectedOutput, tolerance);
 		return {
 			score,
-			detail: `length: actual=${input.actualOutput.length}, expected=${input.expectedOutput.length}, score=${score.toFixed(3)}`,
+			detail: `length: actual=${cleaned.length}, expected=${input.expectedOutput.length}, score=${score.toFixed(3)}`,
 		};
 	},
 
@@ -258,7 +255,10 @@ const SUB_CHECK_MAP: Record<
 	},
 
 	required_fields: (input) => {
-		const score = checkRequiredFields(input.actualOutput, input.expectedOutput);
+		const score = checkRequiredFields(
+			stripCodeFences(input.actualOutput),
+			input.expectedOutput,
+		);
 		return { score, detail: `required_fields: ${(score * 100).toFixed(0)}%` };
 	},
 
@@ -275,6 +275,18 @@ const SUB_CHECK_MAP: Record<
 		};
 	},
 };
+
+/**
+ * Strip markdown code fences (```json, ```, `) from a string.
+ * Common LLM behavior — wrap JSON in code blocks. We strip them
+ * before JSON-related checks so valid JSON inside fences isn't penalized.
+ */
+function stripCodeFences(text: string): string {
+	return text
+		.replace(/^```[a-zA-Z]*\n?/, "")
+		.replace(/```$/, "")
+		.trim();
+}
 
 /**
  * Evaluates output format compliance across enabled sub-checks.

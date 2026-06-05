@@ -30,6 +30,7 @@ interface PreparedTestCase {
 	id: string;
 	description: string;
 	input: string;
+	system_prompt: string | null;
 	expected_output: string;
 	actual_output: string | null;
 	metrics: MetricName[];
@@ -80,6 +81,7 @@ async function prepareGoldenSet(
 			id: tc.id,
 			description: tc.description,
 			input: tc.input,
+			system_prompt: tc.system_prompt,
 			expected_output: tc.expected_output,
 			actual_output: tc.actual_output,
 			metrics: tc.metrics,
@@ -187,7 +189,11 @@ export async function runPipeline(
 						`  Generating output for "${tc.id}" via ${genCfg.provider}/${genCfg.model}`,
 					);
 				}
-				tc.actual_output = await generateOutput(tc.input, null, genCfg);
+				tc.actual_output = await generateOutput(
+					tc.input,
+					tc.system_prompt,
+					genCfg,
+				);
 			}
 		}
 
