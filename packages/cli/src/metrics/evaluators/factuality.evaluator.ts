@@ -1,6 +1,27 @@
 import { buildJudgeConfig, judgeFactuality } from "../../judge/judge";
 import type { MetricResult } from "../../schema/run-record.schema";
 import type { EvaluateInput, MetricEvaluator } from "../types";
+import { stripCodeFences } from "../utils";
+
+/**
+ * Describes a single leaf-value mismatch found during JSON factuality comparison.
+ */
+interface JsonMismatch {
+	path: string;
+	kind: "missing" | "wrong" | "extra" | "type_mismatch";
+	expected: string;
+	actual: string;
+}
+
+/**
+ * Recursive accumulator for JSON factuality comparison.
+ */
+interface JsonCompareAccum {
+	matched: number;
+	expected: number;
+	extra: number;
+	mismatches: JsonMismatch[];
+}
 
 /**
  * Splits text into lowercase alphanumeric tokens, stripping punctuation.
@@ -118,6 +139,323 @@ function checkClaimOverlap(actual: string, expected: string): number {
 }
 
 /**
+ * Recursively compares two parsed JSON values and accumulates match/mismatch info.
+ *
+ * Objects: iterates over union of keys. Keys in expected only → counted in `expected`.
+ * Keys in actual only → counted as `extra`. Both present → recurse.
+ *
+ * Arrays of objects: positional (element-wise). Extra/missing → mismatch.
+ * Arrays of primitives: set-based (order-independent) Jaccard overlap.
+ *
+ * Strings: whitespace-normalized exact match.
+ * Numbers: within 0.01 tolerance.
+ * Booleans/null: exact.
+ *
+ * @param actual - Parsed JSON value from system output
+ * @param expected - Parsed JSON value from reference
+ * @param path - Current dot-delimited path for diagnostics
+ * @returns Accumulated match/mismatch counts
+ */
+function compareJsonValue(
+	actual: unknown,
+	expected: unknown,
+	path: string,
+): JsonCompareAccum {
+	if (typeof actual !== typeof expected) {
+		return {
+			matched: 0,
+			expected: 1,
+			extra: 0,
+			mismatches: [
+				{
+					path,
+					kind: "type_mismatch",
+					expected: String(expected),
+					actual: String(actual),
+				},
+			],
+		};
+	}
+
+	if (actual === null && expected === null) {
+		return { matched: 1, expected: 1, extra: 0, mismatches: [] };
+	}
+	if (actual === null || expected === null) {
+		return {
+			matched: 0,
+			expected: 1,
+			extra: 0,
+			mismatches: [
+				{
+					path,
+					kind: "wrong",
+					expected: String(expected),
+					actual: String(actual),
+				},
+			],
+		};
+	}
+
+	// --- Arrays ---
+	if (Array.isArray(actual) && Array.isArray(expected)) {
+		if (actual.length === 0 && expected.length === 0) {
+			return { matched: 1, expected: 1, extra: 0, mismatches: [] };
+		}
+
+		// Detect if array elements are objects or primitives
+		const actualObjs = actual.filter(
+			(e) => e !== null && typeof e === "object",
+		);
+		const expectedObjs = expected.filter(
+			(e) => e !== null && typeof e === "object",
+		);
+		const hasObjects = expectedObjs.length > 0 || actualObjs.length > 0;
+
+		if (hasObjects) {
+			// Positional comparison for object arrays
+			const maxLen = Math.max(actual.length, expected.length);
+			let totalMatched = 0;
+			let totalExpected = 0;
+			let totalExtra = 0;
+			const allMismatches: JsonMismatch[] = [];
+
+			for (let i = 0; i < maxLen; i++) {
+				const elPath = `${path}[${i}]`;
+				if (i >= expected.length) {
+					totalExtra++;
+					allMismatches.push({
+						path: elPath,
+						kind: "extra",
+						expected: "",
+						actual: JSON.stringify(actual[i]),
+					});
+				} else if (i >= actual.length) {
+					totalExpected++;
+					allMismatches.push({
+						path: elPath,
+						kind: "missing",
+						expected: JSON.stringify(expected[i]),
+						actual: "",
+					});
+				} else {
+					const result = compareJsonValue(actual[i], expected[i], elPath);
+					totalMatched += result.matched;
+					totalExpected += result.expected;
+					totalExtra += result.extra;
+					allMismatches.push(...result.mismatches);
+				}
+			}
+			return {
+				matched: totalMatched,
+				expected: totalExpected,
+				extra: totalExtra,
+				mismatches: allMismatches,
+			};
+		}
+
+		// Set-based comparison for primitive arrays
+		const actualSet = new Set(actual.map(String));
+		const expectedSet = new Set(expected.map(String));
+		let matchCount = 0;
+		for (const val of actualSet) {
+			if (expectedSet.has(val)) matchCount++;
+		}
+		const extraCount = [...actualSet].filter((v) => !expectedSet.has(v)).length;
+		const allMismatches: JsonMismatch[] = [];
+		for (const v of [...actualSet].filter((x) => !expectedSet.has(x))) {
+			allMismatches.push({ path, kind: "extra", expected: "", actual: v });
+		}
+		for (const v of [...expectedSet].filter((x) => !actualSet.has(x))) {
+			allMismatches.push({ path, kind: "missing", expected: v, actual: "" });
+		}
+		return {
+			matched: matchCount,
+			expected: expectedSet.size,
+			extra: extraCount,
+			mismatches: allMismatches,
+		};
+	}
+
+	// --- Objects ---
+	if (typeof actual === "object" && typeof expected === "object") {
+		const actualKeys = Object.keys(actual as Record<string, unknown>);
+		const expectedKeys = Object.keys(expected as Record<string, unknown>);
+		if (expectedKeys.length === 0) {
+			// Empty object — matched if actual is also empty or has extra keys
+			const extraKeys = actualKeys.filter((k) => !expectedKeys.includes(k));
+			return {
+				matched: 1,
+				expected: 1,
+				extra: extraKeys.length,
+				mismatches: extraKeys.map((k) => ({
+					path: `${path}.${k}`,
+					kind: "extra" as const,
+					expected: "",
+					actual: JSON.stringify((actual as Record<string, unknown>)[k]),
+				})),
+			};
+		}
+
+		const allKeys = new Set([...actualKeys, ...expectedKeys]);
+		let totalMatched = 0;
+		let totalExpected = 0;
+		let totalExtra = 0;
+		const allMismatches: JsonMismatch[] = [];
+
+		for (const key of allKeys) {
+			const keyPath = path ? `${path}.${key}` : key;
+			const actualVal = (actual as Record<string, unknown>)[key];
+			const expectedVal = (expected as Record<string, unknown>)[key];
+
+			if (expectedVal === undefined) {
+				totalExtra++;
+				allMismatches.push({
+					path: keyPath,
+					kind: "extra",
+					expected: "",
+					actual: JSON.stringify(actualVal),
+				});
+			} else if (actualVal === undefined) {
+				totalExpected++;
+				allMismatches.push({
+					path: keyPath,
+					kind: "missing",
+					expected: JSON.stringify(expectedVal),
+					actual: "",
+				});
+			} else {
+				const result = compareJsonValue(actualVal, expectedVal, keyPath);
+				totalMatched += result.matched;
+				totalExpected += result.expected;
+				totalExtra += result.extra;
+				allMismatches.push(...result.mismatches);
+			}
+		}
+
+		return {
+			matched: totalMatched,
+			expected: totalExpected,
+			extra: totalExtra,
+			mismatches: allMismatches,
+		};
+	}
+
+	// --- Primitives ---
+	if (typeof actual === "string" && typeof expected === "string") {
+		if (actual.trim() === expected.trim()) {
+			return { matched: 1, expected: 1, extra: 0, mismatches: [] };
+		}
+		return {
+			matched: 0,
+			expected: 1,
+			extra: 0,
+			mismatches: [{ path, kind: "wrong", expected, actual }],
+		};
+	}
+
+	if (typeof actual === "number" && typeof expected === "number") {
+		if (Math.abs(actual - expected) <= 0.01) {
+			return { matched: 1, expected: 1, extra: 0, mismatches: [] };
+		}
+		return {
+			matched: 0,
+			expected: 1,
+			extra: 0,
+			mismatches: [
+				{
+					path,
+					kind: "wrong",
+					expected: String(expected),
+					actual: String(actual),
+				},
+			],
+		};
+	}
+
+	const isMatch = actual === expected;
+	return {
+		matched: isMatch ? 1 : 0,
+		expected: 1,
+		extra: 0,
+		mismatches: isMatch
+			? []
+			: [
+					{
+						path,
+						kind: "wrong",
+						expected: String(expected),
+						actual: String(actual),
+					},
+				],
+	};
+}
+
+/**
+ * Formats up to three JSON mismatches into a human-readable explanation string.
+ * @param score - The computed factuality score
+ * @param acc - The accumulated comparison result
+ * @returns A formatted explanation string
+ */
+function formatJsonExplanation(score: number, acc: JsonCompareAccum): string {
+	const totalVals = acc.expected + acc.extra;
+	const header = `Factuality score ${(score * 100).toFixed(0)}%: ${acc.matched}/${totalVals} leaf values match`;
+
+	const lines = acc.mismatches.slice(0, 3).map((m) => {
+		switch (m.kind) {
+			case "missing":
+				return `  ✗ ${m.path}: missing, expected ${m.expected}`;
+			case "extra":
+				return `  ✗ ${m.path}: unexpected, got ${m.actual}`;
+			case "type_mismatch":
+				return `  ✗ ${m.path}: type mismatch, expected ${m.expected}, got ${m.actual}`;
+			case "wrong":
+				return `  ✗ ${m.path}: expected "${m.expected}", got "${m.actual}"`;
+			default:
+				return `  ✗ ${m.path}: ${m.kind}`;
+		}
+	});
+
+	if (acc.mismatches.length > 3) {
+		lines.push(`  … and ${acc.mismatches.length - 3} more`);
+	}
+
+	return [header, ...lines].join("\n");
+}
+
+/**
+ * Attempts to compare two strings as JSON. If both parse successfully,
+ * returns a structural factuality score with diagnostics.
+ * Otherwise returns null (caller should fall back to word overlap).
+ *
+ * Code fences are stripped from both strings before parsing.
+ *
+ * @param actual - The system output
+ * @param expected - The reference output
+ * @returns Factuality result or null if either string is not valid JSON
+ */
+function tryJsonCompare(
+	actual: string,
+	expected: string,
+): { score: number; explanation: string } | null {
+	let actualParsed: unknown;
+	let expectedParsed: unknown;
+
+	try {
+		actualParsed = JSON.parse(stripCodeFences(actual));
+		expectedParsed = JSON.parse(stripCodeFences(expected));
+	} catch {
+		return null;
+	}
+
+	const acc = compareJsonValue(actualParsed, expectedParsed, "$");
+	const totalVals = acc.expected + acc.extra;
+	const score = totalVals > 0 ? acc.matched / totalVals : 1;
+	const explanation = formatJsonExplanation(score, acc);
+
+	return { score, explanation };
+}
+
+/**
  * Runs the deterministic (shallow) factuality check using n-gram overlap heuristics.
  *
  * When `rag_faithfulness_only` is enabled and no context is provided, the check is skipped with a
@@ -141,6 +479,13 @@ async function evaluateShallow(
 		};
 	}
 
+	// Try JSON structural comparison first (auto-detect)
+	const jsonResult = tryJsonCompare(input.actualOutput, input.expectedOutput);
+	if (jsonResult) {
+		return jsonResult;
+	}
+
+	// Fall back to word overlap
 	let score = checkClaimOverlap(input.actualOutput, input.expectedOutput);
 
 	// Strict mode penalises borderline scores that are above 0.3 but not a perfect match
@@ -198,8 +543,9 @@ async function evaluateDeep(input: EvaluateInput): Promise<{
  *
  * In `deep` mode, an LLM judge performs claim-by-claim comparison. If the judge call fails,
  * the evaluator gracefully degrades to the deterministic shallow path with reduced confidence (0.5)
- * and an explanation that includes the truncated error. In `shallow` mode, n-gram overlap heuristics
- * are used directly with full confidence (1.0).
+ * and an explanation that includes the truncated error. In `shallow` mode, the evaluator first
+ * attempts a JSON structural comparison (auto-detected when both actual and expected parse as JSON),
+ * falling back to n-gram word overlap heuristics when they don't.
  *
  * @param input - The evaluation input
  * @returns A {@link MetricResult} with `evaluation_type` of `"llm_judged"` or `"deterministic"`

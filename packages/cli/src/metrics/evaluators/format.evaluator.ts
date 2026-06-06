@@ -1,5 +1,6 @@
 import type { MetricResult } from "../../schema/run-record.schema";
 import type { EvaluateInput, MetricEvaluator } from "../types";
+import { stripCodeFences } from "../utils";
 
 /** Supported format sub-checks, each mapped to a scoring function in `SUB_CHECK_MAP`. */
 type SubCheck =
@@ -275,18 +276,6 @@ const SUB_CHECK_MAP: Record<
 		};
 	},
 };
-
-/**
- * Strip markdown code fences (```json, ```, `) from a string.
- * Common LLM behavior — wrap JSON in code blocks. We strip them
- * before JSON-related checks so valid JSON inside fences isn't penalized.
- */
-function stripCodeFences(text: string): string {
-	return text
-		.replace(/^```[a-zA-Z]*\n?/, "")
-		.replace(/```$/, "")
-		.trim();
-}
 
 /**
  * Evaluates output format compliance across enabled sub-checks.
