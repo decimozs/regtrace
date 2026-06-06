@@ -58,7 +58,9 @@ When no LLM judge is configured or all providers fail, factuality and tone
 fall back to heuristic scoring:
 
 - **Factuality** — Uses N-gram overlap between expected and actual output
-  (strict and lenient modes). This captures approximate factual alignment.
+  (strict and lenient modes). For JSON outputs, this is replaced with
+  structural leaf-value comparison — each value is compared type-
+  appropriately with specific mismatches reported in the explanation.
 - **Tone** — Uses keyword heuristics: formality ratio, sentiment keyword
   matching, verbosity thresholds. Less accurate but always available.
 

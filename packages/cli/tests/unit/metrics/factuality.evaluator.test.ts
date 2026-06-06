@@ -96,4 +96,140 @@ describe("factuality evaluator", () => {
 		expect(result.score).toBeGreaterThanOrEqual(0);
 		expect(result.score).toBeLessThanOrEqual(1);
 	});
+
+	describe("JSON factuality comparison", () => {
+		const jsonExpected = JSON.stringify({
+			merchant: "Jollibee Foods Corporation",
+			date: "2026-05-01",
+			amount: 431.2,
+			currency: "PHP",
+			category: "Meals",
+			justification: "",
+			status: "approved",
+		});
+
+		it("scores 1.0 for identical JSON", async () => {
+			const input = makeInput({
+				actualOutput: jsonExpected,
+				expectedOutput: jsonExpected,
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			expect(result.score).toBe(1);
+			expect(result.passed).toBe(true);
+		});
+
+		it("penalizes value mismatch", async () => {
+			const actual = JSON.stringify({
+				merchant: "Jollibee Foods Corporation",
+				date: "2026-05-01",
+				amount: 431.2,
+				currency: "PHP",
+				category: "Meals",
+				justification: "",
+				status: "flagged",
+			});
+			const input = makeInput({
+				actualOutput: actual,
+				expectedOutput: jsonExpected,
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			// 6/7 = 0.86 (all leaf values match except status)
+			expect(result.score).toBeGreaterThan(0.8);
+			expect(result.score).toBeLessThan(1);
+			expect(result.explanation).toContain("status");
+			expect(result.explanation).toContain("approved");
+			expect(result.explanation).toContain("flagged");
+		});
+
+		it("penalizes extra keys (hallucination)", async () => {
+			const actual = JSON.stringify({
+				merchant: "Jollibee Foods Corporation",
+				date: "2026-05-01",
+				amount: 431.2,
+				currency: "PHP",
+				category: "Meals",
+				justification: "",
+				status: "approved",
+				hallucinated_field: "this should not be here",
+			});
+			const input = makeInput({
+				actualOutput: actual,
+				expectedOutput: jsonExpected,
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			// 7 matched / (7 expected + 1 extra) = 0.875
+			expect(result.score).toBeGreaterThan(0.8);
+			expect(result.score).toBeLessThan(1);
+			expect(result.explanation).toContain("hallucinated_field");
+		});
+
+		it("penalizes missing keys", async () => {
+			const actual = JSON.stringify({
+				merchant: "Jollibee Foods Corporation",
+				date: "2026-05-01",
+				amount: 431.2,
+				currency: "PHP",
+				category: "Meals",
+				status: "approved",
+			});
+			const input = makeInput({
+				actualOutput: actual,
+				expectedOutput: jsonExpected,
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			// 6 matched / 7 expected = 0.86
+			expect(result.score).toBeGreaterThan(0.8);
+			expect(result.score).toBeLessThan(1);
+			expect(result.explanation).toContain("justification");
+			expect(result.explanation).toContain("missing");
+		});
+
+		it("tolerates numbers within 0.01", async () => {
+			const expected = JSON.stringify({ amount: 431.2 });
+			const actual = JSON.stringify({ amount: 431.21 });
+			const input = makeInput({
+				actualOutput: actual,
+				expectedOutput: expected,
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			expect(result.score).toBe(1);
+		});
+
+		it("handles code fence wrapping", async () => {
+			const wrapped = `\`\`\`json\n${jsonExpected}\n\`\`\``;
+			const input = makeInput({
+				actualOutput: wrapped,
+				expectedOutput: jsonExpected,
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			expect(result.score).toBe(1);
+		});
+
+		it("falls back to word overlap for non-JSON", async () => {
+			const input = makeInput({
+				actualOutput: "The capital of France is Paris.",
+				expectedOutput: "Paris is the capital city of France.",
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			// Should use word overlap path (not JSON)
+			expect(result.evaluation_type).toBe("deterministic");
+			expect(result.score).toBeGreaterThan(0);
+		});
+
+		it("scores primitive arrays as sets (order-independent)", async () => {
+			const expected = JSON.stringify({
+				audit_remarks: ["VAT correct", "Amount matches", "Merchant valid"],
+			});
+			const actual = JSON.stringify({
+				audit_remarks: ["Amount matches", "Merchant valid", "VAT correct"],
+			});
+			const input = makeInput({
+				actualOutput: actual,
+				expectedOutput: expected,
+			});
+			const result = await factualityEvaluator.evaluate(input);
+			// All three elements present in both, order swapped → set-based match = 1.0
+			expect(result.score).toBe(1);
+		});
+	});
 });

@@ -27,13 +27,22 @@ aggregate score.
 ```yaml
 metrics:
   factuality:
-    mode: strict           # strict | lenient
+    mode: strict           # strict | lenient | json_structural
     claim_extraction_depth: shallow  # shallow | deep
     rag_faithfulness_only: false
 ```
 
 `strict` mode fails on both contradicted claims and unverifiable claims.
 `lenient` mode only fails on direct contradictions.
+
+`json_structural` mode enables leaf-value comparison for JSON outputs.
+When both expected and actual parse as valid JSON, each value is compared
+type-appropriately — string exact, number within 0.01 tolerance, boolean
+exact, arrays of primitives order-independent (set-based), arrays of
+objects positional. Specific mismatches (key, expected, actual) are
+reported in the explanation instead of a generic overlap score. Auto-
+detected in any mode when both values are valid JSON; explicit setting
+forces JSON comparison and errors if values don't parse.
 
 <Tabs items={['shallow (default)', 'deep']}>
   <Tab value="shallow (default)">

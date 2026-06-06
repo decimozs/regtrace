@@ -53,7 +53,11 @@ const subDimensionsSchema = object({
 
 /** Schema for factuality metric configuration. */
 const factualityConfigSchema = object({
-	mode: union([literal("strict"), literal("lenient")]).default("strict"),
+	mode: union([
+		literal("strict"),
+		literal("lenient"),
+		literal("json_structural"),
+	]).default("strict"),
 	claim_extraction_depth: union([literal("shallow"), literal("deep")]).default(
 		"shallow",
 	),

@@ -23,6 +23,13 @@ output or context.
 |---|---|
 | `strict` | Fail on contradicted claims AND unverifiable claims |
 | `lenient` | Fail only on contradicted claims |
+| `json_structural` | Auto-detected when both expected and actual parse as JSON. Compares each leaf value type-appropriately (string exact, number within 0.01, boolean exact). Arrays of primitives use set-based comparison (order-independent), arrays of objects use positional. Reports specific mismatches in explanations. Falls back to n-gram overlap for non-JSON. |
+
+<Callout type="info">
+  JSON auto-detection triggers in any mode when both expected and actual output
+  are valid JSON. Explicitly setting `json_structural` forces this comparison
+  and produces a diagnostic error if either value isn't JSON.
+</Callout>
 
 **Claim extraction:**
 
