@@ -1,9 +1,10 @@
 <img width="1920" height="1080" alt="Regtrace Banner" src="https://github.com/user-attachments/assets/51011e21-8328-4d58-8512-bedab56a55a0" />
 
-[![CI](https://github.com/decimozs/regtrace/actions/workflows/ci.yml/badge.svg)](https://github.com/decimozs/regtrace/actions/workflows/ci.yml)
-[![Latest Release](https://img.shields.io/github/v/release/decimozs/regtrace)](https://github.com/decimozs/regtrace/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+<p align="center">
+  <a href="https://github.com/decimozs/regtrace/actions/workflows/ci.yml"><img src="https://github.com/decimozs/regtrace/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/decimozs/regtrace/releases"><img src="https://img.shields.io/github/v/release/decimozs/regtrace" alt="Latest Release"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
 
 LLM quality degrades silently. A prompt change, a model update, a new feature — any of it can quietly break outputs that used to work.
 
