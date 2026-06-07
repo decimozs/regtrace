@@ -62,6 +62,29 @@ function determineRegressionStatus(
  * @param config - Regression configuration including tolerance, critical threshold, and exclusion setting
  * @returns A {@link RegressionBlock} suitable for inclusion in a run record
  */
+function determineWorstStatus(
+	metricDeltas: Record<string, number>,
+	tolerance: number,
+	criticalThreshold: number,
+	metricTolerances: Record<string, number>,
+): "clean" | "warning" | "critical" {
+	if (Object.keys(metricTolerances).length === 0) {
+		return "clean";
+	}
+	let worst: "clean" | "warning" | "critical" = "clean";
+	for (const [metricName, delta] of Object.entries(metricDeltas)) {
+		const effective = metricTolerances[metricName] ?? tolerance;
+		const status = determineRegressionStatus(
+			delta,
+			effective,
+			criticalThreshold,
+		);
+		if (status === "critical") return "critical";
+		if (status === "warning") worst = "warning";
+	}
+	return worst;
+}
+
 export function buildRegressionBlock(
 	baseline: BaselineRecord | null,
 	currentGoldenSetVersion: string,
@@ -72,8 +95,9 @@ export function buildRegressionBlock(
 		tolerance: number;
 		criticalThreshold: number;
 		excludeNewTestCases: boolean;
+		metricTolerances?: Record<string, number>;
 	},
-): RegressionBlock {
+): RegressionBlock & { metric_tolerances_applied?: Record<string, number> } {
 	if (!baseline) {
 		return {
 			baseline_run_id: null,
@@ -117,11 +141,32 @@ export function buildRegressionBlock(
 		}
 	}
 
-	const regressionStatus = determineRegressionStatus(
-		suiteDelta,
-		config.tolerance,
-		config.criticalThreshold,
-	);
+	const metricTolerances = config.metricTolerances ?? {};
+	const hasPerMetric = Object.keys(metricTolerances).length > 0;
+
+	let regressionStatus: "clean" | "warning" | "critical";
+	if (hasPerMetric) {
+		regressionStatus = determineWorstStatus(
+			metricDeltas,
+			config.tolerance,
+			config.criticalThreshold,
+			metricTolerances,
+		);
+	} else {
+		regressionStatus = determineRegressionStatus(
+			suiteDelta,
+			config.tolerance,
+			config.criticalThreshold,
+		);
+	}
+
+	const tolerancesApplied: Record<string, number> = {};
+	if (hasPerMetric) {
+		for (const metricName of Object.keys(metricDeltas)) {
+			tolerancesApplied[metricName] =
+				metricTolerances[metricName] ?? config.tolerance;
+		}
+	}
 
 	return {
 		baseline_run_id: baseline.run_id,
@@ -132,6 +177,9 @@ export function buildRegressionBlock(
 		regression_status: regressionStatus,
 		test_cases_excluded: excludedTestCases,
 		metric_deltas: metricDeltas,
+		...(Object.keys(tolerancesApplied).length > 0
+			? { metric_tolerances_applied: tolerancesApplied }
+			: {}),
 	};
 }
 

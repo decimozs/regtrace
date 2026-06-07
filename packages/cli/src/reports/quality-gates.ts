@@ -1,3 +1,4 @@
+import { checkNfrGates, nfrAllPassed } from "../metrics/nfr";
 import type { Config } from "../schema/config.schema";
 import type { RunRecord } from "../schema/run-record.schema";
 import type { QualityGateResult } from "./types";
@@ -77,6 +78,13 @@ export function checkQualityGates(
 		const regPassed = regStatus === "clean";
 		gates.regression = { passed: regPassed, status: regStatus };
 		if (!regPassed) allPassed = false;
+	}
+
+	if (config.nfr_gates) {
+		const nfrResult = checkNfrGates(record, config.nfr_gates);
+		const nfrPassed = nfrAllPassed(nfrResult);
+		gates.nfr = { passed: nfrPassed, gates: nfrResult };
+		if (!nfrPassed) allPassed = false;
 	}
 
 	return { passed: allPassed, gates };

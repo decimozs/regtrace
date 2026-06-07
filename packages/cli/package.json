@@ -1,6 +1,6 @@
 {
 	"name": "@regtrace/cli",
-	"version": "0.9.3",
+	"version": "0.10.0",
 	"description": "Regtrace CLI — evaluate LLM outputs with deterministic and LLM-judged metrics",
 	"module": "index.ts",
 	"type": "module",

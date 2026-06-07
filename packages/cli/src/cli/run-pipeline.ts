@@ -13,8 +13,9 @@ import {
 	ensureRegtraceDir,
 	findBaselineRun,
 } from "../storage/run-store";
+import { detectBranch, isStaleBaseline, sanitizeBranch } from "../utils/branch";
 import { generateOutput } from "./generate";
-import { printError, printInfo } from "./print";
+import { printError, printInfo, printWarning } from "./print";
 
 declare const __VERSION__: string | undefined;
 
@@ -174,11 +175,46 @@ export async function runPipeline(
 			if (prep.description) printInfo(prep.description);
 		}
 
+		const currentBranch = config.metrics.regression.branch_aware
+			? detectBranch()
+			: undefined;
+
 		const baseline = await findBaselineRun(
 			configDir,
 			config.metrics.regression.baseline_strategy,
 			config.metrics.regression.pinned_run_id ?? undefined,
+			config.metrics.regression.branch_aware
+				? sanitizeBranch(currentBranch ?? "default")
+				: undefined,
+			config.metrics.regression.branch_aware
+				? config.metrics.regression.fallback_baseline
+				: undefined,
 		);
+
+		if (
+			baseline &&
+			currentBranch &&
+			baseline.branch !== sanitizeBranch(currentBranch)
+		) {
+			const expectedBranch = config.metrics.regression.fallback_baseline;
+			if (!options.quiet) {
+				printInfo(
+					`No baseline for branch "${currentBranch}", using "${expectedBranch}" baseline as fallback`,
+				);
+			}
+		}
+
+		if (baseline && isStaleBaseline(baseline.timestamp, 7)) {
+			const ageDays = Math.floor(
+				(Date.now() - new Date(baseline.timestamp).getTime()) /
+					(1000 * 60 * 60 * 24),
+			);
+			if (!options.quiet) {
+				printWarning(
+					`Baseline is ${ageDays} days old. Consider running \`regtrace baseline\` on "${currentBranch ?? "default"}" for fresh comparison.`,
+				);
+			}
+		}
 
 		// --generate: fill null actual_output (in-place on parsed data, never mutates YAML)
 		for (const tc of prep.testCases) {
@@ -210,6 +246,7 @@ export async function runPipeline(
 		const record = await createRunRecord(configDir, {
 			status: "passed",
 			trigger,
+			...(currentBranch ? { branch: sanitizeBranch(currentBranch) } : {}),
 			durationMs: Date.now() - startTime,
 			regtraceVersion,
 			judgeProvider: judgeCfg.provider,

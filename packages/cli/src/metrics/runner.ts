@@ -236,7 +236,7 @@ export async function evaluateSuite(
 	let batchCount = 0;
 	for (let i = 0; i < params.testCases.length; i += concurrency) {
 		const batch = params.testCases.slice(i, i + concurrency);
-		if (batchCount > 0) await sleep(0); // inter-batch delay (reserved for future rate limiting)
+		if (batchCount > 0) await sleep(50); // inter-batch delay to avoid thundering-herd on LLM providers
 		const batchResults = await concurrentMap(
 			batch,
 			(tc) => evaluateTestCase(tc),
@@ -312,6 +312,7 @@ export async function evaluateSuite(
 			tolerance: regressionConfig.tolerance,
 			criticalThreshold: regressionConfig.critical_threshold,
 			excludeNewTestCases: regressionConfig.exclude_new_test_cases,
+			metricTolerances: regressionConfig.metric_tolerances ?? {},
 		},
 	);
 

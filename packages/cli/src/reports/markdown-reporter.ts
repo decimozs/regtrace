@@ -120,6 +120,24 @@ export const markdownReporter: ReportGenerator = {
 				`| Regression Gate | ${statusBadge(g.regression.passed, g.regression.status)} |`,
 			);
 		}
+		if (g.nfr) {
+			const nfr = g.nfr.gates;
+			if (nfr.latency) {
+				lines.push(
+					`| Max Latency ≤ ${(nfr.latency.max_ms / 1000).toFixed(0)}s | ${statusBadge(nfr.latency.passed, `${(nfr.latency.actual_ms / 1000).toFixed(1)}s`)} |`,
+				);
+			}
+			if (nfr.cost) {
+				lines.push(
+					`| Max Cost ≤ $${nfr.cost.max_usd.toFixed(2)} | ${statusBadge(nfr.cost.passed, `$${nfr.cost.actual_usd.toFixed(2)}`)} |`,
+				);
+			}
+			if (nfr.coverage) {
+				lines.push(
+					`| Min Coverage ≥ ${pct(nfr.coverage.min)} | ${statusBadge(nfr.coverage.passed, `${pct(nfr.coverage.actual)}`)} |`,
+				);
+			}
+		}
 		lines.push("");
 
 		lines.push("## Test Case Results");
@@ -145,6 +163,28 @@ export const markdownReporter: ReportGenerator = {
 				);
 			}
 			lines.push("");
+			const detailsEntries = Object.entries(tc.metric_results).filter(
+				([_, mr]) => mr.details && mr.details.length > 0,
+			);
+			if (detailsEntries.length > 0) {
+				for (const [name, mr] of detailsEntries) {
+					const failedDetails = mr.details?.filter((d) => !d.passed);
+					if (!failedDetails || failedDetails.length === 0) continue;
+					lines.push(
+						`<details><summary>${failedDetails.length} failure(s) in ${name}</summary>`,
+					);
+					lines.push("");
+					lines.push("| Check | Expected | Actual |");
+					lines.push("|-------|----------|--------|");
+					for (const d of failedDetails) {
+						const exp = d.expected ? `\`${d.expected}\`` : "—";
+						const act = d.actual ? `\`${d.actual}\`` : "—";
+						lines.push(`| ${d.check} | ${exp} | ${act} |`);
+					}
+					lines.push("</details>");
+					lines.push("");
+				}
+			}
 		}
 
 		lines.push("---");

@@ -1,4 +1,7 @@
-import type { MetricResult } from "../../schema/run-record.schema";
+import type {
+	AssertionDetail,
+	MetricResult,
+} from "../../schema/run-record.schema";
 import type { EvaluateInput, MetricEvaluator } from "../types";
 import { stripCodeFences } from "../utils";
 
@@ -217,9 +220,15 @@ function checkLength(
 }
 
 /** Maps format sub-check names to their scoring functions. Each returns a score and a detail string. */
+interface SubCheckResult {
+	score: number;
+	detail: string;
+	passed: boolean;
+}
+
 const SUB_CHECK_MAP: Record<
 	SubCheck,
-	(input: EvaluateInput) => { score: number; detail: string }
+	(input: EvaluateInput) => SubCheckResult
 > = {
 	length: (input) => {
 		const tolerance = (input.metricConfig.length_tolerance as number) ?? 0.2;
@@ -227,6 +236,7 @@ const SUB_CHECK_MAP: Record<
 		const score = checkLength(cleaned, input.expectedOutput, tolerance);
 		return {
 			score,
+			passed: score >= (input.threshold ?? 0.7),
 			detail: `length: actual=${cleaned.length}, expected=${input.expectedOutput.length}, score=${score.toFixed(3)}`,
 		};
 	},
@@ -235,6 +245,7 @@ const SUB_CHECK_MAP: Record<
 		const score = checkJsonValidity(input.actualOutput) ? 1 : 0;
 		return {
 			score,
+			passed: score === 1,
 			detail: `json_validity: ${score === 1 ? "valid" : "invalid"}`,
 		};
 	},
@@ -244,13 +255,18 @@ const SUB_CHECK_MAP: Record<
 			input.actualOutput,
 			input.expectedOutput,
 		);
-		return { score, detail: `json_schema_match: ${(score * 100).toFixed(0)}%` };
+		return {
+			score,
+			passed: score >= (input.threshold ?? 0.7),
+			detail: `json_schema_match: ${(score * 100).toFixed(0)}%`,
+		};
 	},
 
 	markdown_structure: (input) => {
 		const score = checkMarkdownStructure(input.actualOutput);
 		return {
 			score,
+			passed: score >= (input.threshold ?? 0.7),
 			detail: `markdown_structure: ${(score * 100).toFixed(0)}%`,
 		};
 	},
@@ -260,18 +276,27 @@ const SUB_CHECK_MAP: Record<
 			stripCodeFences(input.actualOutput),
 			input.expectedOutput,
 		);
-		return { score, detail: `required_fields: ${(score * 100).toFixed(0)}%` };
+		return {
+			score,
+			passed: score >= (input.threshold ?? 0.7),
+			detail: `required_fields: ${(score * 100).toFixed(0)}%`,
+		};
 	},
 
 	forbidden_content: (input) => {
 		const score = checkForbiddenContent(input.actualOutput);
-		return { score, detail: `forbidden_content: ${(score * 100).toFixed(0)}%` };
+		return {
+			score,
+			passed: score === 1,
+			detail: `forbidden_content: ${(score * 100).toFixed(0)}%`,
+		};
 	},
 
 	regex_match: (input) => {
 		const score = checkRegexMatch(input.actualOutput, input.expectedOutput);
 		return {
 			score,
+			passed: score === 1,
 			detail: `regex_match: ${score === 1 ? "matched" : "no match"}`,
 		};
 	},
@@ -295,8 +320,8 @@ export const formatEvaluator: MetricEvaluator = {
 			| Record<string, boolean>
 			| undefined;
 
-		const results: { score: number; detail: string }[] = [];
-		const details: string[] = [];
+		const results: SubCheckResult[] = [];
+		const explanations: string[] = [];
 
 		for (const [checkName, enabled] of Object.entries(subChecks ?? {})) {
 			if (!enabled) continue;
@@ -304,7 +329,7 @@ export const formatEvaluator: MetricEvaluator = {
 			if (!checkFn) continue;
 			const result = checkFn(input);
 			results.push(result);
-			details.push(result.detail);
+			explanations.push(result.detail);
 		}
 
 		if (results.length === 0) {
@@ -324,15 +349,25 @@ export const formatEvaluator: MetricEvaluator = {
 			results.reduce((sum, r) => sum + r.score, 0) / results.length;
 		const passed = avgScore >= input.threshold;
 
+		const assertionDetails: AssertionDetail[] = results.map((r, i) => {
+			const checkName = explanations[i]?.split(":")[0] ?? "check";
+			return {
+				check: `format.${checkName}`,
+				passed: r.passed,
+				message: r.detail,
+			};
+		});
+
 		return {
 			metric_name: "format",
 			score: avgScore,
 			confidence: 1,
 			passed,
 			threshold: input.threshold,
-			explanation: details.join("; "),
+			explanation: explanations.join("; "),
 			evaluation_type: "deterministic",
 			token_cost: 0,
+			details: assertionDetails,
 		};
 	},
 };

@@ -32,6 +32,15 @@ export const regressionStatusSchema = union([
 	literal("critical"),
 ]);
 
+/** Schema for a single assertion detail within a metric result. */
+const assertionDetailSchema = object({
+	check: string(),
+	passed: boolean(),
+	expected: string().optional(),
+	actual: string().optional(),
+	message: string().optional(),
+});
+
 /** Schema for a single metric's evaluation result within a test case. */
 const metricResultSchema = object({
 	metric_name: string(),
@@ -42,6 +51,7 @@ const metricResultSchema = object({
 	explanation: string(),
 	evaluation_type: union([literal("deterministic"), literal("llm_judged")]),
 	token_cost: number().int().min(0),
+	details: array(assertionDetailSchema).optional(),
 });
 
 /** Schema for a test case result including per-metric scores and regression delta. */
@@ -65,6 +75,7 @@ export const regressionBlockSchema = object({
 	regression_status: regressionStatusSchema,
 	test_cases_excluded: array(string()),
 	metric_deltas: record(string(), number()),
+	metric_tolerances_applied: record(string(), number()).optional(),
 });
 
 /**
@@ -84,6 +95,7 @@ export const runRecordSchema = object({
 	golden_set_name: string(),
 	golden_set_version: string(),
 	golden_set_file_hash: string(),
+	branch: string().optional(),
 	suite_score: number().min(0).max(1),
 	metric_summary: record(
 		string(),
@@ -113,6 +125,9 @@ export type TestCaseResult = z.infer<typeof testCaseResultSchema>;
 
 /** Inferred TypeScript type from metricResultSchema. */
 export type MetricResult = z.infer<typeof metricResultSchema>;
+
+/** Inferred TypeScript type from assertionDetailSchema. */
+export type AssertionDetail = z.infer<typeof assertionDetailSchema>;
 
 /** Inferred TypeScript type from regressionBlockSchema. */
 export type RegressionBlock = z.infer<typeof regressionBlockSchema>;

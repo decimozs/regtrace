@@ -278,6 +278,110 @@ describe("buildRegressionBlock", () => {
 		expect(result.regression_status).toBe("critical");
 	});
 
+	it("uses per-metric tolerance when metric_tolerances is set", () => {
+		const baseline = makeBaselineRecord({
+			suite_score: 0.85,
+			metric_summary: {
+				factuality: { score: 0.9, pass_rate: 1.0 },
+				format: { score: 0.8, pass_rate: 0.9 },
+			},
+		});
+		const result = buildRegressionBlock(
+			baseline,
+			"1.0.0",
+			0.85,
+			{
+				factuality: makeMetricResult(0.85),
+				format: makeMetricResult(0.79),
+			},
+			["tc-001"],
+			{ ...defaultConfig, metricTolerances: { format: 0 } },
+		);
+
+		expect(result.regression_status).toBe("warning");
+		expect(result.metric_tolerances_applied).toBeDefined();
+		expect(result.metric_tolerances_applied?.format).toBe(0);
+		expect(result.metric_tolerances_applied?.factuality).toBe(0.05);
+	});
+
+	it("per-metric tolerance 0 makes any negative delta a warning", () => {
+		const baseline = makeBaselineRecord({
+			suite_score: 0.85,
+			metric_summary: {
+				format: { score: 0.95, pass_rate: 1.0 },
+			},
+		});
+		const result = buildRegressionBlock(
+			baseline,
+			"1.0.0",
+			0.85,
+			{ format: makeMetricResult(0.94) },
+			["tc-001"],
+			{ ...defaultConfig, metricTolerances: { format: 0 } },
+		);
+
+		expect(result.regression_status).toBe("warning");
+	});
+
+	it("per-metric tolerance higher than delta keeps clean", () => {
+		const baseline = makeBaselineRecord({
+			suite_score: 0.85,
+			metric_summary: {
+				factuality: { score: 0.9, pass_rate: 1.0 },
+			},
+		});
+		const result = buildRegressionBlock(
+			baseline,
+			"1.0.0",
+			0.85,
+			{ factuality: makeMetricResult(0.85) },
+			["tc-001"],
+			{ ...defaultConfig, metricTolerances: { factuality: 0.1 } },
+		);
+
+		expect(result.regression_status).toBe("clean");
+	});
+
+	it("worst per-metric status determines suite status", () => {
+		const baseline = makeBaselineRecord({
+			suite_score: 0.85,
+			metric_summary: {
+				factuality: { score: 0.95, pass_rate: 1.0 },
+				format: { score: 0.8, pass_rate: 0.9 },
+				tone: { score: 0.9, pass_rate: 1.0 },
+			},
+		});
+		const result = buildRegressionBlock(
+			baseline,
+			"1.0.0",
+			0.85,
+			{
+				factuality: makeMetricResult(0.94),
+				format: makeMetricResult(0.5),
+				tone: makeMetricResult(0.9),
+			},
+			["tc-001"],
+			{ ...defaultConfig, metricTolerances: { format: 0.05, factuality: 0.1 } },
+		);
+
+		expect(result.regression_status).toBe("critical");
+	});
+
+	it("legacy behavior unchanged when metric_tolerances is empty", () => {
+		const baseline = makeBaselineRecord({ suite_score: 0.85 });
+		const result = buildRegressionBlock(
+			baseline,
+			"1.0.0",
+			0.79,
+			{ factuality: makeMetricResult(0.85) },
+			["tc-001"],
+			defaultConfig,
+		);
+
+		expect(result.regression_status).toBe("warning");
+		expect(result.metric_tolerances_applied).toBeUndefined();
+	});
+
 	it("returns clean for improvement (positive delta)", () => {
 		const baseline = makeBaselineRecord({ suite_score: 0.8 });
 		const result = buildRegressionBlock(
@@ -353,6 +457,8 @@ describe("regressionEvaluator.evaluate", () => {
 						tolerance: 0.05,
 						critical_threshold: 0.15,
 						exclude_new_test_cases: true,
+						branch_aware: true,
+						fallback_baseline: "main",
 					},
 				},
 				judge: {
