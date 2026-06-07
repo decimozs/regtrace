@@ -1,3 +1,4 @@
+import { chmodSync } from "node:fs";
 import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -40,6 +41,7 @@ export async function downloadRelease(
 
 	const binaryBuffer = await binaryRes.arrayBuffer();
 	await writeFile(binaryPath, new Uint8Array(binaryBuffer));
+	chmodSync(binaryPath, 0o755);
 
 	if (sha256Url && sha256Res.ok) {
 		const sha256Text = await sha256Res.text();

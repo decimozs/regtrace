@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
-import { copyFileSync, renameSync, unlinkSync } from "node:fs";
+import { chmodSync, copyFileSync, renameSync, unlinkSync } from "node:fs";
 
 const RETRY_DELAY_MS = 100;
 
@@ -65,6 +65,7 @@ export function completeSwap(
 	for (let attempt = 0; attempt < maxRetries; attempt++) {
 		try {
 			renameSync(sourcePath, targetPath);
+			chmodSync(targetPath, 0o755);
 			lastErr = null;
 			break;
 		} catch (err) {
