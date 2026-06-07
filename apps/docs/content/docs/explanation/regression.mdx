@@ -87,6 +87,28 @@ can cross-reference score changes with judge changes.
 RAG context documents, customer input distribution, or environment variables.
 External factors that affect model output.
 
+## Branch-aware baselines
+
+When running in CI on feature branches, the baseline must match the branch
+context. Without branch awareness, a feature branch would always compare
+against the latest `main` baseline — even if `main` moved forward since the
+branch was created.
+
+Branch-aware mode (enabled by default via `metrics.regression.branch_aware`)
+solves this:
+
+1. **Auto-detects the current branch** from CI environment variables
+   (`GITHUB_HEAD_REF`, `CI_COMMIT_BRANCH`, `CIRCLE_BRANCH`) or `git rev-parse`
+2. **Filters baselines** to only passing runs from the same branch
+3. **Falls back** to the `fallback_baseline` (default: `main`) when no
+   same-branch baseline exists
+
+Baselines are stored as regular run records in `.regtrace/runs/` with the
+originating `branch` field for cross-referencing.
+
+The `branch_aware` flag works with both `last_passing` and `pinned` baseline
+strategies. Pinned baselines are global (same run ID regardless of branch).
+
 ## Multi-level delta reporting
 
 When a regression is detected, Regtrace reports deltas at three levels:

@@ -15,7 +15,7 @@ import {
 	uninstallCommand,
 } from "../../../src/cli/uninstall.command";
 
-const tmpBase = ".test-tmp/uninstall-test";
+const tmpBase = `.test-tmp/uninstall-test-${process.pid}`;
 
 function tmpPath(name: string): string {
 	return resolve(tmpBase, name);
@@ -25,6 +25,8 @@ let origExit: typeof process.exit;
 
 beforeAll(() => {
 	origExit = process.exit;
+	// Ensure clean slate — this works because tmpBase doesn't exist yet on first run
+	rmSync(tmpBase, { recursive: true, force: true });
 });
 
 beforeEach(() => {
@@ -35,11 +37,9 @@ beforeEach(() => {
 
 afterAll(() => {
 	process.exit = origExit;
-	try {
-		rmSync(tmpBase, { recursive: true, force: true });
-	} catch {
-		// ignore
-	}
+	// Best-effort cleanup. If rmSync fails (readonly dir from test), the next
+	// run's beforeAll removes it since the dir won't have been re-created yet.
+	rmSync(tmpBase, { recursive: true, force: true });
 });
 
 async function runCommand(
@@ -63,6 +63,7 @@ describe("uninstallCommand", () => {
 	it("exits when parent directory lacks write permission", async () => {
 		mkdirSync(tmpBase, { recursive: true });
 		const dir = tmpPath("readonly-dir");
+		rmSync(dir, { recursive: true, force: true });
 		mkdirSync(dir);
 		const target = `${dir}/binary`;
 		writeFileSync(target, "dummy");
@@ -73,6 +74,8 @@ describe("uninstallCommand", () => {
 		if (process.getuid?.() !== 0) {
 			expect(result.code).toBe(1);
 		}
+		// Restore permissions so cleanup can remove the directory
+		chmodSync(dir, 0o755);
 	});
 
 	it("deletes the binary on success", async () => {

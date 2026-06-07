@@ -1,3 +1,20 @@
+## 0.10.0 (2026-06-06)
+
+### Features
+
+- **per-metric regression tolerance**: New `metric_tolerances` config field on
+  `metrics.regression` allows per-metric tolerance overrides (e.g. `format: 0`
+  for zero format drift, `factuality: 0.1` for 10% variance). Suite-level
+  regression status is the worst per-metric status. Backward compatible — empty
+  config uses legacy suite-delta behavior. (`regression.evaluator.ts`,
+  `config.schema.ts`)
+- **NFR enforcement**: New `nfr_gates` config section for latency, cost, and
+  coverage thresholds. NFR results are folded into `QualityGateResult` alongside
+  suite score, regression, and other gates. NFR gate failure causes suite failure.
+  (`nfr.ts`, `quality-gates.ts`, `print.ts`, `markdown-reporter.ts`)
+- **docs**: Updated `config-file.mdx`, `run-record.mdx`, `SKILL.md`, `cli.md`
+  with new fields and features.
+
 # Changelog
 
 ## 0.9.3 (2026-06-05)

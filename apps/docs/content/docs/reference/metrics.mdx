@@ -133,3 +133,24 @@ flowchart LR
 ```
 
 Scoring method: `weighted_average` (default). All weights default to `1`.
+
+## Assertion-level details
+
+For deterministic metrics (format sub-checks, JSON factuality comparisons), each
+metric result includes an optional `details[]` array. Each entry describes a
+single assertion:
+
+| Field | Type | Description |
+|---|---|---|
+| `check` | string | Hierarchical check name (e.g. `format.length`, `json_path.$.amount`) |
+| `passed` | boolean | Whether this specific assertion passed |
+| `expected` | string (optional) | Expected value (truncated to 80 chars) |
+| `actual` | string (optional) | Actual value (truncated to 80 chars) |
+| `message` | string (optional) | Human-readable description |
+
+Up to 10 mismatches are reported per metric. Beyond 10, a `+ N more` entry
+summarizes the rest.
+
+In markdown reports, failed details are shown in collapsible sections per
+metric. In JSON output, the full `details[]` array is included in the
+`metric_results` object.

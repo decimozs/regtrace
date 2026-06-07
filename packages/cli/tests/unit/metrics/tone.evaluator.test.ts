@@ -59,6 +59,8 @@ function makeConfig(): Config {
 				tolerance: 0.05,
 				critical_threshold: 0.15,
 				exclude_new_test_cases: true,
+				branch_aware: true,
+				fallback_baseline: "main",
 			},
 		},
 		judge: {

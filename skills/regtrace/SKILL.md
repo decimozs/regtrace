@@ -183,9 +183,10 @@ After scaffolding, tell the user:
 
 Next steps:
   export ANTHROPIC_API_KEY=sk-ant-...
-  regtrace run --dry-run          # validate without spending tokens
-  regtrace run --generate         # auto-fill actual_output, then evaluate
-  regtrace run                    # evaluate against golden sets
+  regtrace run --dry-run              # validate without spending tokens
+  regtrace scaffold --from-file outputs.jsonl --write  # bootstrap from real outputs
+  regtrace run --generate             # auto-fill actual_output, then evaluate
+  regtrace run                        # evaluate against golden sets
 ```
 
 ---
@@ -262,6 +263,9 @@ metrics:
   regression:
     baseline_strategy: last_passing
     tolerance: 0.05
+    metric_tolerances:
+      format: 0
+      factuality: 0.1
     critical_threshold: 0.15
     exclude_new_test_cases: true
 judge:
@@ -287,6 +291,11 @@ generator:
   timeout_ms: 60000
   retry_attempts: 3
 run:
+  nfr_gates:
+    max_latency_ms: 120000
+    max_cost_usd: 1.00
+    min_coverage: 0.8
+
   concurrency: 1
 quality_gates:
   suite_score_minimum: 0.7
@@ -402,6 +411,7 @@ regtrace db rebuild
 | `max_failed_test_cases` | 0 | Max individual failures |
 | `max_low_confidence_ratio` | 0.1 | Max low-confidence fraction |
 | `regression_gate` | true | Fail on critical regression |
+| `nfr_gates` | — | Latency, cost, and coverage thresholds. Exit 1 on breach. |
 
 Exit codes: `0` = passed, `1` = gate failure, `2` = config/schema error.
 

@@ -162,6 +162,98 @@ describe("run-store", () => {
 		expect(baseline).toBeNull();
 	});
 
+	it("filters baseline by branch", async () => {
+		await createRunRecord(
+			TEST_BASE,
+			makeParams({ branch: "main", durationMs: 1000 }),
+		);
+
+		await new Promise((r) => setTimeout(r, 5));
+
+		await createRunRecord(
+			TEST_BASE,
+			makeParams({ branch: "feature-x", durationMs: 2000 }),
+		);
+
+		const mainBaseline = await findBaselineRun(
+			TEST_BASE,
+			"last_passing",
+			undefined,
+			"main",
+		);
+		expect(mainBaseline).not.toBeNull();
+		expect(mainBaseline?.branch).toBe("main");
+		expect(mainBaseline?.duration_ms).toBe(1000);
+
+		const featureBaseline = await findBaselineRun(
+			TEST_BASE,
+			"last_passing",
+			undefined,
+			"feature-x",
+		);
+		expect(featureBaseline).not.toBeNull();
+		expect(featureBaseline?.branch).toBe("feature-x");
+		expect(featureBaseline?.duration_ms).toBe(2000);
+	});
+
+	it("falls back to fallbackBranch when no passing runs for branch", async () => {
+		await createRunRecord(
+			TEST_BASE,
+			makeParams({ branch: "main", durationMs: 1000 }),
+		);
+
+		await new Promise((r) => setTimeout(r, 5));
+
+		await createRunRecord(
+			TEST_BASE,
+			makeParams({ branch: "other", durationMs: 2000 }),
+		);
+
+		const result = await findBaselineRun(
+			TEST_BASE,
+			"last_passing",
+			undefined,
+			"feature-x",
+			"main",
+		);
+		expect(result).not.toBeNull();
+		expect(result?.branch).toBe("main");
+		expect(result?.duration_ms).toBe(1000);
+	});
+
+	it("falls back to branch-agnostic when branch and fallbackBranch both yield no results", async () => {
+		await createRunRecord(
+			TEST_BASE,
+			makeParams({ branch: "other", durationMs: 1000 }),
+		);
+
+		const result = await findBaselineRun(
+			TEST_BASE,
+			"last_passing",
+			undefined,
+			"feature-x",
+			"main",
+		);
+		expect(result).not.toBeNull();
+		expect(result?.duration_ms).toBe(1000);
+	});
+
+	it("falls back to branch-agnostic when no fallbackBranch provided (legacy behavior)", async () => {
+		await createRunRecord(
+			TEST_BASE,
+			makeParams({ branch: "other", durationMs: 1000 }),
+		);
+
+		const result = await findBaselineRun(
+			TEST_BASE,
+			"last_passing",
+			undefined,
+			"feature-x",
+		);
+		expect(result).not.toBeNull();
+		expect(result?.duration_ms).toBe(1000);
+	});
+
 	it("generates unique run ids", () => {
 		const ids = new Set<string>();
 		for (let i = 0; i < 100; i++) {

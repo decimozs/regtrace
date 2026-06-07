@@ -128,6 +128,39 @@ optional `generator` block in the config file (see
 [config file reference](/docs/reference/config-file)). Generated output is
 stored in the run record only; the golden set YAML is never modified.
 
+### `scaffold`
+
+```bash
+regtrace scaffold [options]
+```
+
+Scaffold golden sets from existing run records or output files. Generates a
+complete golden set YAML with auto-populated `expected_output` and auto-detected
+metrics (JSON output → format sub-checks, prose → tone).
+
+<TypeTable
+  type={{
+    "--from-run <id>": { description: "Scaffold from an existing run record ID", type: "string" },
+    "--from-file <path>": { description: "Scaffold from a JSON/JSONL file with `{input, output}` objects", type: "string" },
+    "-w, --write": { description: "Write golden set to `golden-sets/<name>.yaml` instead of stdout", type: "boolean" },
+    "-n, --name <name>": { description: "Golden set name (default: `scaffolded`)", type: "string", default: "scaffolded" },
+    "-c, --config <path>": { description: "Path to config file", type: "string" },
+  }}
+/>
+
+Examples:
+
+```bash
+# Scaffold from a run record, print to stdout
+regtrace scaffold --from-run run_20260603_a1b2c3
+
+# Scaffold from a JSONL file and save
+regtrace scaffold --from-file outputs.jsonl --write
+
+# Scaffold from JSON with custom name
+regtrace scaffold --from-file outputs.json --name my-set --write
+```
+
 ### `list`
 
 ```bash

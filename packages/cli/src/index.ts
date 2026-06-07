@@ -13,6 +13,7 @@ import { initCommand } from "./cli/init.command";
 import { historyCommand, listCommand } from "./cli/list.command";
 import { configureColor, isCiEnvironment, printError } from "./cli/print";
 import { runCommand } from "./cli/run.command";
+import { scaffoldCommand } from "./cli/scaffold.command";
 import { uninstallCommand } from "./cli/uninstall.command";
 import { upgradeCommand } from "./cli/upgrade.command";
 import { watchCommand } from "./cli/watch.command";
@@ -277,6 +278,41 @@ Examples:
 				noVerify: options.noVerify,
 				dryRun: options.dryRun,
 			});
+		},
+	);
+
+program
+	.command("scaffold")
+	.description("Scaffold golden sets from existing run records or output files")
+	.option("--from-run <id>", "Scaffold from an existing run record ID")
+	.option(
+		"--from-file <path>",
+		"Scaffold from a JSON/JSONL file with {input, output} objects",
+	)
+	.option(
+		"-w, --write",
+		"Write golden set to golden-sets/<name>.yaml instead of stdout",
+	)
+	.option("-n, --name <name>", "Golden set name (default: scaffolded)")
+	.option("-c, --config <path>", "Path to config file")
+	.addHelpText(
+		"after",
+		`
+Examples:
+  regtrace scaffold --from-run run_20260603_a1b2c3
+  regtrace scaffold --from-run run_20260603_a1b2c3 --write
+  regtrace scaffold --from-file outputs.jsonl
+  regtrace scaffold --from-file outputs.json --name my-golden-set --write`,
+	)
+	.action(
+		async (options: {
+			fromRun?: string;
+			fromFile?: string;
+			write?: boolean;
+			name?: string;
+			config?: string;
+		}) => {
+			await scaffoldCommand(options);
 		},
 	);
 

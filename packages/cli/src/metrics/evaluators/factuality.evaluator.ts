@@ -1,5 +1,8 @@
 import { buildJudgeConfig, judgeFactuality } from "../../judge/judge";
-import type { MetricResult } from "../../schema/run-record.schema";
+import type {
+	AssertionDetail,
+	MetricResult,
+} from "../../schema/run-record.schema";
 import type { EvaluateInput, MetricEvaluator } from "../types";
 import { stripCodeFences } from "../utils";
 
@@ -391,16 +394,41 @@ function compareJsonValue(
 }
 
 /**
- * Formats up to three JSON mismatches into a human-readable explanation string.
+ * Converts a JsonMismatch array into AssertionDetail array, truncating values to 80 chars.
+ */
+function mismatchesToDetails(mismatches: JsonMismatch[]): AssertionDetail[] {
+	const truncate = (v: string) => (v.length > 80 ? `${v.slice(0, 80)}…` : v);
+	return mismatches.map((m) => ({
+		check: `json_path.${m.path}`,
+		passed: false,
+		expected: m.expected ? truncate(m.expected) : undefined,
+		actual: m.actual ? truncate(m.actual) : undefined,
+		message:
+			m.kind === "missing"
+				? "Missing key"
+				: m.kind === "extra"
+					? "Unexpected key"
+					: m.kind === "type_mismatch"
+						? "Type mismatch"
+						: "Value mismatch",
+	}));
+}
+
+/**
+ * Formats JSON mismatches into a human-readable explanation string and details array.
  * @param score - The computed factuality score
  * @param acc - The accumulated comparison result
- * @returns A formatted explanation string
+ * @returns A formatted explanation string and details array
  */
-function formatJsonExplanation(score: number, acc: JsonCompareAccum): string {
+function formatJsonExplanation(
+	score: number,
+	acc: JsonCompareAccum,
+): { explanation: string; details: AssertionDetail[] } {
 	const totalVals = acc.expected + acc.extra;
 	const header = `Factuality score ${(score * 100).toFixed(0)}%: ${acc.matched}/${totalVals} leaf values match`;
 
-	const lines = acc.mismatches.slice(0, 3).map((m) => {
+	const shown = acc.mismatches.slice(0, 10);
+	const lines = shown.map((m) => {
 		switch (m.kind) {
 			case "missing":
 				return `  ✗ ${m.path}: missing, expected ${m.expected}`;
@@ -415,11 +443,15 @@ function formatJsonExplanation(score: number, acc: JsonCompareAccum): string {
 		}
 	});
 
-	if (acc.mismatches.length > 3) {
-		lines.push(`  … and ${acc.mismatches.length - 3} more`);
+	const remaining = acc.mismatches.length - shown.length;
+	if (remaining > 0) {
+		lines.push(`  … and ${remaining} more`);
 	}
 
-	return [header, ...lines].join("\n");
+	return {
+		explanation: [header, ...lines].join("\n"),
+		details: mismatchesToDetails(acc.mismatches),
+	};
 }
 
 /**
@@ -436,7 +468,7 @@ function formatJsonExplanation(score: number, acc: JsonCompareAccum): string {
 function tryJsonCompare(
 	actual: string,
 	expected: string,
-): { score: number; explanation: string } | null {
+): { score: number; explanation: string; details: AssertionDetail[] } | null {
 	let actualParsed: unknown;
 	let expectedParsed: unknown;
 
@@ -450,9 +482,9 @@ function tryJsonCompare(
 	const acc = compareJsonValue(actualParsed, expectedParsed, "$");
 	const totalVals = acc.expected + acc.extra;
 	const score = totalVals > 0 ? acc.matched / totalVals : 1;
-	const explanation = formatJsonExplanation(score, acc);
+	const { explanation, details } = formatJsonExplanation(score, acc);
 
-	return { score, explanation };
+	return { score, explanation, details };
 }
 
 /**
@@ -465,9 +497,11 @@ function tryJsonCompare(
  * @param input - The evaluation input
  * @returns A score and human-readable explanation
  */
-async function evaluateShallow(
-	input: EvaluateInput,
-): Promise<{ score: number; explanation: string }> {
+async function evaluateShallow(input: EvaluateInput): Promise<{
+	score: number;
+	explanation: string;
+	details?: AssertionDetail[];
+}> {
 	const mode = (input.metricConfig.mode as string) ?? "strict";
 	const ragFaithfulnessOnly =
 		(input.metricConfig.rag_faithfulness_only as boolean) ?? false;
@@ -583,11 +617,12 @@ export const factualityEvaluator: MetricEvaluator = {
 					explanation: `LLM judge failed (${truncateJudgeError(message)}), fallback: ${fallback.explanation}`,
 					evaluation_type: "deterministic",
 					token_cost: 0,
+					...(fallback.details ? { details: fallback.details } : {}),
 				};
 			}
 		}
 
-		const { score, explanation } = await evaluateShallow(input);
+		const { score, explanation, details } = await evaluateShallow(input);
 		return {
 			metric_name: "factuality",
 			score,
@@ -597,6 +632,7 @@ export const factualityEvaluator: MetricEvaluator = {
 			explanation,
 			evaluation_type: "deterministic",
 			token_cost: 0,
+			...(details ? { details } : {}),
 		};
 	},
 };

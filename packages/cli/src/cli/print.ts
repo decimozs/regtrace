@@ -281,6 +281,31 @@ export function printQualityGates(gates: QualityGateResult): void {
 			`  ${maybeColor(gi, icon(g.regression.passed ? CHECK : WARN))} Regression: ${g.regression.status}`,
 		);
 	}
+	if (g.nfr) {
+		const gi = g.nfr.passed ? GREEN : RED;
+		stderr(
+			`  ${maybeColor(gi, icon(g.nfr.passed ? CHECK : CROSS))} NFR Gates: ${g.nfr.passed ? "PASSED" : "FAILED"}`,
+		);
+		const nfr = g.nfr.gates;
+		if (nfr.latency) {
+			const li = nfr.latency.passed ? GREEN : RED;
+			stderr(
+				`    ${maybeColor(li, icon(nfr.latency.passed ? CHECK : CROSS))} Latency: ${(nfr.latency.actual_ms / 1000).toFixed(1)}s <= ${(nfr.latency.max_ms / 1000).toFixed(0)}s`,
+			);
+		}
+		if (nfr.cost) {
+			const ci = nfr.cost.passed ? GREEN : RED;
+			stderr(
+				`    ${maybeColor(ci, icon(nfr.cost.passed ? CHECK : CROSS))} Cost: $${nfr.cost.actual_usd.toFixed(2)} <= $${nfr.cost.max_usd.toFixed(2)}`,
+			);
+		}
+		if (nfr.coverage) {
+			const ci = nfr.coverage.passed ? GREEN : RED;
+			stderr(
+				`    ${maybeColor(ci, icon(nfr.coverage.passed ? CHECK : CROSS))} Coverage: ${(nfr.coverage.actual * 100).toFixed(0)}% >= ${(nfr.coverage.min * 100).toFixed(0)}%`,
+			);
+		}
+	}
 	stderr();
 }
 
@@ -318,6 +343,11 @@ export function printSuccess(message: string): void {
 /** Prints an informational message to stderr with a cyan "i" prefix. */
 export function printInfo(message: string): void {
 	stderr(`${c(CYAN)}i${_c(RESET)} ${message}`);
+}
+
+/** Prints a warning message to stderr with a yellow "!" prefix. */
+export function printWarning(message: string): void {
+	stderr(`${c(YELLOW)}!${_c(RESET)} ${message}`);
 }
 
 /**

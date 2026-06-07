@@ -87,8 +87,11 @@ const regressionConfigSchema = object({
 	]).default("last_passing"),
 	pinned_run_id: nullable(string()).optional(),
 	tolerance: number().min(0).max(1).default(0.05),
+	metric_tolerances: record(string(), number()).optional(),
 	critical_threshold: number().min(0).max(1).default(0.15),
 	exclude_new_test_cases: boolean().default(true),
+	branch_aware: boolean().default(true),
+	fallback_baseline: string().default("main"),
 });
 
 /** Schema for top-level metrics configuration. */
@@ -125,9 +128,16 @@ const qualityGatesSchema = object({
 	regression_gate: boolean().default(true),
 });
 
+/** Schema for non-functional-requirement (NFR) gates: latency, cost, and coverage thresholds. */
+const nfrGatesSchema = object({
+	max_latency_ms: number().int().positive().optional(),
+	max_cost_usd: number().min(0).optional(),
+	min_coverage: number().min(0).max(1).optional(),
+}).optional();
+
 /** Schema for run execution configuration. */
 const runConfigSchema = object({
-	concurrency: number().int().min(1).max(20).default(1),
+	concurrency: number().int().min(1).max(20).default(4),
 });
 
 /** Schema for output and reporting configuration. */
@@ -175,6 +185,7 @@ export const configSchema = object({
 	}),
 	generator: judgeConfigSchema.optional(),
 	run: runConfigSchema,
+	nfr_gates: nfrGatesSchema,
 	quality_gates: qualityGatesSchema,
 	output: outputConfigSchema,
 	storage: storageConfigSchema.optional(),

@@ -31,6 +31,7 @@ interface RunRecord {
   judge_provider: string;                   // LLM provider name
   judge_model: string;                      // LLM model name
   config_hash: string;                      // SHA-256 of config at run time
+  branch?: string;                          // Git branch where the run was executed
   golden_set_name: string;                  // Name of the evaluated set
   golden_set_version: string;               // Version of the evaluated set
   golden_set_file_hash: string;             // SHA-256 of golden set file
@@ -70,7 +71,20 @@ interface MetricResult {
   explanation: string;                      // Human-readable reasoning
   evaluation_type: "deterministic" | "llm_judged";  // How the score was computed
   token_cost: number;                       // Estimated token cost (0 for deterministic)
+  details?: AssertionDetail[];              // Per-assertion breakdown of sub-checks
 }
+
+## Assertion detail
+
+```typescript
+interface AssertionDetail {
+  check: string;                            // Hierarchical check name (e.g. "json_path.$.amount", "format.length")
+  passed: boolean;                          // Whether this specific assertion passed
+  expected?: string;                        // Expected value (truncated to 80 chars)
+  actual?: string;                          // Actual value (truncated to 80 chars)
+  message?: string;                         // Human-readable description of the assertion
+}
+```
 ```
 
 ## Regression block
@@ -85,5 +99,6 @@ interface RegressionBlock {
   regression_status: "clean" | "warning" | "critical";  // Regression severity
   test_cases_excluded: string[];            // IDs excluded due to version change
   metric_deltas: Record<string, number>;    // Per-metric average delta
+  metric_tolerances_applied?: Record<string, number>;  // Per-metric tolerance values used
 }
 ```

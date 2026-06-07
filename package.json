@@ -1,6 +1,6 @@
 {
 	"name": "regtrace",
-	"version": "0.9.3",
+	"version": "0.10.0",
 	"description": "LLM output evaluation toolkit: deterministic and LLM-judged metrics with quality gates, regression tracking, and CI integration",
 	"type": "module",
 	"private": true,

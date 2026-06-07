@@ -69,6 +69,24 @@ regtrace run --generate                   # auto-generate null outputs then eval
 regtrace run --quiet                      # suppress progress, show only errors
 ```
 
+### `scaffold`
+
+Scaffold golden sets from existing run records or output files.
+
+```bash
+regtrace scaffold [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--from-run <id>` | Scaffold from an existing run record ID |
+| `--from-file <path>` | Scaffold from a JSON/JSONL file with `{input, output}` objects |
+| `-w, --write` | Write golden set to `golden-sets/<name>.yaml` instead of stdout |
+| `-n, --name <name>` | Golden set name (default: `scaffolded`) |
+| `-c, --config <path>` | Path to config file |
+
+Auto-populates `expected_output` and auto-detects metrics (JSON → format sub-checks, prose → tone).
+
 ### `list`
 
 List recent evaluation runs.
@@ -205,6 +223,9 @@ metrics:
   regression:
     baseline_strategy: last_passing  # last_passing or pinned
     tolerance: 0.05
+    metric_tolerances:
+      format: 0
+      factuality: 0.1
     critical_threshold: 0.15
 quality_gates:
   suite_score_minimum: 0.7
@@ -243,6 +264,7 @@ Retries use exponential backoff with jitter: `min(1000 × 2^attempt + random(500
 | `max_failed_test_cases` | 0 | Maximum allowed failed test cases |
 | `max_low_confidence_ratio` | 0.1 | Max fraction of low-confidence results |
 | `regression_gate` | true | Fail on critical regression |
+| `nfr_gates` | — | Latency, cost, and coverage thresholds (optional) |
 
 ### Storage (optional)
 

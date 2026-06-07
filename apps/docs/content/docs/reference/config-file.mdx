@@ -60,6 +60,8 @@ metrics:
     tolerance: 0.05
     critical_threshold: 0.15
     exclude_new_test_cases: true
+    branch_aware: true
+    fallback_baseline: main
 
 # Judge provider configuration
 judge:
@@ -90,7 +92,13 @@ generator:
 
 # Runtime configuration
 run:
-  concurrency: 1
+  concurrency: 4
+
+# NFR gates (optional)
+nfr_gates:
+  max_latency_ms: 30000
+  max_cost_usd: 0.50
+  min_coverage: 0.8
 
 # Quality gates
 quality_gates:
@@ -139,7 +147,7 @@ golden set YAML files are never modified.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `concurrency` | integer | `1` | Number of test cases evaluated in parallel per batch. Higher values speed up suites with many LLM-judged metrics. Max: `20`. |
+| `concurrency` | integer | `4` | Number of test cases evaluated in parallel per batch. Higher values speed up suites with many LLM-judged metrics. Max: `20`. |
 
 ## Quality gates reference
 
@@ -163,6 +171,20 @@ quality_gates:
   max_low_confidence_ratio: 0.1
   regression_gate: true
 ```
+
+## NFR gates
+
+Non-functional requirement gates expand pass/fail beyond output quality to
+latency, API cost, and test coverage. When any NFR gate fails, the suite
+fails — same as quality gates.
+
+| Gate | Type | Description |
+|---|---|---|
+| `max_latency_ms` | integer | Maximum wall-clock duration for the full evaluation run (milliseconds) |
+| `max_cost_usd` | number | Maximum total API cost across all LLM-judged metrics (USD) |
+| `min_coverage` | number | Minimum fraction of passing test cases (0.0–1.0) |
+
+NFR gates are optional. Omit the block entirely to skip all NFR checks.
 
 ## Output configuration
 
@@ -217,6 +239,20 @@ flowchart TD
 ```
 
 All weights default to `1`.
+
+## Regression configuration
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | boolean | `true` | Enable regression detection |
+| `baseline_strategy` | string | `last_passing` | `last_passing` or `pinned` |
+| `pinned_run_id` | string | — | Run ID to pin as baseline (required when `strategy: pinned`) |
+| `tolerance` | number | `0.05` | Score delta threshold for clean regression (±5%) |
+| `metric_tolerances` | object | — | Per-metric tolerance overrides. E.g. `{format: 0, factuality: 0.1}` means zero format drift allowed but 10% factuality variance OK |
+| `critical_threshold` | number | `0.15` | Score delta threshold for critical regression (±15%) |
+| `exclude_new_test_cases` | boolean | `true` | Exclude new test case IDs from regression comparison |
+| `branch_aware` | boolean | `true` | Auto-detect current git branch. Feature branches fall back to `fallback_baseline`. |
+| `fallback_baseline` | string | `main` | Branch name to use as fallback baseline when no baseline exists for the current branch |
 
 ## Required blocks
 

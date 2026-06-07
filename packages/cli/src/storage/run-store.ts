@@ -43,6 +43,7 @@ export function generateTimestamp(): string {
 export interface CreateRunRecordParams {
 	status: RunRecord["status"];
 	trigger: RunTrigger;
+	branch?: string;
 	durationMs: number;
 	regtraceVersion: string;
 	judgeProvider: string;
@@ -75,6 +76,7 @@ export async function createRunRecord(
 		timestamp: generateTimestamp(),
 		status: params.status,
 		trigger: params.trigger,
+		...(params.branch ? { branch: params.branch } : {}),
 		duration_ms: params.durationMs,
 		regtrace_version: params.regtraceVersion,
 		judge_provider: params.judgeProvider,
@@ -177,19 +179,34 @@ export async function listRunRecords(basePath: string): Promise<RunRecord[]> {
  * @param basePath - Root directory of the project.
  * @param strategy - `"last_passing"` uses the most recent passing run; `"pinned"` loads a specific run by ID.
  * @param pinnedRunId - Required when `strategy` is `"pinned"`. Ignored otherwise.
+ * @param branch - Optional branch filter. When set, only passing runs from this branch are considered.
  * @returns The baseline `RunRecord`, or `null` if no matching run exists.
  */
 export async function findBaselineRun(
 	basePath: string,
 	strategy: "last_passing" | "pinned",
 	pinnedRunId?: string,
+	branch?: string,
+	fallbackBranch?: string,
 ): Promise<RunRecord | null> {
 	if (strategy === "pinned" && pinnedRunId) {
 		return loadRunRecord(basePath, pinnedRunId);
 	}
 
 	const records = await listRunRecords(basePath);
-	const passingRecords = records.filter((r) => r.status === "passed");
+	let passingRecords = records.filter((r) => r.status === "passed");
+
+	if (branch) {
+		passingRecords = passingRecords.filter((r) => r.branch === branch);
+		if (passingRecords.length === 0 && fallbackBranch) {
+			passingRecords = records.filter(
+				(r) => r.status === "passed" && r.branch === fallbackBranch,
+			);
+		}
+		if (passingRecords.length === 0) {
+			passingRecords = records.filter((r) => r.status === "passed");
+		}
+	}
 
 	return passingRecords.length > 0 ? (passingRecords[0] ?? null) : null;
 }

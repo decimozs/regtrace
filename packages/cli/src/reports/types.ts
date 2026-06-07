@@ -15,6 +15,10 @@ export interface QualityGateResult {
 		maxFailedCases?: { passed: boolean; actual: number; maximum: number };
 		maxLowConfidence?: { passed: boolean; actual: number; maximum: number };
 		regression?: { passed: boolean; status: string };
+		nfr?: {
+			passed: boolean;
+			gates: import("../metrics/nfr").NfrGateResult;
+		};
 	};
 }
 
