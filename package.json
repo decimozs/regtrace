@@ -2,6 +2,17 @@
 	"name": "regtrace",
 	"version": "0.10.1",
 	"description": "LLM output evaluation toolkit: deterministic and LLM-judged metrics with quality gates, regression tracking, and CI integration",
+	"keywords": [
+		"llm",
+		"evaluation",
+		"quality-gates",
+		"regression-testing",
+		"cli",
+		"ci",
+		"llm-evaluation",
+		"golden-sets",
+		"llm-testing"
+	],
 	"type": "module",
 	"private": true,
 	"license": "MIT",
