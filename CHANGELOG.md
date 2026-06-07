@@ -1,3 +1,13 @@
+## 0.10.1 (2026-06-07)
+
+### Bug Fixes
+
+- **upgrade**: Set execute permission on downloaded binary. `writeFile` creates
+  files with 0644 (no execute). After `renameSync` to `/usr/local/bin/regtrace`,
+  the binary was not executable, causing `execFileSync` verification to fail
+  (EACCES) and silently restore backup. Now `chmodSync` is applied after download
+  and after rename. (`download.ts`, `swap.ts`)
+
 ## 0.10.0 (2026-06-06)
 
 ### Features
