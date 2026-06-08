@@ -31,8 +31,9 @@ export default function Layout({ children }: LayoutProps<"/">) {
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
         <Banner id="agent-skills" variant="rainbow">
-          🎉 Agent Skills are now supported for Regtrace!{" "}
-          <a href="/docs/reference/agent-skills"> Check the docs here</a>
+          <a href="/docs/reference/agent-skills">
+            🎉 Agent Skills are now supported for Regtrace!
+          </a>
         </Banner>
         <RootProvider
           theme={{
