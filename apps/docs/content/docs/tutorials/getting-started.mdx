@@ -58,9 +58,14 @@ This creates:
 - `.regtrace/runs/` — local run storage
 
 <Callout type="tip">
-  **Using an AI coding agent?** Run `/regtrace init` in OpenCode, Claude Code,
-  Cursor, or Zed to auto-detect LLM calls in your project and generate
-  tailored golden sets — no manual editing needed. See the
+  **Using an AI coding agent?** First install the regtrace skill:
+
+  ```bash
+  npx skills add decimozs/regtrace/skills/regtrace
+  ```
+
+  Then run `/regtrace init` in your agent's chat to auto-detect LLM calls
+  and generate tailored golden sets — no manual editing needed. See the
   [Agent Skill](/docs/reference/agent-skills) reference.
 </Callout>
 

@@ -124,6 +124,12 @@ See [ROADMAP.md](ROADMAP.md) for planned features: cost tracking, offline evalua
 
 `skills/regtrace/` teaches AI coding agents how to use regtrace — golden sets, evaluation, regression, CI integration.
 
+```bash
+npx skills add decimozs/regtrace/skills/regtrace
+```
+
+Once installed, type `/regtrace init` in your agent's chat to auto-detect LLM calls and scaffold the project.
+
 ## Launch links
 
 - [Product Hunt](https://www.producthunt.com/p/regtrace)
