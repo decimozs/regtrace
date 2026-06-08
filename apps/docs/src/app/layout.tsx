@@ -32,7 +32,7 @@ export default function Layout({ children }: LayoutProps<"/">) {
       <body className="flex flex-col min-h-screen">
         <Banner id="agent-skills" variant="rainbow">
           🎉 Agent Skills are now supported for Regtrace!{" "}
-          <a href="/docs/reference/agent-skills">Check the docs here</a>
+          <a href="/docs/reference/agent-skills"> Check the docs here</a>
         </Banner>
         <RootProvider
           theme={{
