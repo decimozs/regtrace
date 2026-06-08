@@ -27,3 +27,13 @@ The skill covers:
 - Debugging failing test cases
 - Judge provider configuration
 - Run comparison via `history --diff`
+
+## Agent harness integration
+
+Type `/regtrace init` inside an agent harness (OpenCode, Claude Code, Cursor,
+Zed, Aider, etc.) to bootstrap regtrace without writing config by hand. The
+agent scans your project for LLM signals — prompts, client calls, RAG chains,
+tools, and API routes — then generates golden sets and config wired to your
+actual code.
+
+See `skills/regtrace/SKILL.md` for the full workflow.
