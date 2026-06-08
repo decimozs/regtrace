@@ -1,6 +1,7 @@
 import { RootProvider } from "fumadocs-ui/provider/next";
 import "./global.css";
 import { Analytics } from "@vercel/analytics/next";
+import { Banner } from "fumadocs-ui/components/banner";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
@@ -29,6 +30,9 @@ export default function Layout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
+        <Banner id="agent-skills" variant="rainbow">
+          Agent Skills are now supported for Regtrace!
+        </Banner>
         <RootProvider
           theme={{
             defaultTheme: "light",
