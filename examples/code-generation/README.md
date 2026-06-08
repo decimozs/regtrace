@@ -31,3 +31,4 @@ and `forbidden_content` sub-checks.
 - Enable `regex_match` to enforce code patterns (no try-catch swallows)
 - Add ANTHROPIC_API_KEY and enable `factuality` in `metrics.enabled` for
   deeper code correctness evaluation with LLM judge
+

@@ -124,6 +124,11 @@ See [ROADMAP.md](ROADMAP.md) for planned features: cost tracking, offline evalua
 
 `skills/regtrace/` teaches AI coding agents how to use regtrace — golden sets, evaluation, regression, CI integration.
 
+## Launch links
+
+- [Product Hunt](https://www.producthunt.com/p/regtrace)
+- [Dev.to: "I broke a chatbot with a prompt change — then I built the tool that would've caught it"](https://dev.to/decimozs/i-broke-a-chatbot-with-a-prompt-change-then-i-built-the-tool-that-wouldve-caught-it-m1g)
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, build, test, and release process.
